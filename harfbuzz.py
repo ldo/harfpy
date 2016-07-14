@@ -13,6 +13,23 @@ except ImportError :
 
 hb = ct.cdll.LoadLibrary("libharfbuzz.so.0")
 
+def seq_to_ct(seq, ct_type, conv = None) :
+    "extracts the elements of a Python sequence value into a ctypes array" \
+    " of type ct_type, optionally applying the conv function to each value.\n" \
+    "\n" \
+    "Why doesn’t ctypes make this easy?"
+    if conv == None :
+        conv = lambda x : x
+    #end if
+    nr_elts = len(seq)
+    result = (nr_elts * ct_type)()
+    for i in range(nr_elts) :
+        result[i] = conv(seq[i])
+    #end for
+    return \
+        result
+#end seq_to_ct
+
 class HARFBUZZ :
     "useful definitions adapted from harfbuzz/*.h. You will need to use the constants" \
     " and “macro” functions, but apart from that, see the more Pythonic wrappers" \
@@ -178,10 +195,111 @@ class HARFBUZZ :
 
     # hb_xxx_func_t types todo
 
+    # from hb-shape.h:
+
+    class feature_t(ct.Structure) :
+        pass
+    feature_t._fields_ = \
+        [
+            ("tag", tag_t),
+            ("value", ct.c_uint),
+            ("start", ct.c_uint),
+            ("end", ct.c_uint),
+        ]
+    #end feature_t
+
     # more TBD
 
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
+
+def def_struct_class(name, ctname, conv = None, extra = None) :
+    # defines a class with attributes that are a straightforward mapping
+    # of a ctypes struct. Optionally includes extra members from extra
+    # if specified.
+
+    ctstruct = getattr(HARFBUZZ, ctname)
+
+    class result_class :
+
+        __slots__ = tuple(field[0] for field in ctstruct._fields_) # to forestall typos
+
+        def to_hb(self) :
+            "returns a HarfBuzz representation of the structure."
+            result = ctstruct()
+            for name, cttype in ctstruct._fields_ :
+                val = getattr(self, name)
+                if val != None and conv != None and name in conv :
+                    val = conv[name]["to"](val)
+                #end if
+                setattr(result, name, val)
+            #end for
+            return \
+                result
+        #end to_hb
+
+        @staticmethod
+        def from_hb(r) :
+            "decodes the HarfBuzz representation of the structure."
+            result = result_class()
+            for name, cttype in ctstruct._fields_ :
+                val = getattr(r, name)
+                if val != None and conv != None and name in conv :
+                    val = conv[name]["from"](val)
+                #end if
+                setattr(result, name, val)
+            #end for
+            return \
+                result
+        #end from_hb
+
+        def __getitem__(self, i) :
+            "allows the object to be coerced to a tuple."
+            return \
+                getattr(self, ctstruct._fields_[i][0])
+        #end __getitem__
+
+        def __repr__(self) :
+            return \
+                (
+                    "%s(%s)"
+                %
+                    (
+                        name,
+                        ", ".join
+                          (
+                            "%s = %s" % (field[0], getattr(self, field[0]))
+                            for field in ctstruct._fields_
+                          ),
+                    )
+                )
+        #end __repr__
+
+    #end result_class
+
+#begin def_struct_class
+    result_class.__name__ = name
+    result_class.__doc__ = \
+        (
+            "representation of a HarfBuzz %s structure. Fields are %s."
+            "\nCreate by decoding the HarfBuzz form with the from_hb method;"
+            " convert an instance to HarfBuzz form with the to_hb method."
+        %
+            (
+                ctname,
+                ", ".join(f[0] for f in ctstruct._fields_),
+            )
+        )
+    if extra != None :
+        for attr in dir(extra) :
+            if not attr.startswith("__") :
+                setattr(result_class, attr, getattr(extra, attr))
+            #end if
+        #end for
+    #end if
+    return \
+        result_class
+#end def_struct_class
 
 #+
 # Routine arg/result types
@@ -275,6 +393,16 @@ hb.hb_ft_font_set_load_flags.argtypes = (ct.c_void_p, ct.c_int)
 hb.hb_ft_font_get_load_flags.restype = ct.c_int
 hb.hb_ft_font_get_load_flags.argtypes = (ct.c_void_p,)
 
+hb.hb_feature_from_string.restype = HB.bool_t
+hb.hb_feature_from_string.argtypes = (ct.c_void_p, ct.c_int, ct.c_void_p)
+hb.hb_feature_to_string.restype = None
+hb.hb_feature_to_string.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_uint)
+hb.hb_shape.restype = None
+hb.hb_shape.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint)
+hb.hb_shape_full.restype = HB.bool_t
+hb.hb_shape_full.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
+hb.hb_shape_list_shapers.restype = ct.c_void_p
+hb.hb_shape_list_shapers.argtypes = ()
 # more TBD
 
 #+
@@ -365,44 +493,19 @@ class Language :
 
 # from hb-buffer.h:
 
-class SegmentProperties :
-
-    __slots__ = \
-        ( # to forestall typos
-            "direction",
-            "script",
-            "language", # Language instance
-            "reserved1",
-            "reserved2",
-        )
-
-    def to_hb(self) :
-        "returns a HarfBuzz representation of the structure."
-        return \
-            HB.segment_properties_t \
-              (
-                direction = self.direction,
-                script = self.script,
-                language = (lambda : None, lambda : self.language._hbobj)[self.language != Language.INVALID](),
-                reserved1 = self.reserved1,
-                reserved2 = self.reserved2,
-              )
-    #end to_hb
-
-    @staticmethod
-    def from_hb(r) :
-        "decodes the HarfBuzz represention of the structure."
-        result = SegmentProperties()
-        result.direction = r.direction
-        result.script = r.script
-        result.language = (lambda : Language.INVALID, lambda : Language(r.language))[r.language != None]()
-        result.reserved1 = r.reserved1
-        result.reserved2 = r.reserved2
-        return \
-            result
-    #end from_hb
-
-#end SegmentProperties
+SegmentProperties = def_struct_class \
+  (
+    name = "SegmentProperties",
+    ctname = "segment_properties_t",
+    conv =
+        {
+            "language" :
+                {
+                    "to" : lambda l : l._hbobj,
+                    "from" : Language,
+                }
+        }
+  )
 
 class Buffer :
     "a HarfBuzz buffer. Do not instantiate directly; call the create method."
@@ -467,10 +570,7 @@ class Buffer :
 
     def add_codepoints(self, text, text_length, item_offset, item_length) :
         "adds a list or tuple of codepoints to the buffer."
-        c_text = (text_length * HB.codepoint_t)()
-        for i in range(text_length) :
-            c_text[i] = text[i]
-        #end for
+        c_text = seq_to_ct(text, HB.codepoint_t)
         hb.hb_buffer_add_codepoints(self._hbobj, c_text, text_length, item_offset, item_length)
         self.check_alloc()
     #end add_codepoints
@@ -738,4 +838,98 @@ class Font :
 
 #end Font
 
+# from hb-shape.h:
+
+class FeatureExtra :
+    # extra members for Feature class.
+
+    @staticmethod
+    def from_string(s) :
+        "returns a Feature corresponding to the specified name string."
+        sb = s.encode()
+        result = HB.feature_t()
+        if not hb.hb_feature_from_string(sb, len(sb), ct.byref(result)) :
+            raise ValueError("failed to decode feature_from_string")
+        #end if
+        return \
+            Feature.from_hb(result)
+    #end from_string
+
+    def to_string(self) :
+        "returns the name string for the Feature."
+        namebuf = (ct.c_char * 128)() # big enough according to docs
+        hb_self = self.to_hb()
+        hb.hb_feature_to_string(ct.byref(hb_self), namebuf, len(namebuf))
+        return \
+            namebuf.value.decode() # automatically stops at NUL
+    #end to_string
+
+#end FeatureExtra
+Feature = def_struct_class \
+  (
+    name = "Feature",
+    ctname = "feature_t",
+    extra = FeatureExtra
+  )
+del FeatureExtra
+
+def shape(font, buffer, features = None) :
+    if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
+        raise TypeError("font must be a Font, buffer must be a Buffer")
+    #end if
+    if features != None :
+        c_features = seq_to_ct(features, HB.feature_t, lambda f : f.to_hb())
+        nr_features = len(features)
+    else :
+        c_features = None
+        nr_features = 0
+    #end if
+    hb.hb_shape(font._hbobj, buffer._hbobj, c_features, nr_features)
+#end shape
+
+def shape_full(font, buffer, features = None, shaper_list = None) :
+    if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
+        raise TypeError("font must be a Font, buffer must be a Buffer")
+    #end if
+    if features != None :
+        c_features = seq_to_ct(features, HB.feature_t, lambda f : f.to_hb())
+        nr_features = len(features)
+    else :
+        c_features = None
+        nr_features = 0
+    #end if
+    if shaper_list != None :
+        nr_shapers = len(shaper_list)
+        c_shaper_list = ((nr_shapers + 1) * ct.c_char_p)()
+        c_strs = []
+        for s in shaper_list :
+            c_str = ct.c_char_p(s.encode())
+            c_strs.append(c_str)
+            c_shaper_list.append(c_str)
+        #end for
+        c_shaper_list.append(None) # marks end of list
+    else :
+        c_shaper_list = None
+    #end if
+    return \
+        hb.hb_shape_full(font._hbobj, buffer._hbobj, c_features, nr_features, c_shaper_list)
+#end shape_full
+
+def shape_list_shapers() :
+    c_shaper_list = ct.cast(hb.hb_shape_list_shapers(), ct.POINTER(ct.c_char_p))
+    result = []
+    i = 0
+    while True :
+        c_str = c_shaper_list[i]
+        if not bool(c_str) :
+            break
+        result.append(c_str.decode())
+        i += 1
+    #end while
+    return \
+        tuple(result)
+#end shape_list_shapers
+
 # more TBD
+
+del def_struct_class # my work is done
