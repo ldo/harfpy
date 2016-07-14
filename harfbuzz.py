@@ -3,6 +3,8 @@
 #-
 
 import ctypes as ct
+from weakref import \
+    WeakValueDictionary
 
 hb = ct.cdll.LoadLibrary("libharfbuzz.so.0")
 
@@ -38,6 +40,23 @@ class HARFBUZZ :
 
     tag_t = ct.c_uint
 
+    def TAG(c1, c2, c3, c4) :
+        "creates a tag_t from four byte values."
+        return \
+            c1 << 24 | c2 << 16 | c3 << 8 | c4
+    #end TAG
+
+    def UNTAG(tag) :
+        "decomposes a tag_t into a tuple of four byte values."
+        return \
+            (tag >> 24 & 255, tag >> 16 & 255, tag >> 8 & 255, tag & 255)
+    #end UNTAG
+
+    TAG_NONE = TAG(0, 0, 0, 0)
+    TAG_MAX = TAG(0xff, 0xff, 0xff, 0xff)
+    TAG_MAX_SIGNED = TAG(0x7f, 0xff, 0xff, 0xff)
+    # more TAG_xxx values todo
+
     direction_t = ct.c_uint
     DIRECTION_INVALID = 0
     DIRECTION_LTR = 4
@@ -47,12 +66,75 @@ class HARFBUZZ :
 
     script_t = ct.c_uint
     # SCRIPT_xxx values todo
+    SCRIPT_INVALID = TAG_NONE
 
     # from hb-buffer.h:
+
     buffer_content_type_t = ct.c_uint
     BUFFER_CONTENT_TYPE_INVALID = 0
     BUFFER_CONTENT_TYPE_UNICODE = 1
     BUFFER_CONTENT_TYPE_GLYPHS = 2
+
+    buffer_flags_t = ct.c_uint
+    BUFFER_FLAG_DEFAULT = 0x00000000
+    BUFFER_FLAG_BOT = 0x00000001 # Beginning-of-text
+    BUFFER_FLAG_EOT = 0x00000002 # End-of-text
+    BUFFER_FLAG_PRESERVE_DEFAULT_IGNORABLES = 0x00000004
+
+    buffer_cluster_level_t = ct.c_uint
+    BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES = 0
+    BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS = 1
+    BUFFER_CLUSTER_LEVEL_CHARACTERS = 2
+    BUFFER_CLUSTER_LEVEL_DEFAULT = BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES
+
+    class segment_properties_t(ct.Structure) :
+        pass
+    segment_properties_t._fields_ = \
+        [
+            ("direction", direction_t),
+            ("script", script_t),
+            ("language", ct.c_void_p), # language_t
+            # private
+            ("reserved1", ct.c_void_p),
+            ("reserved2", ct.c_void_p),
+        ]
+    #end segment_properties_t
+
+    SEGMENT_PROPERTIES_DEFAULT = \
+        segment_properties_t \
+          (
+            DIRECTION_INVALID,
+            SCRIPT_INVALID,
+            None, # Language.INVALID
+            None,
+            None,
+          )
+
+    class glyph_info_t(ct.Structure) :
+        pass
+    glyph_info_t._fields_ = \
+        [
+            ("codepoint", codepoint_t),
+            ("mask", mask_t),
+            ("cluster", ct.c_uint),
+            # private
+            ("var1", var_int_t),
+            ("var2", var_int_t),
+        ]
+    #end glyph_info_t
+
+    class glyph_position_t(ct.Structure) :
+        pass
+    glyph_position_t._fields_ = \
+        [
+            ("x_advance", position_t),
+            ("y_advance", position_t),
+            ("x_offset", position_t),
+            ("y_offset", position_t),
+            # private
+            ("var", var_int_t),
+        ]
+    #end glyph_position_t
 
     # more TBD
 
@@ -104,6 +186,36 @@ hb.hb_buffer_set_script.restype = None
 hb.hb_buffer_set_script.argtypes = (ct.c_void_p, HB.script_t)
 hb.hb_buffer_get_script.restype = HB.script_t
 hb.hb_buffer_get_script.argtypes = (ct.c_void_p,)
+hb.hb_buffer_set_language.restype = None
+hb.hb_buffer_set_language.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_buffer_get_language.restype = ct.c_void_p
+hb.hb_buffer_get_language.argtypes = (ct.c_void_p,)
+hb.hb_buffer_set_flags.restype = None
+hb.hb_buffer_set_flags.argtypes = (ct.c_void_p, HB.buffer_flags_t)
+hb.hb_buffer_get_flags.restype = HB.buffer_flags_t
+hb.hb_buffer_get_flags.argtypes = (ct.c_void_p,)
+hb.hb_buffer_set_cluster_level.restype = None
+hb.hb_buffer_set_cluster_level.argtypes = (ct.c_void_p, HB.buffer_cluster_level_t)
+hb.hb_buffer_get_cluster_level.restype = HB.buffer_cluster_level_t
+hb.hb_buffer_get_cluster_level.argtypes = (ct.c_void_p,)
+hb.hb_buffer_set_length.restype = None
+hb.hb_buffer_set_length.argtypes = (ct.c_void_p, ct.c_uint)
+hb.hb_buffer_get_length.restype = ct.c_uint
+hb.hb_buffer_get_length.argtypes = (ct.c_void_p,)
+hb.hb_buffer_set_segment_properties.restype = None
+hb.hb_buffer_set_segment_properties.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_buffer_get_segment_properties.restype = None
+hb.hb_buffer_get_segment_properties.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_buffer_guess_segment_properties.restype = None
+hb.hb_buffer_guess_segment_properties.argtypes = (ct.c_void_p,)
+hb.hb_buffer_get_glyph_infos.restype = ct.c_void_p
+hb.hb_buffer_get_glyph_infos.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+hb.hb_buffer_get_glyph_positions.restype = ct.c_void_p
+hb.hb_buffer_get_glyph_positions.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+hb.hb_buffer_set_replacement_codepoint.restype = None
+hb.hb_buffer_set_replacement_codepoint.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_buffer_get_replacement_codepoint.restype = HB.codepoint_t
+hb.hb_buffer_get_replacement_codepoint.argtypes = (ct.c_void_p,)
 # more TBD
 
 #+
@@ -143,13 +255,25 @@ class Language :
     __slots__ = \
         ( # to forestall typos
             "_hbobj",
+            "__weakref__",
         )
 
-    def __init__(self, hbobj) :
-        self._hbobj = hbobj
-    #end __init__
+    _instances = WeakValueDictionary()
 
-    # no __del__: are these objects ever freed?
+    INVALID = None # use to indicate invalid Language
+
+    def __new__(celf, _hbobj) :
+        self = celf._instances.get(_hbobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._hbobj = _hbobj
+            celf._instances[_hbobj] = self
+        #end if
+        return \
+            self
+    #end __new__
+
+    # no __del__ -- these objects are never freed
 
     @classmethod
     def default(celf) :
@@ -160,8 +284,12 @@ class Language :
     @classmethod
     def from_string(celf, s) :
         sb = s.encode()
+        result = hb.hb_language_from_string(sb, len(sb))
+        if result == None :
+            raise ValueError("invalid language “%s”" % s)
+        #end if
         return \
-            Language(hb.hb_language_from_string(sb, len(sb)))
+            Language(result)
     #end from_string
 
     def to_string(self) :
@@ -177,6 +305,45 @@ class Language :
 #end Language
 
 # from hb-buffer.h:
+
+class SegmentProperties :
+
+    __slots__ = \
+        ( # to forestall typos
+            "direction",
+            "script",
+            "language", # Language instance
+            "reserved1",
+            "reserved2",
+        )
+
+    def to_hb(self) :
+        "returns a HarfBuzz representation of the structure."
+        return \
+            HB.segment_properties_t \
+              (
+                direction = self.direction,
+                script = self.script,
+                language = (lambda : None, lambda : self.language._hbobj)[self.language != Language.INVALID](),
+                reserved1 = self.reserved1,
+                reserved2 = self.reserved2,
+              )
+    #end to_hb
+
+    @staticmethod
+    def from_hb(r) :
+        "decodes the HarfBuzz represention of the structure."
+        result = SegmentProperties()
+        result.direction = r.direction
+        result.script = r.script
+        result.language = (lambda : Language.INVALID, lambda : Language(r.language))[r.language != None]()
+        result.reserved1 = r.reserved1
+        result.reserved2 = r.reserved2
+        return \
+            result
+    #end from_hb
+
+#end SegmentProperties
 
 class Buffer :
     "a HarfBuzz buffer. Do not instantiate directly; call the create method."
@@ -292,7 +459,121 @@ class Buffer :
         hb.hb_buffer_set_script(self._hbobj, script)
     #end script
 
-    # more TBD
+    @property
+    def language(self) :
+        result = hb.hb_buffer_get_language(self._hbobj)
+        if result != None :
+            result = Language(result)
+        #end if
+        return \
+            result
+    #end language
+
+    @language.setter
+    def language(self, language) :
+        if language != None and not isinstance(language, Language) :
+            raise TypeError("language must be a Language")
+        #end if
+        if language != None :
+            hb.hb_buffer_set_language(self._hbobj, language._hbobj)
+        else :
+            hb.hb_buffer_set_language(self._hbobj, None)
+        #end if
+    #end language
+
+    @property
+    def flags(self) :
+        return \
+            hb.hb_buffer_get_flags(self._hbobj)
+    #end flags
+
+    @flags.setter
+    def flags(self, flags) :
+        hb.hb_buffer_set_flags(self._hbobj, flags)
+    #end flags
+
+    @property
+    def cluster_level(self) :
+        return \
+            hb.hb_buffer_get_cluster_level(self._hbobj)
+    #end cluster_level
+
+    @cluster_level.setter
+    def cluster_level(self, cluster_level) :
+        hb.hb_buffer_set_cluster_level(self._hbobj, cluster_level)
+    #end cluster_level
+
+    @property
+    def length(self) :
+        return \
+            hb.hb_buffer_get_length(self._hbobj)
+    #end length
+
+    @length.setter
+    def length(self, length) :
+        if not hb.hb_buffer_set_length(self._hbobj, length) :
+            raise RuntimeError("set_length failed")
+        #end if
+    #end length
+
+    @property
+    def segment_properties(self) :
+        result = HB.segment_properties_t()
+        hb.hb_buffer_get_segment_properties(self._hbobj, ct.byref(result))
+        return \
+            SegmentProperties.from_hb(result)
+    #end segment_properties
+
+    @segment_properties.setter
+    def segment_properties(self, segment_properties) :
+        if not isinstance(segment_properties, SegmentProperties) :
+            raise TypeError("segment_properties must be a SegmentProperties")
+        #end if
+        hb.hb_buffer_set_segment_properties(self._hbobj, segment_properties.to_hb())
+    #end segment_properties
+
+    def guess_segment_properties(self) :
+        hb.hb_buffer_guess_segment_properties(self._hbobj)
+    #end guess_segment_properties
+
+    # TODO: unicode_funcs, user_data
+
+    @property
+    def glyph_infos(self) :
+        nr_glyphs = ct.c_uint()
+        arr = ct.cast \
+          (
+            hb.hb_buffer_get_glyph_infos(self._hbobj, ct.byref(nr_glyphs)),
+            ct.POINTER(HB.glyph_info_t)
+          )
+        return \
+            tuple(arr[i] for i in range(nr_glyphs))
+    #end glyph_infos
+
+    @property
+    def glyph_positions(self) :
+        nr_glyphs = ct.c_uint()
+        arr = ct.cast \
+          (
+            hb.hb_buffer_get_glyph_positions(self._hbobj, ct.byref(nr_glyphs)),
+            ct.POINTER(HB.glyph_position_t)
+          )
+        return \
+            tuple(arr[i] for i in range(nr_glyphs))
+    #end glyph_positions
+
+    @property
+    def replacement_codepoint(self) :
+        return \
+            hb.hb_buffer_get_replacement_codepoint(self._hbobj)
+    #end replacement_codepoint
+
+    @replacement_codepoint.setter
+    def replacement_codepoint(self, replacement_codepoint) :
+        hb.hb_buffer_set_replacement_codepoint(self._hbobj, replacement_codepoint)
+    #end replacement_codepoint
+
+    # TODO: normalize, reverse, (de)serialize, properties, message_func
 
 #end Buffer
 
