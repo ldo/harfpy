@@ -5,6 +5,11 @@
 import ctypes as ct
 from weakref import \
     WeakValueDictionary
+try :
+    import freetype2 as freetype
+except ImportError :
+    freetype = None
+#end try
 
 hb = ct.cdll.LoadLibrary("libharfbuzz.so.0")
 
@@ -136,6 +141,43 @@ class HARFBUZZ :
         ]
     #end glyph_position_t
 
+    # from hb-font.h:
+
+    class font_extents_t(ct.Structure) :
+        pass
+    # Note that typically ascender is positive and descender negative in
+    # coordinate systems that grow up.
+    font_extents_t._fields_ = \
+        [
+            ("ascender", position_t), # typographic ascender.
+            ("descender", position_t), # typographic descender.
+            ("line_gap", position_t), # suggested line spacing gap.
+            # private
+            ("reserved9", position_t),
+            ("reserved8", position_t),
+            ("reserved7", position_t),
+            ("reserved6", position_t),
+            ("reserved5", position_t),
+            ("reserved4", position_t),
+            ("reserved3", position_t),
+            ("reserved2", position_t),
+            ("reserved1", position_t),
+        ]
+    #end font_extents_t
+
+    class glyph_extents_t(ct.Structure) :
+        pass
+    glyph_extents_t._fields_ = \
+        [
+            ("x_bearing", position_t), # left side of glyph from origin.
+            ("y_bearing", position_t), # top side of glyph from origin.
+            ("width", position_t), # distance from left to right side.
+            ("height", position_t), # distance from top to bottom side.
+        ]
+    #end glyph_extents_t
+
+    # hb_xxx_func_t types todo
+
     # more TBD
 
 #end HARFBUZZ
@@ -157,6 +199,7 @@ hb.hb_language_to_string.restype = ct.c_char_p
 hb.hb_language_to_string.argtypes = (ct.c_void_p,)
 hb.hb_language_get_default.restype = ct.c_void_p
 hb.hb_language_get_default.argtypes = ()
+
 hb.hb_buffer_destroy.restype = None
 hb.hb_buffer_create.restype = ct.c_void_p
 hb.hb_buffer_create.argtypes = ()
@@ -216,6 +259,22 @@ hb.hb_buffer_set_replacement_codepoint.restype = None
 hb.hb_buffer_set_replacement_codepoint.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_buffer_get_replacement_codepoint.restype = HB.codepoint_t
 hb.hb_buffer_get_replacement_codepoint.argtypes = (ct.c_void_p,)
+
+hb.hb_face_destroy.restype = None
+hb.hb_face_destroy.argtypes = (ct.c_void_p,)
+
+hb.hb_font_destroy.restype = None
+hb.hb_font_destroy.argtypes = (ct.c_void_p,)
+
+hb.hb_ft_face_create_referenced.restype = ct.c_void_p
+hb.hb_ft_face_create_referenced.argtypes = (ct.c_void_p,)
+hb.hb_ft_font_create_referenced.restype = ct.c_void_p
+hb.hb_ft_font_create_referenced.argtypes = (ct.c_void_p,)
+hb.hb_ft_font_set_load_flags.restype = None
+hb.hb_ft_font_set_load_flags.argtypes = (ct.c_void_p, ct.c_int)
+hb.hb_ft_font_get_load_flags.restype = ct.c_int
+hb.hb_ft_font_get_load_flags.argtypes = (ct.c_void_p,)
+
 # more TBD
 
 #+
@@ -576,5 +635,107 @@ class Buffer :
     # TODO: normalize, reverse, (de)serialize, properties, message_func
 
 #end Buffer
+
+# from hb-face.h:
+
+class Face :
+    "wrapper around hb_face_t objects. Do not instantiate directly; use" \
+    " create methods."
+
+    __slots__ = \
+        ( # to forestall typos
+            "_hbobj",
+        )
+
+    def __init__(self, hbobj) :
+        self._hbobj = hbobj
+    #end __init__
+
+    def __del__(self) :
+        if self._hbobj != None :
+            hb.hb_face_destroy(self._hbobj)
+            self._hbobj = None
+        #end if
+    #end __del__
+
+    # no point implementing other create calls?
+
+    if freetype != None :
+
+        # from hb-ft.h:
+
+        @staticmethod
+        def ft_create(ft_face) :
+            if not isinstance(ft_face, freetype.Face) :
+                raise TypeError("ft_face must be a freetype.Face")
+            #end if
+            return \
+                Face(hb.hb_ft_face_create_referenced(ft_face._ftobj))
+        #end ft_create
+
+    #end if
+
+    # more TBD
+
+#end Face
+
+# from hb-font.h:
+
+class Font :
+    "wrapper around hb_font_t objects. Do not instantiate directly; use" \
+    " create methods."
+
+    __slots__ = \
+        ( # to forestall typos
+            "_hbobj",
+        )
+
+    def __init__(self, hbobj) :
+        self._hbobj = hbobj
+    #end __init__
+
+    def __del__(self) :
+        if self._hbobj != None :
+            hb.hb_font_destroy(self._hbobj)
+            self._hbobj = None
+        #end if
+    #end __del__
+
+    # no point implementing other create calls?
+
+    if freetype != None :
+
+        # from hb-ft.h:
+
+        @staticmethod
+        def ft_create(ft_face) :
+            if not isinstance(ft_face, freetype.Face) :
+                raise TypeError("ft_face must be a freetype.Face")
+            #end if
+            return \
+                Font(hb.hb_ft_font_create_referenced(ft_face._ftobj))
+        #end ft_create
+
+        @property
+        def load_flags(self) :
+            return \
+                hb.hb_ft_font_get_load_flags(self._hbobj)
+        #end load_flags
+
+        @load_flags.setter
+        def load_flags(self, load_flags) :
+            hb.hb_ft_font_set_load_flags(self._hbobj, load_flags)
+        #end load_flags
+
+    #end if
+
+    # Note: cannot implement get_face because that requires
+    # reconstructing a freetype.Face wrapper object, which
+    # cannot safely be done without the associated library
+    # for disposal purposes.
+
+    # set_funcs todo
+
+#end Font
 
 # more TBD
