@@ -669,11 +669,21 @@ class Buffer :
     __slots__ = \
         ( # to forestall typos
             "_hbobj",
+            "__weakref__",
         )
 
-    def __init__(self, _hbobj) :
-        self._hbobj = _hbobj
-    #end __init__
+    _instances = WeakValueDictionary()
+
+    def __new__(celf, _hbobj) :
+        self = celf._instances.get(_hbobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._hbobj = _hbobj
+            celf._instances[_hbobj] = self
+        #end if
+        return \
+            self
+    #end __new__
 
     def __del__(self) :
         if self._hbobj != None :
