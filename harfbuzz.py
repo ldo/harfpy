@@ -493,6 +493,17 @@ class Language :
 
 # from hb-buffer.h:
 
+GlyphInfo = def_struct_class \
+  (
+    name = "GlyphInfo",
+    ctname = "glyph_info_t"
+  )
+GlyphPosition = def_struct_class \
+  (
+    name = "GlyphPosition",
+    ctname = "glyph_position_t"
+  )
+
 SegmentProperties = def_struct_class \
   (
     name = "SegmentProperties",
@@ -706,7 +717,7 @@ class Buffer :
             ct.POINTER(HB.glyph_info_t)
           )
         return \
-            tuple(arr[i] for i in range(nr_glyphs))
+            tuple(GlyphInfo.from_hb(arr[i]) for i in range(nr_glyphs.value))
     #end glyph_infos
 
     @property
@@ -718,7 +729,7 @@ class Buffer :
             ct.POINTER(HB.glyph_position_t)
           )
         return \
-            tuple(arr[i] for i in range(nr_glyphs))
+            tuple(GlyphPosition.from_hb(arr[i]) for i in range(nr_glyphs.value))
     #end glyph_positions
 
     @property
