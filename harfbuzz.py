@@ -1071,4 +1071,6 @@ def shape_list_shapers() :
 
 # more TBD
 
+# hb-set.h: probably not useful, might as well use Python sets instead
+
 del def_struct_class # my work is done
