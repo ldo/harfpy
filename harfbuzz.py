@@ -423,8 +423,12 @@ hb.hb_buffer_set_replacement_codepoint.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_buffer_get_replacement_codepoint.restype = HB.codepoint_t
 hb.hb_buffer_get_replacement_codepoint.argtypes = (ct.c_void_p,)
 
+hb.hb_face_create.restype = ct.c_void_p
+hb.hb_face_create.argtypes = (ct.c_void_p, ct.c_uint)
 hb.hb_face_destroy.restype = None
 hb.hb_face_destroy.argtypes = (ct.c_void_p,)
+hb.hb_face_get_empty.restype = ct.c_void_p
+hb.hb_face_get_empty.argtypes = ()
 
 hb.hb_font_destroy.restype = None
 hb.hb_font_destroy.argtypes = (ct.c_void_p,)
@@ -667,8 +671,8 @@ class Buffer :
             "_hbobj",
         )
 
-    def __init__(self, hbobj) :
-        self._hbobj = hbobj
+    def __init__(self, _hbobj) :
+        self._hbobj = _hbobj
     #end __init__
 
     def __del__(self) :
@@ -935,16 +939,26 @@ class Buffer :
 
 class Face :
     "wrapper around hb_face_t objects. Do not instantiate directly; use" \
-    " create methods."
+    " create or get_empty methods."
 
     __slots__ = \
         ( # to forestall typos
             "_hbobj",
+            "__weakref__",
         )
 
-    def __init__(self, hbobj) :
-        self._hbobj = hbobj
-    #end __init__
+    _instances = WeakValueDictionary()
+
+    def __new__(celf, _hbobj) :
+        self = celf._instances.get(_hbobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._hbobj = _hbobj
+            celf._instances[_hbobj] = self
+        #end if
+        return \
+            self
+    #end __new__
 
     def __del__(self) :
         if self._hbobj != None :
@@ -953,7 +967,16 @@ class Face :
         #end if
     #end __del__
 
-    # no point implementing other create calls?
+    @staticmethod
+    def create(blob, index) :
+        if not isinstance(blob, Blob) :
+            raise TypeError("blob must be a Blob")
+        #end if
+        return \
+            Face(hb.hb_face_create(blob._hbobj, index))
+    #end create
+
+    # TODO: create_for_tables
 
     if freetype != None :
 
@@ -970,7 +993,14 @@ class Face :
 
     #end if
 
-    # more TBD
+    @staticmethod
+    def get_empty() :
+        return \
+            Face(hb.hb_face_get_empty())
+    #end get_empty
+
+    # TODO: get/set glyph_count, index, upem, user_data, immutable,
+    # reference_blob? reference_table?
 
 #end Face
 
@@ -985,8 +1015,8 @@ class Font :
             "_hbobj",
         )
 
-    def __init__(self, hbobj) :
-        self._hbobj = hbobj
+    def __init__(self, _hbobj) :
+        self._hbobj = _hbobj
     #end __init__
 
     def __del__(self) :
