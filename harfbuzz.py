@@ -559,7 +559,8 @@ class Blob :
 
     def create_sub(self, offset, length) :
         "creates a sub-Blob spanning the specified range of bytes in the parent." \
-        " mode is always set to MEMORY_MODE_READONLY for new blob and for parent."
+        " parent mode is set to immutable, while new blob seems to inherit" \
+        " previous parent mutability setting?"
         return \
             Blob(hb.hb_blob_create_sub_blob(self._hbobj, offset, length))
     #end create_sub
@@ -582,6 +583,9 @@ class Blob :
         length = ct.c_uint()
         addr = (hb.hb_blob_get_data, hb.hb_blob_get_data_writable)[writable] \
             (self._hbobj, ct.byref(length))
+        if addr == None :
+            raise ValueError("failed to get blob data")
+        #end if
         return \
             addr, length.value
     #end data
