@@ -93,6 +93,16 @@ class HARFBUZZ :
     # SCRIPT_xxx values todo
     SCRIPT_INVALID = TAG_NONE
 
+    destroy_func_t = ct.CFUNCTYPE(None, ct.c_void_p)
+
+    # from hb-blob.h:
+
+    memory_mode = ct.c_uint
+    MEMORY_MODE_DUPLICATE = 0
+    MEMORY_MODE_READONLY = 1
+    MEMORY_MODE_WRITABLE = 2
+    MEMORY_MODE_READONLY_MAY_MAKE_WRITABLE = 3
+
     # from hb-buffer.h:
 
     buffer_content_type_t = ct.c_uint
@@ -321,6 +331,25 @@ hb.hb_language_to_string.argtypes = (ct.c_void_p,)
 hb.hb_language_get_default.restype = ct.c_void_p
 hb.hb_language_get_default.argtypes = ()
 
+hb.hb_blob_create.restype = ct.c_void_p
+hb.hb_blob_create.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
+hb.hb_blob_create_sub_blob.restype = ct.c_void_p
+hb.hb_blob_create_sub_blob.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint)
+hb.hb_blob_get_empty.restype = ct.c_void_p
+hb.hb_blob_get_empty.argtypes = ()
+hb.hb_blob_destroy.restype = None
+hb.hb_blob_destroy.argtypes = (ct.c_void_p,)
+hb.hb_blob_make_immutable.restype = None
+hb.hb_blob_make_immutable.argtypes = (ct.c_void_p,)
+hb.hb_blob_is_immutable.restype = HB.bool_t
+hb.hb_blob_is_immutable.argtypes = (ct.c_void_p,)
+hb.hb_blob_get_length.restype = ct.c_uint
+hb.hb_blob_get_length.argtypes = (ct.c_void_p,)
+hb.hb_blob_get_data.restype = ct.c_void_p
+hb.hb_blob_get_data.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+hb.hb_blob_get_data_writable.restype = ct.c_void_p
+hb.hb_blob_get_data_writable.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+
 hb.hb_buffer_destroy.restype = None
 hb.hb_buffer_create.restype = ct.c_void_p
 hb.hb_buffer_create.argtypes = ()
@@ -493,6 +522,91 @@ class Language :
     #end __repr__
 
 #end Language
+
+# from hb-blob.h:
+
+class Blob :
+    "wraps the hb_blob_t opaque type. Do not instantiate directly; use" \
+    " the create and get_empty methods."
+
+    __slots__ = \
+        ( # to forestall typos
+            "_hbobj",
+        )
+
+    def __init__(self, _hbobj) :
+        self._hbobj = _hbobj
+    #end __init__
+
+    def __del__(self) :
+        if self._hbobj != None :
+            hb.hb_blob_destroy(self._hbobj)
+            self._hbobj = None
+        #end if
+    #end __del__
+
+    @staticmethod
+    def create_for_array(arr, mode, destroy) :
+        "creates a Blob that wraps the storage for the specified array.array object." \
+        " mode is one of the MEMORY_MODE_XXX values."
+        if destroy != None :
+            raise NotImplementedError("no destroy arg for now")
+        #end if
+        bufinfo = arr.buffer_info()
+        return \
+            Blob(hb.hb_blob_create(bufinfo[0], bufinfo[1], mode, None, None))
+    #end create_for_array
+
+    def create_sub(self, offset, length) :
+        "creates a sub-Blob spanning the specified range of bytes in the parent." \
+        " mode is always set to MEMORY_MODE_READONLY for new blob and for parent."
+        return \
+            Blob(hb.hb_blob_create_sub_blob(self._hbobj, offset, length))
+    #end create_sub
+
+    @staticmethod
+    def get_empty() :
+        "returns the empty Blob."
+        return \
+            Blob(hb.hb_blob_get_empty())
+    #end get_empty
+
+    def __len__(self) :
+        "the length of the Blob data."
+        return \
+            hb.hb_get_length(self._hbobj)
+    #end __len__
+
+    def data(self, writable) :
+        "returns a tuple (addr, length) of the Blob."
+        length = ct.c_uint()
+        addr = (hb.hb_blob_get_data, hb.hb_blob_get_data_writable)[writable] \
+            (self._hbobj, ct.byref(length))
+        return \
+            addr, length.value
+    #end data
+
+    @property
+    def immutable(self) :
+        "is the Blob immutable."
+        return \
+            hb.hb_blob_is_immutable(self._hbobj) != 0
+    #end immutable
+
+    @immutable.setter
+    def immutable(self, immut) :
+        "makes the Blob immutable."
+        if not isinstance(immut, bool) :
+            raise TypeError("new setting must be a bool")
+        elif not immut :
+            raise ValueError("cannot clear immutable setting")
+        #end if
+        hb.hb_blob_make_immutable(self._hbobj)
+    #end immutable
+
+    # TODO: user_data, destroy_func
+
+#end Blob
 
 # from hb-buffer.h:
 
