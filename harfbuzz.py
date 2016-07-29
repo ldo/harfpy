@@ -45,8 +45,11 @@ class HARFBUZZ :
 
     bool_t = ct.c_int
     codepoint_t = ct.c_uint
-    position_t = ct.c_int
+    position_t = ct.c_int # fixed 16.6?
     mask_t = ct.c_uint
+
+    to_position_t = lambda x : round(x * 64)
+    from_position_t = lambda x : x / 64
 
     class var_int_t(ct.Union) :
         _fields_ = \
@@ -501,7 +504,14 @@ GlyphInfo = def_struct_class \
 GlyphPosition = def_struct_class \
   (
     name = "GlyphPosition",
-    ctname = "glyph_position_t"
+    ctname = "glyph_position_t",
+    conv =
+        {
+            "x_advance" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+            "y_advance" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+            "x_offset" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+            "y_offset" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+        }
   )
 
 SegmentProperties = def_struct_class \
