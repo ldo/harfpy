@@ -224,8 +224,6 @@ class HARFBUZZ :
         ]
     #end feature_t
 
-    # more TBD
-
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
 
@@ -452,7 +450,6 @@ hb.hb_shape_full.restype = HB.bool_t
 hb.hb_shape_full.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
 hb.hb_shape_list_shapers.restype = ct.c_void_p
 hb.hb_shape_list_shapers.argtypes = ()
-# more TBD
 
 #+
 # Higher-level stuff begins here
@@ -1072,14 +1069,14 @@ class Font :
             hb.hb_ft_font_set_load_flags(self._hbobj, load_flags)
         #end load_flags
 
+        # Note: cannot implement get_face because that requires
+        # reconstructing a freetype.Face wrapper object, which
+        # cannot safely be done without the associated library
+        # for disposal purposes.
+
+        # TODO: set_funcs
+
     #end if
-
-    # Note: cannot implement get_face because that requires
-    # reconstructing a freetype.Face wrapper object, which
-    # cannot safely be done without the associated library
-    # for disposal purposes.
-
-    # set_funcs todo
 
 #end Font
 
@@ -1175,8 +1172,12 @@ def shape_list_shapers() :
         tuple(result)
 #end shape_list_shapers
 
-# more TBD
-
-# hb-set.h: probably not useful, might as well use Python sets instead
+# TODO:
+# hb-set.h: just minimal wrapper converting to/from Python sets
+# hb-ot-layout.h
+# hb-ot-tag.h
+# hb-ot-font.h
+# hb-ot-shape.h
+# hb-shape-plan.h
 
 del def_struct_class # my work is done
