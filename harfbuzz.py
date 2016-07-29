@@ -735,7 +735,7 @@ class Buffer :
 
     def allocation_successful(self) :
         return \
-            hb.hb_buffer_allocation_successful(self._hbobj)
+            hb.hb_buffer_allocation_successful(self._hbobj) != 0
     #end allocation_successful
 
     def check_alloc(self) :
@@ -1157,7 +1157,7 @@ def shape_full(font, buffer, features = None, shaper_list = None) :
         c_shaper_list = None
     #end if
     return \
-        hb.hb_shape_full(font._hbobj, buffer._hbobj, c_features, nr_features, c_shaper_list)
+        hb.hb_shape_full(font._hbobj, buffer._hbobj, c_features, nr_features, c_shaper_list) != 0
 #end shape_full
 
 def shape_list_shapers() :
