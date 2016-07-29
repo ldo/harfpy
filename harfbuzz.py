@@ -122,6 +122,9 @@ class HARFBUZZ :
     BUFFER_CLUSTER_LEVEL_CHARACTERS = 2
     BUFFER_CLUSTER_LEVEL_DEFAULT = BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES
 
+    # The default code point for replacing invalid characters in a given encoding
+    BUFFER_REPLACEMENT_CODEPOINT_DEFAULT = 0xFFFD
+
     class segment_properties_t(ct.Structure) :
         pass
     segment_properties_t._fields_ = \
@@ -355,6 +358,8 @@ hb.hb_buffer_create.restype = ct.c_void_p
 hb.hb_buffer_create.argtypes = ()
 hb.hb_buffer_destroy.restype = None
 hb.hb_buffer_destroy.argtypes = (ct.c_void_p,)
+hb.hb_buffer_get_empty.restype = ct.c_void_p
+hb.hb_buffer_get_empty.argtypes = ()
 hb.hb_buffer_reset.restype = None
 hb.hb_buffer_reset.argtypes = (ct.c_void_p,)
 hb.hb_buffer_clear_contents.restype = None
@@ -405,6 +410,14 @@ hb.hb_buffer_get_glyph_infos.restype = ct.c_void_p
 hb.hb_buffer_get_glyph_infos.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
 hb.hb_buffer_get_glyph_positions.restype = ct.c_void_p
 hb.hb_buffer_get_glyph_positions.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+hb.hb_buffer_normalize_glyphs.restype = ct.c_void_p
+hb.hb_buffer_normalize_glyphs.argtypes = (ct.c_void_p,)
+hb.hb_buffer_reverse.restype = ct.c_void_p
+hb.hb_buffer_reverse.argtypes = (ct.c_void_p,)
+hb.hb_buffer_reverse_range.restype = ct.c_void_p
+hb.hb_buffer_reverse_range.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint)
+hb.hb_buffer_reverse_clusters.restype = ct.c_void_p
+hb.hb_buffer_reverse_clusters.argtypes = (ct.c_void_p,)
 hb.hb_buffer_set_replacement_codepoint.restype = None
 hb.hb_buffer_set_replacement_codepoint.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_buffer_get_replacement_codepoint.restype = HB.codepoint_t
@@ -647,7 +660,7 @@ SegmentProperties = def_struct_class \
   )
 
 class Buffer :
-    "a HarfBuzz buffer. Do not instantiate directly; call the create method."
+    "a HarfBuzz buffer. Do not instantiate directly; call the create or get_empty methods."
 
     __slots__ = \
         ( # to forestall typos
@@ -671,6 +684,13 @@ class Buffer :
         return \
             Buffer(hb.hb_buffer_create())
     #end create
+
+    @staticmethod
+    def get_empty() :
+        "returns the empty Buffer instance."
+        return \
+            Buffer(hb.hb_buffer_get_empty())
+    #end get_empty
 
     def reset(self) :
         "resets the buffer state as though it were newly created."
@@ -737,28 +757,33 @@ class Buffer :
 
     @property
     def direction(self) :
+        "returns the buffer direction as a DIRECTION_XXX value."
         return \
             hb.hb_buffer_get_direction(self._hbobj)
     #end direction
 
     @direction.setter
     def direction(self, direction) :
+        "sets the buffer direction as a DIRECTION_XXX value."
         hb.hb_buffer_set_direction(self._hbobj, direction)
     #end direction
 
     @property
     def script(self) :
+        "returns the script as a SCRIPT_XXX value."
         return \
             hb.hb_buffer_get_script(self._hbobj)
     #end script
 
     @script.setter
     def script(self, script) :
+        "sets the script as a SCRIPT_XXX value."
         hb.hb_buffer_set_script(self._hbobj, script)
     #end script
 
     @property
     def language(self) :
+        "returns the language as a Language instance."
         result = hb.hb_buffer_get_language(self._hbobj)
         if result != None :
             result = Language(result)
@@ -769,6 +794,7 @@ class Buffer :
 
     @language.setter
     def language(self, language) :
+        "sets a new language from a Language instance."
         if language != None and not isinstance(language, Language) :
             raise TypeError("language must be a Language")
         #end if
@@ -781,30 +807,41 @@ class Buffer :
 
     @property
     def flags(self) :
+        "returns the flags as a mask of BUFFER_FLAG_XXX bits."
         return \
             hb.hb_buffer_get_flags(self._hbobj)
     #end flags
 
     @flags.setter
     def flags(self, flags) :
+        "sets new flags as a mask of BUFFER_FLAG_XXX bits."
         hb.hb_buffer_set_flags(self._hbobj, flags)
     #end flags
 
     @property
     def cluster_level(self) :
+        "returns the cluster level as a BUFFER_CLUSTER_LEVEL_XXX value."
         return \
             hb.hb_buffer_get_cluster_level(self._hbobj)
     #end cluster_level
 
     @cluster_level.setter
     def cluster_level(self, cluster_level) :
+        "sets the cluster level as a BUFFER_CLUSTER_LEVEL_XXX value."
         hb.hb_buffer_set_cluster_level(self._hbobj, cluster_level)
     #end cluster_level
 
-    @property
-    def length(self) :
+    def __len__(self) :
+        "the number of items in the buffer."
         return \
             hb.hb_buffer_get_length(self._hbobj)
+    #end __len__
+
+    @property
+    def length(self) :
+        "the number of items in the buffer."
+        return \
+            len(self)
     #end length
 
     @length.setter
@@ -816,6 +853,7 @@ class Buffer :
 
     @property
     def segment_properties(self) :
+        "convenience accessor for getting direction, script and language all at once."
         result = HB.segment_properties_t()
         hb.hb_buffer_get_segment_properties(self._hbobj, ct.byref(result))
         return \
@@ -824,6 +862,7 @@ class Buffer :
 
     @segment_properties.setter
     def segment_properties(self, segment_properties) :
+        "convenience accessor for setting direction, script and language all at once."
         if not isinstance(segment_properties, SegmentProperties) :
             raise TypeError("segment_properties must be a SegmentProperties")
         #end if
@@ -831,6 +870,7 @@ class Buffer :
     #end segment_properties
 
     def guess_segment_properties(self) :
+        "guesses what the segment properties should be, based on the buffer contents."
         hb.hb_buffer_guess_segment_properties(self._hbobj)
     #end guess_segment_properties
 
@@ -871,7 +911,23 @@ class Buffer :
         hb.hb_buffer_set_replacement_codepoint(self._hbobj, replacement_codepoint)
     #end replacement_codepoint
 
-    # TODO: normalize, reverse, (de)serialize, properties, message_func
+    def normalize_glyphs(self) :
+        hb.hb_buffer_normalize_glyphs(self._hbobj)
+    #end normalize_glyphs
+
+    def reverse(self) :
+        hb.hb_buffer_reverse(self._hbobj)
+    #end reverse
+
+    def reverse_range(self, start, end) :
+        hb.hb_buffer_reverse_range(self._hbobj, start, end)
+    #end reverse_range
+
+    def reverse_clusters(self) :
+        hb.hb_buffer_reverse_clusters(self._hbobj)
+    #end reverse_clusters
+
+    # TODO: (de)serialize, segment properties, message_func
 
 #end Buffer
 
