@@ -99,9 +99,15 @@ class HARFBUZZ :
 
     memory_mode = ct.c_uint
     MEMORY_MODE_DUPLICATE = 0
+      # blob is to get its own copy of data; its mode becomes MEMORY_MODE_WRITABLE
     MEMORY_MODE_READONLY = 1
-    MEMORY_MODE_WRITABLE = 2
+      # passed data area is to be assumed to be read-only, so any
+      # attempt to get writable access will cause it to be copied
+      # to a new area and the mode changed to MEMORY_MODE_WRITABLE
+    MEMORY_MODE_WRITABLE = 2 # passed data area is to be assumed to be writable
     MEMORY_MODE_READONLY_MAY_MAKE_WRITABLE = 3
+       # passed data area is to be assumed to be initially read-only, but
+       # may be made writable in-place
 
     # from hb-buffer.h:
 
@@ -583,8 +589,7 @@ class Blob :
 
     def create_sub(self, offset, length) :
         "creates a sub-Blob spanning the specified range of bytes in the parent." \
-        " parent mode is set to immutable, while new blob seems to inherit" \
-        " previous parent mutability setting?"
+        " Child inherits parent’s memory mode, but Parent is made immutable."
         return \
             Blob(hb.hb_blob_create_sub_blob(self._hbobj, offset, length))
     #end create_sub
@@ -603,7 +608,8 @@ class Blob :
     #end __len__
 
     def data(self, writable) :
-        "returns a tuple (addr, length) of the Blob."
+        "returns a tuple (addr, length) of the Blob for read-only or read/write" \
+        " access, depending on writable."
         length = ct.c_uint()
         addr = (hb.hb_blob_get_data, hb.hb_blob_get_data_writable)[writable] \
             (self._hbobj, ct.byref(length))
@@ -623,7 +629,7 @@ class Blob :
 
     @immutable.setter
     def immutable(self, immut) :
-        "makes the Blob immutable."
+        "blocks further access to the memory area for writes."
         if not isinstance(immut, bool) :
             raise TypeError("new setting must be a bool")
         elif not immut :
