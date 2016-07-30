@@ -1,5 +1,10 @@
 #+
 # Python-3 binding for (parts of) HarfBuzz.
+#
+# Additional recommended libraries:
+#     python_freetype <https://github.com/ldo/python_freetype>
+#     Qahirah <https://github.com/ldo/qahirah>
+#     PyBidi <https://github.com/ldo/pybidi>
 #-
 
 import ctypes as ct
@@ -9,6 +14,11 @@ try :
     import freetype2 as freetype
 except ImportError :
     freetype = None
+#end try
+try :
+    import qahirah
+except ImportError :
+    qahirah = None
 #end try
 
 hb = ct.cdll.LoadLibrary("libharfbuzz.so.0")
@@ -649,6 +659,27 @@ GlyphInfo = def_struct_class \
     name = "GlyphInfo",
     ctname = "glyph_info_t"
   )
+class GlyphPositionExtra :
+    # extra members for GlyphPosition class.
+
+    if qahirah != None :
+
+        @property
+        def advance(self) :
+            "returns the x- and y-advance of the glyph position as a qahirah.Vector."
+            return \
+                qahirah.Vector(self.x_advance, self.y_advance)
+        #end advance
+
+        @property
+        def offset(self) :
+            "returns the x- and y-offset of the glyph position as a qahirah.Vector."
+            return \
+                qahirah.Vector(self.x_offset, self.y_offset)
+        #end offset
+
+    #end if
+#end GlyphPositionExtra
 GlyphPosition = def_struct_class \
   (
     name = "GlyphPosition",
@@ -659,8 +690,10 @@ GlyphPosition = def_struct_class \
             "y_advance" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
             "x_offset" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
             "y_offset" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
-        }
+        },
+    extra = GlyphPositionExtra
   )
+del GlyphPositionExtra
 
 SegmentProperties = def_struct_class \
   (
