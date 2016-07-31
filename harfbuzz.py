@@ -190,6 +190,10 @@ class HARFBUZZ :
         ]
     #end glyph_position_t
 
+    # from hb-face.h:
+
+    reference_table_func_t = ct.CFUNCTYPE(ct.c_void_p, ct.c_void_p, tag_t, ct.c_void_p)
+
     # from hb-font.h:
 
     class font_extents_t(ct.Structure) :
@@ -439,13 +443,32 @@ hb.hb_buffer_get_replacement_codepoint.argtypes = (ct.c_void_p,)
 
 hb.hb_face_create.restype = ct.c_void_p
 hb.hb_face_create.argtypes = (ct.c_void_p, ct.c_uint)
+hb.hb_face_create_for_tables.restype = ct.c_void_p
+hb.hb_face_create_for_tables.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_face_destroy.restype = None
 hb.hb_face_destroy.argtypes = (ct.c_void_p,)
+hb.hb_face_reference.restype = ct.c_void_p
+hb.hb_face_reference.argtypes = (ct.c_void_p,)
 hb.hb_face_get_empty.restype = ct.c_void_p
 hb.hb_face_get_empty.argtypes = ()
 
+hb.hb_font_create.restype = ct.c_void_p
+hb.hb_font_create.argtypes = (ct.c_void_p,)
+hb.hb_font_create_sub_font.restype = ct.c_void_p
+hb.hb_font_create_sub_font.argtypes = (ct.c_void_p,)
 hb.hb_font_destroy.restype = None
 hb.hb_font_destroy.argtypes = (ct.c_void_p,)
+
+hb.hb_font_funcs_create.restype = ct.c_void_p
+hb.hb_font_funcs_create.argtypes = ()
+hb.hb_font_funcs_get_empty.restype = ct.c_void_p
+hb.hb_font_funcs_get_empty.argtypes = ()
+hb.hb_font_funcs_destroy.restype = None
+hb.hb_font_funcs_destroy.argtypes = (ct.c_void_p,)
+hb.hb_font_funcs_make_immutable.restype = None
+hb.hb_font_funcs_make_immutable.argtypes = (ct.c_void_p,)
+hb.hb_font_funcs_is_immutable.restype = HB.bool_t
+hb.hb_font_funcs_is_immutable.argtypes = (ct.c_void_p,)
 
 hb.hb_ft_face_create_referenced.restype = ct.c_void_p
 hb.hb_ft_face_create_referenced.argtypes = (ct.c_void_p,)
@@ -1001,6 +1024,10 @@ class Face :
         ( # to forestall typos
             "_hbobj",
             "__weakref__",
+            # need to keep references to ctypes-wrapped functions
+            # so they don't disappear prematurely:
+            "_wrap_reference_table",
+            "_wrap_destroy",
         )
 
     _instances = WeakValueDictionary()
@@ -1010,7 +1037,12 @@ class Face :
         if self == None :
             self = super().__new__(celf)
             self._hbobj = _hbobj
+            self._wrap_reference_table = None
+            self._wrap_destroy = None
             celf._instances[_hbobj] = self
+        else :
+            hb.hb_face_destroy(self._hbobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -1032,7 +1064,40 @@ class Face :
             Face(hb.hb_face_create(blob._hbobj, index))
     #end create
 
-    # TODO: create_for_tables
+    @staticmethod
+    def create_for_tables(reference_table, user_data, destroy) :
+
+        @HB.reference_table_func_t
+        def wrap_reference_table(c_face, c_tag, c_user_data) :
+            result = reference_table(Face(hb.hb_face_reference(c_face)), c_tag.value, user_data)
+            if not isinstance(result, Blob) :
+                raise TypeError("reference_table must return a Blob")
+            #end if
+            return \
+                result._hbobj
+        #end wrap_reference_table
+
+        if destroy != None :
+            @HB.destroy_func_t
+            def wrap_destroy(c_user_data) :
+                destroy(user_data)
+            #end wrap_destroy
+        else :
+            wrap_destroy = None
+        #end if
+
+        result = Face(hb.hb_face_create_for_tables(wrap_reference_table, None, wrap_destroy))
+        result._wrap_reference_table = wrap_reference_table
+        result._wrap_destroy = wrap_destroy
+        return \
+            result
+    #end create_for_tables
+
+    @staticmethod
+    def get_empty() :
+        return \
+            Face(hb.hb_face_get_empty())
+    #end get_empty
 
     if freetype != None :
 
@@ -1048,12 +1113,6 @@ class Face :
         #end ft_create
 
     #end if
-
-    @staticmethod
-    def get_empty() :
-        return \
-            Face(hb.hb_face_get_empty())
-    #end get_empty
 
     # TODO: get/set glyph_count, index, upem, user_data, immutable,
     # reference_blob? reference_table?
@@ -1082,7 +1141,19 @@ class Font :
         #end if
     #end __del__
 
-    # no point implementing other create calls?
+    @staticmethod
+    def create(face) :
+        if not isinstance(face, Face) :
+            raise TypeError("face must be a Face")
+        #end if
+        return \
+            Font(hb.hb_font_create(face._hbobj))
+    #end create
+
+    def create_sub_font(self) :
+        return \
+            Font(hb.hb_font_create_sub_font(self._hbobj))
+    #end create_sub_font
 
     if freetype != None :
 
@@ -1118,6 +1189,70 @@ class Font :
     #end if
 
 #end Font
+
+class FontFuncs :
+    "wrapper around hb_font_funcs_t objects. Do not instantiate directly; use" \
+    " create and get_empty methods."
+
+    __slots__ = \
+        ( # to forestall typos
+            "_hbobj",
+            "__weakref__",
+        )
+
+    _instances = WeakValueDictionary()
+
+    def __new__(celf, _hbobj) :
+        self = celf._instances.get(_hbobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._hbobj = _hbobj
+            celf._instances[_hbobj] = self
+        #end if
+        return \
+            self
+    #end __new__
+
+    def __del__(self) :
+        if hb != None and self._hbobj != None :
+            hb.hb_font_funcs_destroy(self._hbobj)
+            self._hbobj = None
+        #end if
+    #end __del__
+
+    @staticmethod
+    def create() :
+        return \
+            FonFunc(hb.hb_font_funcs_create())
+    #end create
+
+    @staticmethod
+    def get_empty() :
+        return \
+            FonFunc(hb.hb_font_funcs_get_empty())
+    #end get_empty
+
+    # TODO: user_data
+
+    @property
+    def immutable(self) :
+        return \
+            hb.hb_font_funcs_is_immutable(self._hbobj) != 0
+    #end immutable
+
+    @immutable.setter
+    def immutable(self, immut) :
+        if not isinstance(immut, bool) :
+            raise TypeError("new setting must be a bool")
+        elif not immut :
+            raise ValueError("cannot clear immutable setting")
+        #end if
+        hb.hb_font_funcs_make_immutable(self._hbobj)
+    #end immutable
+
+    # TBD: actual funcs
+
+#end FontFuncs
 
 # from hb-shape.h:
 
