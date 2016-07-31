@@ -579,7 +579,7 @@ class Blob :
     #end __new__
 
     def __del__(self) :
-        if self._hbobj != None :
+        if hb != None and self._hbobj != None :
             hb.hb_blob_destroy(self._hbobj)
             self._hbobj = None
         #end if
@@ -732,7 +732,7 @@ class Buffer :
     #end __new__
 
     def __del__(self) :
-        if self._hbobj != None :
+        if hb != None and self._hbobj != None :
             hb.hb_buffer_destroy(self._hbobj)
             self._hbobj = None
         #end if
@@ -1017,7 +1017,7 @@ class Face :
     #end __new__
 
     def __del__(self) :
-        if self._hbobj != None :
+        if hb != None and self._hbobj != None :
             hb.hb_face_destroy(self._hbobj)
             self._hbobj = None
         #end if
@@ -1076,7 +1076,7 @@ class Font :
     #end __init__
 
     def __del__(self) :
-        if self._hbobj != None :
+        if hb != None and self._hbobj != None :
             hb.hb_font_destroy(self._hbobj)
             self._hbobj = None
         #end if
