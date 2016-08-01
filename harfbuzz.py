@@ -7,8 +7,7 @@
 #     PyBidi <https://github.com/ldo/pybidi> -- binding for FriBidi
 #
 # Python adaptation copyright © 2016 Lawrence D'Oliveiro,
-# based on C original by Behdad Esfahbod, Owen Taylor, David Turner,
-# Werner Lemberg and Ryan Lortie, with copyrights by Red Hat, Google and Codethink, 2009-2014.
+# based on C original by Behdad Esfahbod and others.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
