@@ -262,6 +262,10 @@ class HARFBUZZ :
         ]
     #end feature_t
 
+    # from hb-set.h:
+
+    SET_VALUE_INVALID = 0xffffffff
+
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
 
@@ -541,6 +545,23 @@ hb.hb_shape_full.restype = HB.bool_t
 hb.hb_shape_full.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
 hb.hb_shape_list_shapers.restype = ct.c_void_p
 hb.hb_shape_list_shapers.argtypes = ()
+
+hb.hb_set_create.restype = ct.c_void_p
+hb.hb_set_create.argtypes = ()
+hb.hb_set_destroy.restype = None
+hb.hb_set_destroy.argtypes = (ct.c_void_p,)
+hb.hb_set_get_empty.restype = ct.c_void_p
+hb.hb_set_get_empty.argtypes = ()
+hb.hb_set_add.restype = None
+hb.hb_set_add.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_set_add_range.restype = None
+hb.hb_set_add_range.argtypes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t)
+hb.hb_set_allocation_successful.restype = HB.bool_t
+hb.hb_set_allocation_successful.argtypes = (ct.c_void_p,)
+hb.hb_set_next.restype = HB.bool_t
+hb.hb_set_next.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_next_range.restype = HB.bool_t
+hb.hb_set_next_range.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
 hb.hb_shape_plan_create.restype = ct.c_void_p
 hb.hb_shape_plan_create.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
@@ -1451,8 +1472,55 @@ def shape_list_shapers() :
         tuple(result)
 #end shape_list_shapers
 
+# from hb-set.h:
+
+class Set :
+    "wrapper around hb_set_t objects. For internal use only: all relevant" \
+    " functions will pass and return Python sets."
+
+    __slots__ = \
+        ( # to forestall typos
+            "_hbobj",
+        )
+
+    def __init__(self, _hbobj) :
+        self._hbobj = _hbobj
+    #end __init__
+
+    @staticmethod
+    def to_hb(pyset) :
+        hbobj = hb.hb_set_create()
+        for elt in pyset :
+            if not isinstance(elt, int) or elt < 0 :
+                raise TypeError("set elements must be codepoints")
+            #end if
+            hb.hb_set_add(hbobj, elt)
+            # figure out how to use set_add_range in future?
+            if hb.hb_set_allocation_successful(hbobj) == 0 :
+                raise RuntimeError("insertion of set element failed")
+            #end if
+        #end for
+        return \
+            Set(hbobj)
+    #end to_hb
+
+    def from_hb(self) :
+        result = set()
+        first = HB.codepoint_t()
+        last = HB.codepoint_t()
+        first.value = HB.SET_VALUE_INVALID
+        while True :
+            if hb.hb_set_next_range(self._hbobj, ct.byref(first), ct.byref(last)) == 0 :
+                break
+            result.update(range(first.value, last.value + 1))
+        #end while
+        return \
+            result
+    #end from_hb
+
+#end Set
+
 # TODO:
-# hb-set.h: just minimal wrapper converting to/from Python sets
 # hb-ot-layout.h
 # hb-ot-tag.h
 # hb-ot-font.h
