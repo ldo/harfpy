@@ -23,7 +23,7 @@ except ImportError :
 
 hb = ct.cdll.LoadLibrary("libharfbuzz.so.0")
 
-def seq_to_ct(seq, ct_type, conv = None) :
+def seq_to_ct(seq, ct_type, conv = None, zeroterm = False) :
     "extracts the elements of a Python sequence value into a ctypes array" \
     " of type ct_type, optionally applying the conv function to each value.\n" \
     "\n" \
@@ -31,11 +31,14 @@ def seq_to_ct(seq, ct_type, conv = None) :
     if conv == None :
         conv = lambda x : x
     #end if
-    nr_elts = len(seq)
+    nr_elts = len(seq) + int(zeroterm)
     result = (nr_elts * ct_type)()
     for i in range(nr_elts) :
         result[i] = conv(seq[i])
     #end for
+    if zeroterm :
+        result[nr_elts] = conv(0)
+    #end if
     return \
         result
 #end seq_to_ct
@@ -1261,7 +1264,7 @@ class Face :
         "creates a Face which calls the specified reference_table action to access" \
         " the font tables. This should be declared as\n" \
         "\n" \
-        "    def reference_table(face, tag, user_data)\n"
+        "    def reference_table(face, tag, user_data)\n" \
         "\n" \
         "where face is this Face, tag is the integer tag identifying the table," \
         " and must return a Blob. The interpretation of user_data is up to you." \
@@ -1321,6 +1324,311 @@ class Face :
 
     # TODO: get/set glyph_count, index, upem, user_data, immutable,
     # reference_blob? reference_table?
+
+    # from hb-ot-layout.h:
+
+    class OTLayout :
+        "namespace wrapper for ot_layout functions on Face objects." \
+        " Do not instantiate directly; get from Face.ot_layout property."
+
+        __slots__ = \
+            ( # to forestall typos
+                "_hbobj",
+            )
+
+        def __init__(self, _hbobj) :
+            # note I’m not calling hb_face_reference,
+            # assuming parent Face doesn’t go away!
+            self._hbobj = _hbobj
+        #end __init__
+
+        def has_glyph_classes(self) :
+            return \
+                hb.hb_ot_layout_has_glyph_classes(self._hbobj) != 0
+        #end has_glyph_classes
+
+        def get_glyph_class(self, glyph) :
+            return \
+                hb.hb_ot_layout_get_glyph_class(self._hbobj, glyph)
+        #end get_glyph_class
+
+        def get_glyphs_in_class(self, klass) :
+            result = Set.to_hb()
+            hb.hb_ot_layout_get_glyphs_in_class(self._hbobj, klass, result._hbobj)
+            return \
+                result.from_hb()
+        #end get_glyphs_in_class
+
+        def get_attach_points(self, glyph) :
+            point_count = None
+            point_array = None
+            while True :
+                # just get the length on the first pass
+                nr_attach_points = hb.hb_ot_layout_get_attach_points \
+                    (self._hbobj, glyph, 0, point_count, point_array)
+                if point_array != None :
+                    break
+                # allocate space, now I know how much I need
+                point_count = ct.c_uint(nr_attach_points)
+                point_array = (nr_attach_points * ct.c_uint)()
+            #end while
+            return \
+                tuple(point_array[i].value for i in range(nr_attach_points))
+        #end get_attach_points
+
+        # GSUB/GPOS feature query and enumeration interface
+
+        def layout_table_get_script_tags(self, table_tag) :
+            script_count = None
+            script_tags = None
+            while True :
+                # just get the length on the first pass
+                nr_script_tags = hb.hb_ot_layout_table_get_script_tags \
+                    (self._hbobj, table_tag, 0, script_count, script_tags)
+                if script_tags != None :
+                    break
+                # allocate space, now I know how much I need
+                script_count = ct.c_uint(nr_script_tags)
+                script_tags = (nr_script_tags * ct.c_uint)()
+            #end while
+            return \
+                tuple(script_tags[i].value for i in range(nr_script_tags))
+        #end layout_table_get_script_tags
+
+        def find_script(self, table_tag, script_tag) :
+            script_index = ct.c_uint()
+            if hb.hb_ot_layout_table_find_script(self._hbobj, table_tag, script_tag, script_index) != 0 :
+                result = script_index.value
+            else :
+                result = None
+            #end if
+            return \
+                result
+        #end find_script
+
+        def choose_script(self, table_tag, script_tags) :
+            "Like find_script, but takes sequence of scripts to test."
+            c_script_tags = seq_to_ct(script_tags, HB.tag_t, zeroterm = True)
+            script_index = ct.c_uint()
+            chosen_script = HB.tag_t()
+            success = hb.hb_ot_layout_table_choose_script(self._hbobj, table_tag, c_script_tags, script_index, chosen_script) != 0
+            return \
+                (success, script_index.value, chosen_script.value)
+        #end choose_script
+
+        def table_get_feature_tags(self, table_tag) :
+            feature_count = None
+            feature_tags = None
+            while True :
+                # just get the length on the first pass
+                nr_feature_tags = hb.hb_ot_layout_table_get_feature_tags \
+                    (self._hbobj, table_tag, 0, feature_count, feature_tags)
+                if feature_tags != None :
+                    break
+                # allocate space, now I know how much I need
+                feature_count = ct.c_uint(nr_feature_tags)
+                feature_tags = (nr_feature_tags * ct.c_uint)()
+            #end while
+            return \
+                tuple(feature_tags[i].value for i in range(nr_feature_tags))
+        #end table_get_feature_tags
+
+        def script_get_language_tags(self, table_tag, script_index) :
+            language_count = None
+            language_tags = None
+            while True :
+                # just get the length on the first pass
+                nr_language_tags = hb.hb_ot_layout_script_get_language_tags \
+                    (self._hbobj, table_tag, script_index, 0, language_count, language_tags)
+                if language_tags != None :
+                    break
+                # allocate space, now I know how much I need
+                language_count = ct.c_uint(nr_language_tags)
+                language_tags = (nr_language_tags * ct.c_uint)()
+            #end while
+            return \
+                tuple(language_tags[i].value for i in range(nr_language_tags))
+        #end script_get_language_tags
+
+        def script_find_language(self, table_tag, script_index, language_tag) :
+            language_index = ct.c_uint()
+            success = hb.hb_ot_layout_script_find_language(self._hbobj, table_tag, script_index, language_tag, language_index) != 0
+            return \
+                (success, language_index.value)
+        #end script_find_language
+
+        # don’t bother implementing language_get_required_feature_index,
+        # use language_get_required_feature instead
+
+        def language_get_required_feature(self, table_tag, script_index, language_index) :
+            feature_index = ct.c_uint()
+            feature_tag = HB.tag_t()
+            success = hb.hb_ot_layout_language_get_required_feature(self._hbobj, table_tag, script_index, language_index, feature_index, feature_tag) != 0
+            return \
+                (success, feature_index.value, feature_tag.value)
+        #end language_get_required_feature
+
+        def language_get_feature_indexes(self, table_tag, script_index, language_index) :
+            feature_count = None
+            feature_indexes = None
+            while True :
+                # just get the length on the first pass
+                nr_feature_indexes = hb.hb_ot_layout_language_get_feature_indexes \
+                    (self._hbobj, table_tag, script_index, language_index, 0, feature_count, feature_indexes)
+                if feature_indexes != None :
+                    break
+                # allocate space, now I know how much I need
+                feature_count = ct.c_uint(nr_feature_indexes)
+                feature_indexes = (nr_feature_indexes * ct.c_uint)()
+            #end while
+            return \
+                tuple(feature_indexes[i].value for i in range(nr_feature_indexes))
+        #end language_get_feature_indexes
+
+        def language_get_feature_tags(self, table_tag, script_index, language_index) :
+            feature_count = None
+            feature_tags = None
+            while True :
+                # just get the length on the first pass
+                nr_feature_tags = hb.hb_ot_layout_language_get_feature_tags \
+                    (self._hbobj, table_tag, script_index, language_index, 0, feature_count, feature_tags)
+                if feature_tags != None :
+                    break
+                # allocate space, now I know how much I need
+                feature_count = ct.c_uint(nr_feature_tags)
+                feature_tags = (nr_feature_tags * ct.c_uint)()
+            #end while
+            return \
+                tuple(feature_tags[i].value for i in range(nr_feature_tags))
+        #end language_get_feature_tags
+
+        def language_find_feature(self, table_tag, script_index, language_index, feature_tag) :
+            feature_index = ct.c_uint()
+            success = hb.hb_ot_layout_language_find_feature(self._hbobj, table_tag, script_index, language_index, feature_tag, feature_index) != 0
+            return \
+                (success, feature_index.value)
+        #end language_find_feature
+
+        def feature_get_lookups(self, table_tag, feature_index) :
+            lookup_count = None
+            lookup_indexes = None
+            while True :
+                # just get the length on the first pass
+                nr_lookups = hb.hb_ot_layout_feature_get_lookups \
+                    (self._hbobj, table_tag, feature_index, 0, lookup_count, lookup_indexes)
+                if lookup_indexes != None :
+                    break
+                # allocate space, now I know how much I need
+                lookup_count = ct.c_uint(nr_lookups)
+                lookup_indexes = (nr_lookups * ct.c_uint)()
+            #end while
+            return \
+                tuple(lookup_indexes[i].value for i in range(nr_lookups))
+        #end feature_get_lookups
+
+        def table_get_lookup_count(self, table_tag) :
+            return \
+                hb_ot_layout_table_get_lookup_count(self._hbobj, table_tag)
+        #end table_get_lookup_count
+
+        def collect_lookups(self, table_tag, scripts, languages, features) :
+            if scripts != None :
+                c_scripts = seq_to_ct(scripts, HB.tag_t, zeroterm = True)
+            else :
+                c_scripts = None
+            #end if
+            if languages != None :
+                c_languages = seq_to_ct(languages, HB.tag_t, zeroterm = True)
+            else :
+                c_languages = None
+            #end if
+            if features != None :
+                c_features = seq_to_ct(features, HB.tag_t, zeroterm = True)
+            else :
+                c_features = None
+            #end if
+            lookup_indexes = Set.to_hb()
+            hb.hb_ot_layout_collect_lookups(self._hbobj, table_tag, c_scripts, c_languages, cC_features, lookup_indexes._hbobj)
+            return \
+                lookup_indexes.from_hb()
+        #end collect_lookups
+
+        def lookup_collect_glyphs(self, table_tag, lookup_index, want_glyphs_before, want_glyphs_input, want_glyphs_after, want_glyphs_output) :
+            glyphs_before = (Set.NULL, Set.to_hb)[want_glyphs_before]()
+            glyphs_input = (Set.NULL, Set.to_hb)[want_glyphs_input]()
+            glyphs_after = (Set.NULL, Set.to_hb)[want_glyphs_after]()
+            glyphs_output = (Set.NULL, Set.to_hb)[want_glyphs_output]()
+            hb.hb_ot_layout_lookup_collect_glyphs(self._hbobj, lookup_index, glyphs_before._hbobj, glyphs_input._hbobj, glyphs_after._hbobj, glyphs_output._hbobj)
+            return \
+                (glyphs_before.from_hb(), glyphs_input.from_hb(), glyphs_after.from_hb(), glyphs_output.from_hb())
+        #end lookup_collect_glyphs
+
+        # GSUB
+
+        def has_substitution(self) :
+            return \
+                hb.hb_ot_layout_has_substitution(self._hbobj) != 0
+        #end has_substitution
+
+        def lookup_would_substitute(self, lookup_index, glyphs, zero_context) :
+            c_glyphs = seq_to_ct(glyphs, HB.codepoint_t)
+            return \
+                (
+                    hb.hb_ot_layout_lookup_would_substitute
+                        (self._hbobj, lookup_index, c_glyphs, len(glyphs, zero_context))
+                !=
+                    0
+                )
+        #end lookup_would_substitute
+
+        def lookup_substitute_closure(self, lookup_index) :
+            glyphs = Set.to_hb()
+            hb.hb_ot_layout_lookup_substitute_closure(self._hbobj, lookup_index. glyphs._hbobj)
+            return \
+                glyphs.from_hb()
+        #end lookup_substitute_closure
+
+        # GPOS
+
+        def has_positioning(self) :
+            return \
+                hb.hb_ot_layout_has_positioning(self._hbobj) != 0
+        #end has_positioning
+
+        def get_size_params(self) :
+            # Optical 'size' feature info.  Returns true if found.
+            # http://www.microsoft.com/typography/otspec/features_pt.htm#size
+            design_size = ct.c_uint()
+            subfamily_id = ct.c_uint()
+            subfamily_name_id = ct.c_uint()
+            range_start = ct.c_uint()
+            range_end = ct.c_uint()
+            hb.hb_ot_layout_get_size_params \
+              (
+                self._hbobj,
+                ct.byref(design_size),
+                ct.byref(subfamily_id),
+                ct.byref(subfamily_name_id),
+                ct.byref(range_start),
+                ct.byref(range_end)
+              )
+            return \
+                (design_size.value, subfamily_id.value, subfamily_name_id.value, range_start.value, range_end.value)
+        #end get_size_params
+
+    #end OTLayout
+
+    @property
+    def ot_layout(self) :
+        "returns an object which can be used to invoke ot_layout_xxx functions" \
+        " relevant to Face objects."
+        # Should this be a property or an attribute set up directly in __init__?
+        # Latter case would cause reference circularity, unless I use weak refs,
+        # which further complicates things. Seems simpler to just make this
+        # a property.
+        return \
+            self.OTLayout(self._hbobj)
+    #end ot_layout
 
 #end Face
 
@@ -1426,6 +1734,54 @@ class Font :
     def ot_set_funcs(self) :
         hb.hb_ot_font_set_funcs(self._hbobj)
     #end ot_set_funcs
+
+    # from hb-ot-layout.h:
+
+    class OTLayout :
+        "namespace wrapper for ot_layout functions on Font objects." \
+        " Do not instantiate directly; get from Font.ot_layout property."
+
+        __slots__ = \
+            ( # to forestall typos
+                "_hbobj",
+            )
+
+        def __init__(self, _hbobj) :
+            # note I’m not calling hb_font_reference,
+            # assuming parent Font doesn’t go away!
+            self._hbobj = _hbobj
+        #end __init__
+
+        def get_ligature_carets(self, direction, glyph) :
+            caret_count = None
+            caret_array = None
+            while True :
+                # just get the length on the first pass
+                nr_carets = hb.hb_ot_layout_get_ligature_carets \
+                    (self._hbobj, direction, glyph, 0, caret_count, caret_array)
+                if caret_array != None :
+                    break
+                # allocate space, now I know how much I need
+                caret_count = ct.c_uint(nr_carets)
+                caret_array = (nr_carets * HB.position_t)()
+            #end while
+            return \
+                tuple(caret_array[i].value for i in range(nr_carets))
+        #end get_ligature_carets
+
+    #end OTLayout
+
+    @property
+    def ot_layout(self) :
+        "returns an object which can be used to invoke ot_layout_xxx functions" \
+        " relevant to Font objects."
+        # Should this be a property or an attribute set up directly in __init__?
+        # Latter case would cause reference circularity, unless I use weak refs,
+        # which further complicates things. Seems simpler to just make this
+        # a property.
+        return \
+            self.OTLayout(self._hbobj)
+    #end ot_layout
 
 #end Font
 
@@ -1617,23 +1973,31 @@ class Set :
             Set(hbobj)
     #end to_hb
 
+    @staticmethod
+    def NULL() :
+        return \
+            Set(None)
+    #end NULL
+
     def from_hb(self) :
-        result = set()
-        first = HB.codepoint_t()
-        last = HB.codepoint_t()
-        first.value = HB.SET_VALUE_INVALID
-        while True :
-            if hb.hb_set_next_range(self._hbobj, ct.byref(first), ct.byref(last)) == 0 :
-                break
-            result.update(range(first.value, last.value + 1))
-        #end while
+        if self._hbobj != None :
+            result = set()
+            first = HB.codepoint_t()
+            last = HB.codepoint_t()
+            first.value = HB.SET_VALUE_INVALID
+            while True :
+                if hb.hb_set_next_range(self._hbobj, ct.byref(first), ct.byref(last)) == 0 :
+                    break
+                result.update(range(first.value, last.value + 1))
+            #end while
+        else :
+            result = None
+        #end if
         return \
             result
     #end from_hb
 
 #end Set
-
-# TODO: hb-ot-layout.h
 
 # from hb-ot-tag.h:
 
