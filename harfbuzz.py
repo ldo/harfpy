@@ -2577,9 +2577,7 @@ class Set :
             first = HB.codepoint_t()
             last = HB.codepoint_t()
             first.value = HB.SET_VALUE_INVALID
-            while True :
-                if hb.hb_set_next_range(self._hbobj, ct.byref(first), ct.byref(last)) == 0 :
-                    break
+            while hb.hb_set_next_range(self._hbobj, ct.byref(first), ct.byref(last)) != 0 :
                 result.update(range(first.value, last.value + 1))
             #end while
         else :
