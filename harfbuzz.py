@@ -2724,15 +2724,19 @@ class ShapePlan :
 
     @property
     def shaper(self) :
+        result = hb.hb_shape_plan_get_shaper(self._hbobj)
+        if bool(result) :
+            result = result.decode() # automatically stops at NUL?
+        #end if
         return \
-            hb.hb_shape_plan_get_shaper(self._hbobj).decode() # automatically stops at NUL?
+            result
     #end shaper
 
     # TODO: user_data?
 
     # from hb-ot-shape.h:
 
-    def ot_collect_lookups(table_tag) :
+    def ot_collect_lookups(self, table_tag) :
         hb_set = Set.to_hb()
         hb.hb_ot_shape_plan_collect_lookups(self._hbobj, table_tag, hb_set._hbobj)
         return \
