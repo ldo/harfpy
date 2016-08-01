@@ -580,6 +580,11 @@ hb.hb_ot_tag_to_language.argtypes = (HB.tag_t,)
 hb.hb_ot_font_set_funcs.restype = None
 hb.hb_ot_font_set_funcs.argtypes = (ct.c_void_p,)
 
+hb.hb_ot_shape_glyphs_closure.restype = None
+hb.hb_ot_shape_glyphs_closure.argtyes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
+hb.hb_ot_shape_plan_collect_lookups.restype = None
+hb.hb_ot_shape_plan_collect_lookups.argtypes = (ct.c_void_p, HB.tag_t, ct.c_void_p)
+
 hb.hb_shape_plan_create.restype = ct.c_void_p
 hb.hb_shape_plan_create.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
 hb.hb_shape_plan_create_cached.restype = ct.c_void_p
@@ -1518,18 +1523,20 @@ class Set :
     #end __del__
 
     @staticmethod
-    def to_hb(pyset) :
+    def to_hb(pyset = None) :
         hbobj = hb.hb_set_create()
-        for elt in pyset :
-            if not isinstance(elt, int) or elt < 0 :
-                raise TypeError("set elements must be codepoints")
-            #end if
-            hb.hb_set_add(hbobj, elt)
-            # figure out how to use set_add_range in future?
-            if hb.hb_set_allocation_successful(hbobj) == 0 :
-                raise RuntimeError("insertion of set element failed")
-            #end if
-        #end for
+        if pyset != None :
+            for elt in pyset :
+                if not isinstance(elt, int) or elt < 0 :
+                    raise TypeError("set elements must be codepoints")
+                #end if
+                hb.hb_set_add(hbobj, elt)
+                # figure out how to use set_add_range in future?
+                if hb.hb_set_allocation_successful(hbobj) == 0 :
+                    raise RuntimeError("insertion of set element failed")
+                #end if
+            #end for
+        #end if
         return \
             Set(hbobj)
     #end to_hb
@@ -1580,7 +1587,27 @@ def ot_tag_to_language(tag) :
         Language(hb.hb_ot_tag_to_language(tag))
 #end ot_tag_to_language
 
-# TODO: hb-ot-shape.h
+# from hb-ot-shape.h:
+
+def ot_shape_glyphs_closure(font, buffer, features, glyphs = None) :
+    # does HarfBuzz really allow an initial nonempty set of glyphs?
+    if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
+        raise TypeError("font must be a Font and buffer must be a Buffer")
+    #end if
+    c_glyphs = Set.to_hb(glyphs)
+    if features != None :
+        c_features = seq_to_ct(features, HB.feature_t, lambda f : f.to_hb())
+        nr_features = len(features)
+    else :
+        c_features = None
+        nr_features = 0
+    #end if
+    hb_ot_shape_glyphs_closure(font._hbobj, buffer._hbobj, c_features, nr_features, c_glyphs._hbobj)
+    return \
+        c_glyphs.from_hb()
+#end ot_shape_glyphs_closure
+
+# ot_shape_plan_collect_lookups will be found as ShapePlan.ot_collect_lookups (below)
 
 # from hb-shape-plan.h:
 
@@ -1672,6 +1699,15 @@ class ShapePlan :
     #end shaper
 
     # TODO: user_data?
+
+    # from hb-ot-shape.h:
+
+    def ot_collect_lookups(table_tag) :
+        hb_set = Set.to_hb()
+        hb.hb_ot_shape_plan_collect_lookups(self._hbobj, table_tag, hb_set._hbobj)
+        return \
+            hb_set.from_hb()
+    #end ot_collect_lookups
 
 #end ShapePlan
 
