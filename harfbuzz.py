@@ -554,6 +554,8 @@ class HARFBUZZ :
         ]
     #end glyph_position_t
 
+    buffer_message_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.c_char_p, ct.c_void_p)
+
     # from hb-face.h:
 
     reference_table_func_t = ct.CFUNCTYPE(ct.c_void_p, ct.c_void_p, tag_t, ct.c_void_p)
@@ -918,6 +920,8 @@ hb.hb_buffer_set_replacement_codepoint.restype = None
 hb.hb_buffer_set_replacement_codepoint.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_buffer_get_replacement_codepoint.restype = HB.codepoint_t
 hb.hb_buffer_get_replacement_codepoint.argtypes = (ct.c_void_p,)
+hb.hb_buffer_set_message_func.restype = None
+hb.hb_buffer_set_message_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
 hb.hb_face_create.restype = ct.c_void_p
 hb.hb_face_create.argtypes = (ct.c_void_p, ct.c_uint)
@@ -1460,6 +1464,10 @@ class Buffer :
         ( # to forestall typos
             "_hbobj",
             "__weakref__",
+            # need to keep references to ctypes-wrapped functions
+            # so they don't disappear prematurely:
+            "_wrap_message_func",
+            "_wrap_message_destroy",
         )
 
     _instances = WeakValueDictionary()
@@ -1469,6 +1477,8 @@ class Buffer :
         if self == None :
             self = super().__new__(celf)
             self._hbobj = _hbobj
+            self._wrap_message_func = None
+            self._wrap_message_destroy = None
             celf._instances[_hbobj] = self
         else :
             hb.hb_buffer_destroy(self._hbobj)
@@ -1752,7 +1762,36 @@ class Buffer :
         hb.hb_buffer_reverse_clusters(self._hbobj)
     #end reverse_clusters
 
-    # TODO: (de)serialize, segment properties, message_func
+    # TODO: (de)serialize, segment properties
+
+    def set_message_func(self, message_func, user_data, destroy) :
+
+        @HB.message_func_t
+        def wrap_message_func(c_buffer, c_font, message, c_user_data) :
+            return \
+                message_func \
+                  (
+                    self,
+                    Font(c_font),
+                    message.decode(),
+                    user_data
+                  )
+        #end wrap_message_func
+
+        if destroy != None :
+            @HB.destroy_func_t
+            def wrap_message_destroy(c_user_data) :
+                destroy(user_data)
+            #end wrap_message_destroy
+        else :
+            wrap_message_destroy = None
+        #end if
+
+        self._wrap_message_func = None
+        self._wrap_message_destroy = wrap_message_destroy
+        hb.hb_buffer_set_message_func \
+            (self._hbobj, self._wrap_message_func, None, self._wrap_message_destroy)
+    #end set_message_func
 
 #end Buffer
 
