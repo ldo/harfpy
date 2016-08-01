@@ -1487,6 +1487,13 @@ class Set :
         self._hbobj = _hbobj
     #end __init__
 
+    def __del__(self) :
+        if hb != None and self._hbobj != None :
+            hb.hb_set_destroy(self._hbobj)
+            self._hbobj = None
+        #end if
+    #end __del__
+
     @staticmethod
     def to_hb(pyset) :
         hbobj = hb.hb_set_create()
