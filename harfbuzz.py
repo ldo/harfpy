@@ -1966,7 +1966,7 @@ class Face :
                 point_array = (nr_attach_points * ct.c_uint)()
             #end while
             return \
-                tuple(point_array[i].value for i in range(nr_attach_points))
+                tuple(point_array[i] for i in range(nr_attach_points))
         #end get_attach_points
 
         # GSUB/GPOS feature query and enumeration interface
@@ -1985,7 +1985,7 @@ class Face :
                 script_tags = (nr_script_tags * ct.c_uint)()
             #end while
             return \
-                tuple(script_tags[i].value for i in range(nr_script_tags))
+                tuple(script_tags[i] for i in range(nr_script_tags))
         #end table_get_script_tags
 
         def find_script(self, table_tag, script_tag) :
@@ -2023,7 +2023,7 @@ class Face :
                 feature_tags = (nr_feature_tags * ct.c_uint)()
             #end while
             return \
-                tuple(feature_tags[i].value for i in range(nr_feature_tags))
+                tuple(feature_tags[i] for i in range(nr_feature_tags))
         #end table_get_feature_tags
 
         def script_get_language_tags(self, table_tag, script_index) :
@@ -2040,7 +2040,7 @@ class Face :
                 language_tags = (nr_language_tags * ct.c_uint)()
             #end while
             return \
-                tuple(language_tags[i].value for i in range(nr_language_tags))
+                tuple(language_tags[i] for i in range(nr_language_tags))
         #end script_get_language_tags
 
         def script_find_language(self, table_tag, script_index, language_tag) :
@@ -2075,7 +2075,7 @@ class Face :
                 feature_indexes = (nr_feature_indexes * ct.c_uint)()
             #end while
             return \
-                tuple(feature_indexes[i].value for i in range(nr_feature_indexes))
+                tuple(feature_indexes[i] for i in range(nr_feature_indexes))
         #end language_get_feature_indexes
 
         def language_get_feature_tags(self, table_tag, script_index, language_index) :
@@ -2092,7 +2092,7 @@ class Face :
                 feature_tags = (nr_feature_tags * ct.c_uint)()
             #end while
             return \
-                tuple(feature_tags[i].value for i in range(nr_feature_tags))
+                tuple(feature_tags[i] for i in range(nr_feature_tags))
         #end language_get_feature_tags
 
         def language_find_feature(self, table_tag, script_index, language_index, feature_tag) :
@@ -2116,7 +2116,7 @@ class Face :
                 lookup_indexes = (nr_lookups * ct.c_uint)()
             #end while
             return \
-                tuple(lookup_indexes[i].value for i in range(nr_lookups))
+                tuple(lookup_indexes[i] for i in range(nr_lookups))
         #end feature_get_lookups
 
         def table_get_lookup_count(self, table_tag) :
@@ -2361,7 +2361,7 @@ class Font :
                 caret_array = (nr_carets * HB.position_t)()
             #end while
             return \
-                tuple(caret_array[i].value for i in range(nr_carets))
+                tuple(caret_array[i] for i in range(nr_carets))
         #end get_ligature_carets
 
     #end OTLayout
