@@ -707,7 +707,7 @@ class Blob :
     def __len__(self) :
         "the length of the Blob data."
         return \
-            hb.hb_get_length(self._hbobj)
+            hb.hb_blob_get_length(self._hbobj)
     #end __len__
 
     def data(self, writable) :
