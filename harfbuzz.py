@@ -353,6 +353,34 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
         result_class
 #end def_struct_class
 
+def shaper_list_to_hb(shaper_list) :
+    "converts a list of strings to a null-terminated ctypes array of" \
+    " pointers to char. Returns a tuple of 3 items: the number of shaper" \
+    " strings (excluding the terminating null entry), the ctypes array, and" \
+    " a separate Python list of the ctypes char pointers. I’m not sure if" \
+    " the last one is really necessary to ensure the allocated strings don’t" \
+    " unexpectedly disappear, so I include it, just in case.\n" \
+    "\n" \
+    "The shaper_list can be null, in which case 0 and null values are returned."
+    if shaper_list != None :
+        nr_shapers = len(shaper_list)
+        c_shaper_list = ((nr_shapers + 1) * ct.c_char_p)()
+        c_strs = []
+        for i, s in enumerate(shaper_list) :
+            c_str = ct.c_char_p(s.encode())
+            c_strs.append(c_str)
+            c_shaper_list[i] = c_str
+        #end for
+        c_shaper_list[nr_shapers] = None # marks end of list
+    else :
+        nr_shapers = 0
+        c_shaper_list = None
+        c_strs = None
+    #end if
+    return \
+        nr_shapers, c_shaper_list, c_strs
+#end shaper_list_to_hb
+
 #+
 # Routine arg/result types
 #-
@@ -513,6 +541,21 @@ hb.hb_shape_full.restype = HB.bool_t
 hb.hb_shape_full.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
 hb.hb_shape_list_shapers.restype = ct.c_void_p
 hb.hb_shape_list_shapers.argtypes = ()
+
+hb.hb_shape_plan_create.restype = ct.c_void_p
+hb.hb_shape_plan_create.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
+hb.hb_shape_plan_create_cached.restype = ct.c_void_p
+hb.hb_shape_plan_create_cached.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
+hb.hb_shape_plan_destroy.restype = None
+hb.hb_shape_plan_destroy.argtypes = (ct.c_void_p,)
+hb.hb_shape_plan_execute.restype = HB.bool_t
+hb.hb_shape_plan_execute.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint)
+hb.hb_shape_plan_get_empty.restype = ct.c_void_p
+hb.hb_shape_plan_get_empty.argtypes = ()
+hb.hb_shape_plan_get_shaper.restype = ct.c_char_p
+hb.hb_shape_plan_get_shaper.argtypes = (ct.c_void_p,)
+hb.hb_shape_plan_reference.restype = ct.c_void_p
+hb.hb_shape_plan_reference.argtypes = (ct.c_void_p,)
 
 #+
 # Higher-level stuff begins here
@@ -1388,19 +1431,7 @@ def shape_full(font, buffer, features = None, shaper_list = None) :
         c_features = None
         nr_features = 0
     #end if
-    if shaper_list != None :
-        nr_shapers = len(shaper_list)
-        c_shaper_list = ((nr_shapers + 1) * ct.c_char_p)()
-        c_strs = []
-        for s in shaper_list :
-            c_str = ct.c_char_p(s.encode())
-            c_strs.append(c_str)
-            c_shaper_list.append(c_str)
-        #end for
-        c_shaper_list.append(None) # marks end of list
-    else :
-        c_shaper_list = None
-    #end if
+    nr_shapers, c_shaper_list, c_strs = shaper_list_to_hb(shaper_list)
     return \
         hb.hb_shape_full(font._hbobj, buffer._hbobj, c_features, nr_features, c_shaper_list) != 0
 #end shape_full
@@ -1426,6 +1457,98 @@ def shape_list_shapers() :
 # hb-ot-tag.h
 # hb-ot-font.h
 # hb-ot-shape.h
-# hb-shape-plan.h
+
+# from hb-shape-plan.h:
+
+class ShapePlan :
+    "wrapper around hb_shape_plan_t objects. Do not instantiate directly; use" \
+    " create and get_empty methods."
+
+    __slots__ = \
+        ( # to forestall typos
+            "_hbobj",
+            "__weakref__",
+        )
+
+    # Not sure if I need the ability to map hb_shape_plan_t objects back to
+    # Python objects, but, just in case...
+    _instances = WeakValueDictionary()
+
+    def __new__(celf, _hbobj) :
+        self = celf._instances.get(_hbobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._hbobj = _hbobj
+            celf._instances[_hbobj] = self
+        else :
+            hb.hb_shape_plan_destroy(self._hbobj)
+              # lose extra reference created by caller
+        #end if
+        return \
+            self
+    #end __new__
+
+    def __del__(self) :
+        if hb != None and self._hbobj != None :
+            hb.hb_shape_plan_destroy(self._hbobj)
+            self._hbobj = None
+        #end if
+    #end __del__
+
+    @staticmethod
+    def create(face, props, user_features, shaper_list, cached) :
+        if not isinstance(face, Face) :
+            raise TypeError("face must be a Face")
+        #end if
+        c_props = props.to_hb()
+        if user_features != None :
+            c_user_features = seq_to_ct(user_features, HB.feature_t, lambda f : f.to_hb())
+            nr_user_features = len(user_features)
+        else :
+            nr_user_features = 0
+            c_user_features = None
+        #end if
+        nr_shapers, c_shaper_list, c_strs = shaper_list_to_hb(shaper_list)
+        return \
+            ShapePlan \
+              (
+                (
+                    hb_shape_plan_create,
+                    hb_shape_plan_create_cached,
+                )[cached]
+                (face._hbobj, c_props, c_user_features, nr_user_features, c_shaper_list)
+              )
+    #end create
+
+    def execute(self, font, buffer, features) :
+        if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
+            raise TypeError("font must be a Font and buffer must be a Buffer")
+        #end if
+        if user_features != None :
+            c_user_features = seq_to_ct(user_features, HB.feature_t, lambda f : f.to_hb())
+            nr_user_features = len(user_features)
+        else :
+            c_user_features = None
+            nr_user_features = 0
+        #end if
+        return \
+            hb.hb_shape_plan_execute(self._hbobj, font._hbobj, buffer._hbobj, c_user_features, nr_user_features) != 0
+    #end execute
+
+    @staticmethod
+    def get_empty() :
+        return \
+            ShapePlan(hb.hb_shape_plan_reference(hb.hb_shape_plan_get_empty()))
+    #end get_empty
+
+    @property
+    def shaper(self) :
+        return \
+            hb.hb_shape_plan_get_shaper(self._hbobj).decode() # automatically stops at NUL?
+    #end shaper
+
+    # TODO: user_data?
+
+#end ShapePlan
 
 del def_struct_class # my work is done
