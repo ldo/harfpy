@@ -2,9 +2,28 @@
 # Python-3 binding for (parts of) HarfBuzz.
 #
 # Additional recommended libraries:
-#     python_freetype <https://github.com/ldo/python_freetype>
-#     Qahirah <https://github.com/ldo/qahirah>
-#     PyBidi <https://github.com/ldo/pybidi>
+#     python_freetype <https://github.com/ldo/python_freetype> -- binding for FreeType
+#     Qahirah <https://github.com/ldo/qahirah> -- binding for Cairo
+#     PyBidi <https://github.com/ldo/pybidi> -- binding for FriBidi
+#
+# Python adaptation copyright © 2016 Lawrence D'Oliveiro,
+# based on C original by Behdad Esfahbod, Owen Taylor, David Turner and Werner Lemberg,
+# with copyrights by Red Hat and Google, 2009-2014.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this library, in a file named COPYING; if not, write to the
+# Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+# Boston, MA 02110-1301, USA
 #-
 
 import ctypes as ct
@@ -1027,6 +1046,8 @@ def script_get_horizontal_direction(script) :
     return \
         hb.hb_script_get_horizontal_direction(script)
 #end script_get_horizontal_direction
+
+# TODO: hb-unicode.h
 
 # from hb-blob.h:
 
