@@ -75,8 +75,15 @@ class HARFBUZZ :
 
     tag_t = ct.c_uint
 
-    def TAG(c1, c2, c3, c4) :
-        "creates a tag_t from four byte values."
+    def TAG(*args) :
+        "creates a tag_t from four byte values or a bytes value of length 4."
+        if len(args) == 4 :
+            c1, c2, c3, c4 = args
+        elif len(args) == 1 :
+            c1, c2, c3, c4 = tuple(args[0])
+        else :
+            raise TypeError("wrong nr of TAG args")
+        #end if
         return \
             c1 << 24 | c2 << 16 | c3 << 8 | c4
     #end TAG
@@ -268,8 +275,8 @@ class HARFBUZZ :
 
     # from hb-ot-tag.h:
 
-    OT_TAG_DEFAULT_SCRIPT = TAG(*(b for b in b'DFLT'))
-    OT_TAG_DEFAULT_LANGUAGE = TAG(*(b for b in b'dflt'))
+    OT_TAG_DEFAULT_SCRIPT = TAG(b'DFLT')
+    OT_TAG_DEFAULT_LANGUAGE = TAG(b'dflt')
 
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
