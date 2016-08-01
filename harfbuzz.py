@@ -940,6 +940,8 @@ hb.hb_font_create_sub_font.restype = ct.c_void_p
 hb.hb_font_create_sub_font.argtypes = (ct.c_void_p,)
 hb.hb_font_destroy.restype = None
 hb.hb_font_destroy.argtypes = (ct.c_void_p,)
+hb.hb_font_reference.restype = ct.c_void_p
+hb.hb_font_reference.argtypes = (ct.c_void_p,)
 
 hb.hb_font_funcs_create.restype = ct.c_void_p
 hb.hb_font_funcs_create.argtypes = ()
@@ -1772,7 +1774,7 @@ class Buffer :
                 message_func \
                   (
                     self,
-                    Font(c_font),
+                    Font(hb.hb_font_reference(c_font)),
                     message.decode(),
                     user_data
                   )
