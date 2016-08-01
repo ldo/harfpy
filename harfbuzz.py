@@ -104,7 +104,6 @@ class HARFBUZZ :
     TAG_NONE = TAG(0, 0, 0, 0)
     TAG_MAX = TAG(0xff, 0xff, 0xff, 0xff)
     TAG_MAX_SIGNED = TAG(0x7f, 0xff, 0xff, 0xff)
-    # more TAG_xxx values todo
 
     direction_t = ct.c_uint
     DIRECTION_INVALID = 0
@@ -113,8 +112,207 @@ class HARFBUZZ :
     DIRECTION_TTB = 6
     DIRECTION_BTT = 7
 
+    def HB_DIRECTION_IS_VALID(dirn) :
+        return \
+            dirn & ~3 == 4
+    #end HB_DIRECTION_IS_VALID
+
+    # Direction must be valid for the following
+
+    def HB_DIRECTION_IS_HORIZONTAL(dirn) :
+        return \
+            dirn & ~1 == 4
+    #end HB_DIRECTION_IS_HORIZONTAL
+
+    def HB_DIRECTION_IS_VERTICAL(dirn) :
+        return \
+            dirn & ~1 == 6
+    #end HB_DIRECTION_IS_VERTICAL
+
+    def HB_DIRECTION_IS_FORWARD(dirn) :
+        return \
+            dirn & ~2 == 4
+    #end HB_DIRECTION_IS_FORWARD
+
+    def HB_DIRECTION_IS_BACKWARD(dirn) :
+        return \
+            dirn & ~2 == 5
+    #end HB_DIRECTION_IS_BACKWARD
+
+    def DIRECTION_REVERSE(dirn) :
+        return \
+            dirn ^ 1
+    #end DIRECTION_REVERSE
+
     script_t = ct.c_uint
-    # SCRIPT_xxx values todo
+    # http://unicode.org/iso15924/
+    # http://goo.gl/x9ilM
+    # Unicode Character Database property: Script (sc)
+    # 1.1
+    SCRIPT_COMMON = TAG(b'Zyyy')
+    SCRIPT_INHERITED = TAG(b'Zinh')
+    # 5.0
+    SCRIPT_UNKNOWN = TAG(b'Zzzz')
+
+    # 1.1
+    SCRIPT_ARABIC = TAG(b'Arab')
+    SCRIPT_ARMENIAN = TAG(b'Armn')
+    SCRIPT_BENGALI = TAG(b'Beng')
+    SCRIPT_CYRILLIC = TAG(b'Cyrl')
+    SCRIPT_DEVANAGARI = TAG(b'Deva')
+    SCRIPT_GEORGIAN = TAG(b'Geor')
+    SCRIPT_GREEK = TAG(b'Grek')
+    SCRIPT_GUJARATI = TAG(b'Gujr')
+    SCRIPT_GURMUKHI = TAG(b'Guru')
+    SCRIPT_HANGUL = TAG(b'Hang')
+    SCRIPT_HAN = TAG(b'Hani')
+    SCRIPT_HEBREW = TAG(b'Hebr')
+    SCRIPT_HIRAGANA = TAG(b'Hira')
+    SCRIPT_KANNADA = TAG(b'Knda')
+    SCRIPT_KATAKANA = TAG(b'Kana')
+    SCRIPT_LAO = TAG(b'Laoo')
+    SCRIPT_LATIN = TAG(b'Latn')
+    SCRIPT_MALAYALAM = TAG(b'Mlym')
+    SCRIPT_ORIYA = TAG(b'Orya')
+    SCRIPT_TAMIL = TAG(b'Taml')
+    SCRIPT_TELUGU = TAG(b'Telu')
+    SCRIPT_THAI = TAG(b'Thai')
+
+    # 2.0
+    SCRIPT_TIBETAN = TAG(b'Tibt')
+
+    # 3.0
+    SCRIPT_BOPOMOFO = TAG(b'Bopo')
+    SCRIPT_BRAILLE = TAG(b'Brai')
+    SCRIPT_CANADIAN_SYLLABICS = TAG(b'Cans')
+    SCRIPT_CHEROKEE = TAG(b'Cher')
+    SCRIPT_ETHIOPIC = TAG(b'Ethi')
+    SCRIPT_KHMER = TAG(b'Khmr')
+    SCRIPT_MONGOLIAN = TAG(b'Mong')
+    SCRIPT_MYANMAR = TAG(b'Mymr')
+    SCRIPT_OGHAM = TAG(b'Ogam')
+    SCRIPT_RUNIC = TAG(b'Runr')
+    SCRIPT_SINHALA = TAG(b'Sinh')
+    SCRIPT_SYRIAC = TAG(b'Syrc')
+    SCRIPT_THAANA = TAG(b'Thaa')
+    SCRIPT_YI = TAG(b'Yiii')
+
+    # 3.1
+    SCRIPT_DESERET = TAG(b'Dsrt')
+    SCRIPT_GOTHIC = TAG(b'Goth')
+    SCRIPT_OLD_ITALIC = TAG(b'Ital')
+
+    # 3.2
+    SCRIPT_BUHID = TAG(b'Buhd')
+    SCRIPT_HANUNOO = TAG(b'Hano')
+    SCRIPT_TAGALOG = TAG(b'Tglg')
+    SCRIPT_TAGBANWA = TAG(b'Tagb')
+
+    # 4.0
+    SCRIPT_CYPRIOT = TAG(b'Cprt')
+    SCRIPT_LIMBU = TAG(b'Limb')
+    SCRIPT_LINEAR_B = TAG(b'Linb')
+    SCRIPT_OSMANYA = TAG(b'Osma')
+    SCRIPT_SHAVIAN = TAG(b'Shaw')
+    SCRIPT_TAI_LE = TAG(b'Tale')
+    SCRIPT_UGARITIC = TAG(b'Ugar')
+
+    # 4.1
+    SCRIPT_BUGINESE = TAG(b'Bugi')
+    SCRIPT_COPTIC = TAG(b'Copt')
+    SCRIPT_GLAGOLITIC = TAG(b'Glag')
+    SCRIPT_KHAROSHTHI = TAG(b'Khar')
+    SCRIPT_NEW_TAI_LUE = TAG(b'Talu')
+    SCRIPT_OLD_PERSIAN = TAG(b'Xpeo')
+    SCRIPT_SYLOTI_NAGRI = TAG(b'Sylo')
+    SCRIPT_TIFINAGH = TAG(b'Tfng')
+
+    # 5.0
+    SCRIPT_BALINESE = TAG(b'Bali')
+    SCRIPT_CUNEIFORM = TAG(b'Xsux')
+    SCRIPT_NKO = TAG(b'Nkoo')
+    SCRIPT_PHAGS_PA = TAG(b'Phag')
+    SCRIPT_PHOENICIAN = TAG(b'Phnx')
+
+    # 5.1
+    SCRIPT_CARIAN = TAG(b'Cari')
+    SCRIPT_CHAM = TAG(b'Cham')
+    SCRIPT_KAYAH_LI = TAG(b'Kali')
+    SCRIPT_LEPCHA = TAG(b'Lepc')
+    SCRIPT_LYCIAN = TAG(b'Lyci')
+    SCRIPT_LYDIAN = TAG(b'Lydi')
+    SCRIPT_OL_CHIKI = TAG(b'Olck')
+    SCRIPT_REJANG = TAG(b'Rjng')
+    SCRIPT_SAURASHTRA = TAG(b'Saur')
+    SCRIPT_SUNDANESE = TAG(b'Sund')
+    SCRIPT_VAI = TAG(b'Vaii')
+
+    # 5.2
+    SCRIPT_AVESTAN = TAG(b'Avst')
+    SCRIPT_BAMUM = TAG(b'Bamu')
+    SCRIPT_EGYPTIAN_HIEROGLYPHS = TAG(b'Egyp')
+    SCRIPT_IMPERIAL_ARAMAIC = TAG(b'Armi')
+    SCRIPT_INSCRIPTIONAL_PAHLAVI = TAG(b'Phli')
+    SCRIPT_INSCRIPTIONAL_PARTHIAN = TAG(b'Prti')
+    SCRIPT_JAVANESE = TAG(b'Java')
+    SCRIPT_KAITHI = TAG(b'Kthi')
+    SCRIPT_LISU = TAG(b'Lisu')
+    SCRIPT_MEETEI_MAYEK = TAG(b'Mtei')
+    SCRIPT_OLD_SOUTH_ARABIAN = TAG(b'Sarb')
+    SCRIPT_OLD_TURKIC = TAG(b'Orkh')
+    SCRIPT_SAMARITAN = TAG(b'Samr')
+    SCRIPT_TAI_THAM = TAG(b'Lana')
+    SCRIPT_TAI_VIET = TAG(b'Tavt')
+
+    # 6.0
+    SCRIPT_BATAK = TAG(b'Batk')
+    SCRIPT_BRAHMI = TAG(b'Brah')
+    SCRIPT_MANDAIC = TAG(b'Mand')
+
+    # 6.1
+    SCRIPT_CHAKMA = TAG(b'Cakm')
+    SCRIPT_MEROITIC_CURSIVE = TAG(b'Merc')
+    SCRIPT_MEROITIC_HIEROGLYPHS = TAG(b'Mero')
+    SCRIPT_MIAO = TAG(b'Plrd')
+    SCRIPT_SHARADA = TAG(b'Shrd')
+    SCRIPT_SORA_SOMPENG = TAG(b'Sora')
+    SCRIPT_TAKRI = TAG(b'Takr')
+
+    # Since: 0.9.30
+    # 7.0
+    SCRIPT_BASSA_VAH = TAG(b'Bass')
+    SCRIPT_CAUCASIAN_ALBANIAN = TAG(b'Aghb')
+    SCRIPT_DUPLOYAN = TAG(b'Dupl')
+    SCRIPT_ELBASAN = TAG(b'Elba')
+    SCRIPT_GRANTHA = TAG(b'Gran')
+    SCRIPT_KHOJKI = TAG(b'Khoj')
+    SCRIPT_KHUDAWADI = TAG(b'Sind')
+    SCRIPT_LINEAR_A = TAG(b'Lina')
+    SCRIPT_MAHAJANI = TAG(b'Mahj')
+    SCRIPT_MANICHAEAN = TAG(b'Mani')
+    SCRIPT_MENDE_KIKAKUI = TAG(b'Mend')
+    SCRIPT_MODI = TAG(b'Modi')
+    SCRIPT_MRO = TAG(b'Mroo')
+    SCRIPT_NABATAEAN = TAG(b'Nbat')
+    SCRIPT_OLD_NORTH_ARABIAN = TAG(b'Narb')
+    SCRIPT_OLD_PERMIC = TAG(b'Perm')
+    SCRIPT_PAHAWH_HMONG = TAG(b'Hmng')
+    SCRIPT_PALMYRENE = TAG(b'Palm')
+    SCRIPT_PAU_CIN_HAU = TAG(b'Pauc')
+    SCRIPT_PSALTER_PAHLAVI = TAG(b'Phlp')
+    SCRIPT_SIDDHAM = TAG(b'Sidd')
+    SCRIPT_TIRHUTA = TAG(b'Tirh')
+    SCRIPT_WARANG_CITI = TAG(b'Wara')
+
+    # 8.0
+    SCRIPT_AHOM = TAG(b'Ahom')
+    SCRIPT_ANATOLIAN_HIEROGLYPHS = TAG(b'Hluw')
+    SCRIPT_HATRAN = TAG(b'Hatr')
+    SCRIPT_MULTANI = TAG(b'Mult')
+    SCRIPT_OLD_HUNGARIAN = TAG(b'Hung')
+    SCRIPT_SIGNWRITING = TAG(b'Sgnw')
+
+    # No script set.
     SCRIPT_INVALID = TAG_NONE
 
     destroy_func_t = ct.CFUNCTYPE(None, ct.c_void_p)
@@ -432,12 +630,28 @@ hb.hb_version_atleast.restype = HB.bool_t
 hb.hb_version_atleast.argtypes = (ct.c_uint, ct.c_uint, ct.c_uint)
 hb.hb_version_string.restype = ct.c_char_p
 hb.hb_version_string.argtypes = ()
+hb.hb_direction_from_string.restype = HB.direction_t
+hb.hb_direction_from_string.argtypes = (ct.c_void_p, ct.c_int)
+hb.hb_direction_to_string.restype = ct.c_char_p
+hb.hb_direction_to_string.argtypes = (HB.direction_t,)
 hb.hb_language_from_string.restype = ct.c_void_p
 hb.hb_language_from_string.argtypes = (ct.c_char_p, ct.c_int)
 hb.hb_language_to_string.restype = ct.c_char_p
 hb.hb_language_to_string.argtypes = (ct.c_void_p,)
 hb.hb_language_get_default.restype = ct.c_void_p
 hb.hb_language_get_default.argtypes = ()
+hb.hb_tag_from_string.restype = HB.tag_t
+hb.hb_tag_from_string.argtypes = (ct.c_void_p, ct.c_int)
+hb.hb_tag_to_string.restype = None
+hb.hb_tag_to_string.argtypes = (HB.tag_t, ct.c_void_p)
+hb.hb_script_from_iso15924_tag.restype = HB.script_t
+hb.hb_script_from_iso15924_tag.argtypes = (HB.tag_t,)
+hb.hb_script_from_string.restype = HB.script_t
+hb.hb_script_from_string.argtypes = (ct.c_void_p, ct.c_int)
+hb.hb_script_to_iso15924_tag.restype = HB.tag_t
+hb.hb_script_to_iso15924_tag.argtypes = (HB.script_t,)
+hb.hb_script_get_horizontal_direction.restype = HB.direction_t
+hb.hb_script_get_horizontal_direction.argtypes = (HB.script_t,)
 
 hb.hb_blob_create.restype = ct.c_void_p
 hb.hb_blob_create.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
@@ -708,10 +922,21 @@ def version_atleast(major, minor, micro) :
 def version_string() :
     "returns the version string."
     return \
-        hb.hb_version_string().decode()
+        hb.hb_version_string().decode() # automatically stops at NUL?
 #end version_string
 
 # from hb-common.h:
+
+def direction_from_string(s) :
+    sb = s.encode()
+    return \
+        hb.hb_direction_from_string(sb, len(sb))
+#end direction_from_string
+
+def direction_to_string(direction) :
+    return \
+        hb.hb_direction_to_string(direction).decode() # automatically stops at NUL?
+#end direction_to_string
 
 class Language :
     "wraps the hb_language_t opaque type. Do not instantiate directly; use" \
@@ -768,6 +993,40 @@ class Language :
     #end __repr__
 
 #end Language
+
+def tag_from_string(s) :
+    sb = s.encode()
+    return \
+        hb.hb_tag_from_string(sb, len(sb))
+#end tag_from_string
+
+def tag_to_string(tag) :
+    buf = (4 * ct.c_ubyte)()
+    hb.hb_tag_to_string(tag, ct.byref(buf))
+    return \
+        HB.TAG(*tuple(buf[i] for i in range(4)))
+#end tag_to_string
+
+def script_from_iso15924_tag(tag) :
+    return \
+        hb.hb_script_from_iso15924_tag(tag)
+#end script_from_iso15924_tag
+
+def script_from_string(s) :
+    sb = s.encode()
+    return \
+        hb.hb_script_from_string(sb, len(sb))
+#end script_from_string
+
+def script_to_iso15924_tag(script) :
+    return \
+        hb.hb_script_to_iso15924_tag(script)
+#end script_to_iso15924_tag
+
+def script_get_horizontal_direction(script) :
+    return \
+        hb.hb_script_get_horizontal_direction(script)
+#end script_get_horizontal_direction
 
 # from hb-blob.h:
 
