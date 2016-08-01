@@ -868,6 +868,10 @@ hb.hb_buffer_set_content_type.restype = None
 hb.hb_buffer_set_content_type.argtypes = (ct.c_void_p, HB.buffer_content_type_t)
 hb.hb_buffer_get_content_type.restype = HB.buffer_content_type_t
 hb.hb_buffer_get_content_type.argtypes = (ct.c_void_p,)
+hb.hb_buffer_set_unicode_funcs.restype = None
+hb.hb_buffer_set_unicode_funcs.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_buffer_get_unicode_funcs.restype = ct.c_void_p
+hb.hb_buffer_get_unicode_funcs.argtypes = (ct.c_void_p,)
 hb.hb_buffer_set_direction.restype = None
 hb.hb_buffer_set_direction.argtypes = (ct.c_void_p, HB.direction_t)
 hb.hb_buffer_get_direction.restype = HB.direction_t
@@ -1677,7 +1681,24 @@ class Buffer :
         hb.hb_buffer_guess_segment_properties(self._hbobj)
     #end guess_segment_properties
 
-    # TODO: unicode_funcs
+    @property
+    def unicode_funcs(self) :
+        return \
+            UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_buffer_get_unicode_funcs(self._hbobj)))
+    #end unicode_funcs
+
+    @unicode_funcs.setter
+    def unicode_funcs(self, funcs) :
+        if funcs == None :
+            new_funcs = None
+        elif isinstance(funcs, UnicodeFuncs) :
+            new_funcs = funcs._hbobj
+        else :
+            raise TypeError("funcs must be None or UnicodeFuncs")
+        #end if
+        hb.hb_buffer_set_unicode_funcs(self._hbobj, new_funcs)
+    #end unicode_funcs
+
     # TODO: user_data?
 
     @property
