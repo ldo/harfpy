@@ -91,10 +91,14 @@ class HARFBUZZ :
             c1 << 24 | c2 << 16 | c3 << 8 | c4
     #end TAG
 
-    def UNTAG(tag) :
-        "decomposes a tag_t into a tuple of four byte values."
+    def UNTAG(tag, printable = False) :
+        "decomposes a tag_t into a tuple or bytes object of four byte values."
+        result = (tag >> 24 & 255, tag >> 16 & 255, tag >> 8 & 255, tag & 255)
+        if printable :
+            result = bytes(result)
+        #end if
         return \
-            (tag >> 24 & 255, tag >> 16 & 255, tag >> 8 & 255, tag & 255)
+            result
     #end UNTAG
 
     TAG_NONE = TAG(0, 0, 0, 0)
