@@ -1971,7 +1971,7 @@ class Face :
 
         # GSUB/GPOS feature query and enumeration interface
 
-        def layout_table_get_script_tags(self, table_tag) :
+        def table_get_script_tags(self, table_tag) :
             script_count = None
             script_tags = None
             while True :
@@ -1986,7 +1986,7 @@ class Face :
             #end while
             return \
                 tuple(script_tags[i].value for i in range(nr_script_tags))
-        #end layout_table_get_script_tags
+        #end table_get_script_tags
 
         def find_script(self, table_tag, script_tag) :
             script_index = ct.c_uint()
