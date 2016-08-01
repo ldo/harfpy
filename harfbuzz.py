@@ -278,6 +278,24 @@ class HARFBUZZ :
     OT_TAG_DEFAULT_SCRIPT = TAG(b'DFLT')
     OT_TAG_DEFAULT_LANGUAGE = TAG(b'dflt')
 
+    # from hb-ot-layout.h:
+
+    OT_TAG_GDEF = TAG(b'GDEF')
+    OT_TAG_GSUB = TAG(b'GSUB')
+    OT_TAG_GPOS = TAG(b'GPOS')
+    OT_TAG_JSTF = TAG(b'JSTF')
+
+    ot_layout_glyph_class_t = ct.c_uint
+    OT_LAYOUT_GLYPH_CLASS_UNCLASSIFIED = 0
+    OT_LAYOUT_GLYPH_CLASS_BASE_GLYPH = 1
+    OT_LAYOUT_GLYPH_CLASS_LIGATURE = 2
+    OT_LAYOUT_GLYPH_CLASS_MARK = 3
+    OT_LAYOUT_GLYPH_CLASS_COMPONENT = 4
+
+    OT_LAYOUT_NO_SCRIPT_INDEX = 0xFFFF
+    OT_LAYOUT_NO_FEATURE_INDEX = 0xFFFF
+    OT_LAYOUT_DEFAULT_LANGUAGE_INDEX = 0xFFFF
+
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
 
@@ -574,6 +592,57 @@ hb.hb_set_next.restype = HB.bool_t
 hb.hb_set_next.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_set_next_range.restype = HB.bool_t
 hb.hb_set_next_range.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+
+hb.hb_ot_layout_has_glyph_classes.restype = HB.bool_t
+hb.hb_ot_layout_has_glyph_classes.argtypes = (ct.c_void_p,)
+hb.hb_ot_layout_get_glyph_class.restype = HB.ot_layout_glyph_class_t
+hb.hb_ot_layout_get_glyph_class.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_ot_layout_get_glyphs_in_class.restype = None
+hb.hb_ot_layout_get_glyphs_in_class.argtypes = (ct.c_void_p, HB.ot_layout_glyph_class_t, ct.c_void_p)
+hb.hb_ot_layout_get_attach_points.restype = ct.c_uint
+hb.hb_ot_layout_get_attach_points.argtypes = (ct.c_void_p, HB.codepoint_t, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
+hb.hb_ot_layout_get_ligature_carets.restype = ct.c_uint
+hb.hb_ot_layout_get_ligature_carets.argtypes = (ct.c_void_p, HB.direction_t, HB.codepoint_t, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.position_t))
+hb.hb_ot_layout_table_get_script_tags.restype = ct.c_uint
+hb.hb_ot_layout_table_get_script_tags.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+hb.hb_ot_layout_table_find_script.restype = HB.bool_t
+hb.hb_ot_layout_table_find_script.argtypes = (ct.c_void_p, HB.tag_t, HB.tag_t, ct.POINTER(ct.c_uint))
+hb.hb_ot_layout_table_choose_script.restype = HB.bool_t
+hb.hb_ot_layout_table_choose_script.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(HB.tag_t), ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+hb.hb_ot_layout_table_get_feature_tags.restype = ct.c_uint
+hb.hb_ot_layout_table_get_feature_tags.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+hb.hb_ot_layout_script_get_language_tags.restype = ct.c_uint
+hb.hb_ot_layout_script_get_language_tags.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+hb.hb_ot_layout_script_find_language.restype = HB.bool_t
+hb.hb_ot_layout_script_find_language.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, HB.tag_t, ct.POINTER(ct.c_uint))
+hb.hb_ot_layout_language_get_required_feature_index.restype = HB.bool_t
+hb.hb_ot_layout_language_get_required_feature_index.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint))
+hb.hb_ot_layout_language_get_required_feature.restype = HB.bool_t
+hb.hb_ot_layout_language_get_required_feature.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+hb.hb_ot_layout_language_get_feature_indexes.restype = ct.c_uint
+hb.hb_ot_layout_language_get_feature_indexes.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
+hb.hb_ot_layout_language_get_feature_tags.restype = ct.c_uint
+hb.hb_ot_layout_language_get_feature_tags.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+hb.hb_ot_layout_language_find_feature.restype = HB.bool_t
+hb.hb_ot_layout_language_find_feature.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, HB.tag_t, ct.POINTER(ct.c_uint))
+hb.hb_ot_layout_feature_get_lookups.restype = ct.c_uint
+hb.hb_ot_layout_feature_get_lookups.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
+hb.hb_ot_layout_table_get_lookup_count.restype = ct.c_uint
+hb.hb_ot_layout_table_get_lookup_count.argtypes = (ct.c_void_p, HB.tag_t)
+hb.hb_ot_layout_collect_lookups.restype = None
+hb.hb_ot_layout_collect_lookups.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t), ct.c_void_p)
+hb.hb_ot_layout_lookup_collect_glyphs.restype = None
+hb.hb_ot_layout_lookup_collect_glyphs.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_ot_layout_has_substitution.restype = HB.bool_t
+hb.hb_ot_layout_has_substitution.argtypes = (ct.c_void_p,)
+hb.hb_ot_layout_lookup_would_substitute.restype = HB.bool_t
+hb.hb_ot_layout_lookup_would_substitute.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(HB.codepoint_t), ct.c_uint, HB.bool_t)
+hb.hb_ot_layout_lookup_substitute_closure.restype = None
+hb.hb_ot_layout_lookup_substitute_closure.argtypes = (ct.c_void_p, ct.c_uint, ct.c_void_p)
+hb.hb_ot_layout_has_positioning.restype = HB.bool_t
+hb.hb_ot_layout_has_positioning.argtypes = (ct.c_void_p,)
+hb.hb_ot_layout_get_size_params.restype = HB.bool_t
+hb.hb_ot_layout_get_size_params.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
 
 hb.hb_ot_tags_from_script.restype = None
 hb.hb_ot_tags_from_script.argtypes = (HB.script_t, ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t))
