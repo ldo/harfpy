@@ -452,6 +452,23 @@ class HARFBUZZ :
 
     UNICODE_COMBINING_CLASS_INVALID = 255
 
+    unicode_combining_class_func_t = \
+        ct.CFUNCTYPE(unicode_combining_class_t, ct.c_void_p, codepoint_t, ct.c_void_p)
+    unicode_eastasian_width_func_t = \
+        ct.CFUNCTYPE(ct.c_uint, ct.c_void_p, codepoint_t, ct.c_void_p)
+    unicode_general_category_func_t = \
+        ct.CFUNCTYPE(unicode_general_category_t, ct.c_void_p, codepoint_t, ct.c_void_p)
+    unicode_mirroring_func_t = \
+        ct.CFUNCTYPE(codepoint_t, ct.c_void_p, codepoint_t, ct.c_void_p)
+    unicode_script_func_t = \
+        ct.CFUNCTYPE(script_t, ct.c_void_p, codepoint_t, ct.c_void_p)
+    unicode_compose_func_t = \
+        ct.CFUNCTYPE(bool_t, ct.c_void_p, codepoint_t, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
+    unicode_decompose_func_t = \
+        ct.CFUNCTYPE(bool_t, ct.c_void_p, codepoint_t, ct.POINTER(codepoint_t), ct.POINTER(codepoint_t), ct.c_void_p)
+    unicode_decompose_compatibility_func_t = \
+        ct.CFUNCTYPE(ct.c_uint, ct.c_void_p, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
+
     # from hb-blob.h:
 
     memory_mode = ct.c_uint
@@ -787,6 +804,23 @@ hb.hb_script_to_iso15924_tag.restype = HB.tag_t
 hb.hb_script_to_iso15924_tag.argtypes = (HB.script_t,)
 hb.hb_script_get_horizontal_direction.restype = HB.direction_t
 hb.hb_script_get_horizontal_direction.argtypes = (HB.script_t,)
+
+hb.hb_unicode_funcs_get_default.restype = ct.c_void_p
+hb.hb_unicode_funcs_get_default.argtypes = ()
+hb.hb_unicode_funcs_create.restype = ct.c_void_p
+hb.hb_unicode_funcs_create.argtypes = (ct.c_void_p,)
+hb.hb_unicode_funcs_get_empty.restype = ct.c_void_p
+hb.hb_unicode_funcs_get_empty.argtypes = ()
+hb.hb_unicode_funcs_reference.restype = ct.c_void_p
+hb.hb_unicode_funcs_reference.argtypes = (ct.c_void_p,)
+hb.hb_unicode_funcs_destroy.restype = None
+hb.hb_unicode_funcs_destroy.argtypes = (ct.c_void_p,)
+hb.hb_unicode_funcs_make_immutable.restype = None
+hb.hb_unicode_funcs_make_immutable.argtypes = (ct.c_void_p,)
+hb.hb_unicode_funcs_is_immutable.restype = HB.bool_t
+hb.hb_unicode_funcs_is_immutable.argtypes = (ct.c_void_p,)
+hb.hb_unicode_funcs_get_parent.restype = ct.c_void_p
+hb.hb_unicode_funcs_get_parent.argtypes = (ct.c_void_p,)
 
 hb.hb_blob_create.restype = ct.c_void_p
 hb.hb_blob_create.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
@@ -1163,7 +1197,97 @@ def script_get_horizontal_direction(script) :
         hb.hb_script_get_horizontal_direction(script)
 #end script_get_horizontal_direction
 
-# TODO: hb-unicode.h
+# from hb-unicode.h:
+
+class UnicodeFuncs :
+    "wrapper around hb_unicode_funcs_t objects. Do not instantiate directly; use" \
+    " the create, get_default and get_empty methods."
+
+    __slots__ = \
+        ( # to forestall typos
+            "_hbobj",
+            "__weakref__",
+        )
+
+    _instances = WeakValueDictionary()
+
+    def __new__(celf, _hbobj) :
+        self = celf._instances.get(_hbobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._hbobj = _hbobj
+            celf._instances[_hbobj] = self
+        else :
+            hb.hb_unicode_funcs_destroy(self._hbobj)
+              # lose extra reference created by caller
+        #end if
+        return \
+            self
+    #end __new__
+
+    def __del__(self) :
+        if hb != None and self._hbobj != None :
+            hb.hb_blob_destroy(self._hbobj)
+            self._hbobj = None
+        #end if
+    #end __del__
+
+    @staticmethod
+    def get_default() :
+        return \
+            UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_default()))
+    #end get_default
+
+    @staticmethod
+    def create(parent = None) :
+        if parent != None and not isinstance(parent, UnicodeFuncs) :
+            raise TypeError("parent must be None or a UnicodeFuncs")
+        #end if
+        return \
+            UnicodeFuncs \
+              (
+                hb.hb_unicode_funcs_create
+                  (
+                    (lambda : None, lambda : parent._hbobj)[parent != None]()
+                  )
+              )
+    #end create
+
+    @staticmethod
+    def get_empty() :
+        return \
+            UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_empty()))
+    #end get_empty
+
+    # TODO: user_data?
+
+    @property
+    def immutable(self) :
+        "is the UnicodeFuncs immutable."
+        return \
+            hb.hb_unicode_funcs_is_immutable(self._hbobj) != 0
+    #end immutable
+
+    @immutable.setter
+    def immutable(self, immut) :
+        "blocks further changes."
+        if not isinstance(immut, bool) :
+            raise TypeError("new setting must be a bool")
+        elif not immut :
+            raise ValueError("cannot clear immutable setting")
+        #end if
+        hb.hb_unicode_funcs_make_immutable(self._hbobj)
+    #end immutable
+
+    @property
+    def parent(self) :
+        return \
+            UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_parent(self._hbobj)))
+    #end parent
+
+    # TODO: set the actual funcs
+
+#end UnicodeFuncs
 
 # from hb-blob.h:
 
@@ -1263,7 +1387,8 @@ class Blob :
         hb.hb_blob_make_immutable(self._hbobj)
     #end immutable
 
-    # TODO: user_data, destroy_func
+    # TODO: destroy_func
+    # TODO: user_data?
 
 #end Blob
 
@@ -1552,7 +1677,8 @@ class Buffer :
         hb.hb_buffer_guess_segment_properties(self._hbobj)
     #end guess_segment_properties
 
-    # TODO: unicode_funcs, user_data
+    # TODO: unicode_funcs
+    # TODO: user_data?
 
     @property
     def glyph_infos(self) :
@@ -2230,7 +2356,7 @@ class FontFuncs :
             FontFuncs(hb.hb_font_funcs_reference(hb.hb_font_funcs_get_empty()))
     #end get_empty
 
-    # TODO: user_data
+    # TODO: user_data?
 
     @property
     def immutable(self) :
