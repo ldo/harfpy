@@ -266,6 +266,11 @@ class HARFBUZZ :
 
     SET_VALUE_INVALID = 0xffffffff
 
+    # from hb-ot-tag.h:
+
+    OT_TAG_DEFAULT_SCRIPT = TAG(*(b for b in b'DFLT'))
+    OT_TAG_DEFAULT_LANGUAGE = TAG(*(b for b in b'dflt'))
+
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
 
@@ -562,6 +567,18 @@ hb.hb_set_next.restype = HB.bool_t
 hb.hb_set_next.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_set_next_range.restype = HB.bool_t
 hb.hb_set_next_range.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+
+hb.hb_ot_tags_from_script.restype = None
+hb.hb_ot_tags_from_script.argtypes = (HB.script_t, ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t))
+hb.hb_ot_tag_to_script.restype = HB.script_t
+hb.hb_ot_tag_to_script.argtypes = (HB.tag_t,)
+hb.hb_ot_tag_from_language.restype = HB.tag_t
+hb.hb_ot_tag_from_language.argtypes = (ct.c_void_p,)
+hb.hb_ot_tag_to_language.restype = ct.c_void_p
+hb.hb_ot_tag_to_language.argtypes = (HB.tag_t,)
+
+hb.hb_ot_font_set_funcs.restype = None
+hb.hb_ot_font_set_funcs.argtypes = (ct.c_void_p,)
 
 hb.hb_shape_plan_create.restype = ct.c_void_p
 hb.hb_shape_plan_create.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
@@ -1323,6 +1340,12 @@ class Font :
 
     #end if
 
+    # from hb-ot-font.h:
+
+    def ot_set_funcs(self) :
+        hb.hb_ot_font_set_funcs(self._hbobj)
+    #end ot_set_funcs
+
 #end Font
 
 class FontFuncs :
@@ -1527,11 +1550,37 @@ class Set :
 
 #end Set
 
-# TODO:
-# hb-ot-layout.h
-# hb-ot-tag.h
-# hb-ot-font.h
-# hb-ot-shape.h
+# TODO: hb-ot-layout.h
+
+# from hb-ot-tag.h:
+
+def ot_tags_from_script(script) :
+    script_tag_1 = HB.tag_t()
+    script_tag_2 = HB.tag_t()
+    hb.hb_ot_tags_from_script(script, ct.byref(script_tag_1), ct.byref(script_tag_2))
+    return \
+        (script_tag_1.value, script_tag_2.value)
+#end ot_tags_from_script
+
+def ot_tag_to_script(tag) :
+    return \
+        hb.hb_ot_tag_to_script(tag).value
+#end ot_tag_to_script
+
+def ot_tag_from_language(language) :
+    if not isinstance(language, Language) :
+        raise TypeError("language must be a Language")
+    #end if
+    return \
+        hb.hb_ot_tag_from_language(language._hbobj)
+#end def
+
+def ot_tag_to_language(tag) :
+    return \
+        Language(hb.hb_ot_tag_to_language(tag))
+#end ot_tag_to_language
+
+# TODO: hb-ot-shape.h
 
 # from hb-shape-plan.h:
 
