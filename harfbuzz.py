@@ -218,6 +218,7 @@ class HARFBUZZ :
         ]
     #end font_extents_t
 
+    # Note that height is negative in coordinate systems that grow up.
     class glyph_extents_t(ct.Structure) :
         pass
     glyph_extents_t._fields_ = \
@@ -229,7 +230,24 @@ class HARFBUZZ :
         ]
     #end glyph_extents_t
 
-    # hb_xxx_func_t types todo
+    font_get_font_extents_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.POINTER(font_extents_t), ct.c_void_p)
+    font_get_font_h_extents_func_t = font_get_font_extents_func_t
+    font_get_font_v_extents_func_t = font_get_font_extents_func_t
+    font_get_nominal_glyph_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
+    font_get_variation_glyph_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
+    font_get_glyph_advance_func_t = ct.CFUNCTYPE(position_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.c_void_p)
+    font_get_glyph_h_advance_func_t = font_get_glyph_advance_func_t
+    font_get_glyph_v_advance_func_t = font_get_glyph_advance_func_t
+    font_get_glyph_origin_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.POINTER(position_t), ct.POINTER(position_t), ct.c_void_p)
+    font_get_glyph_h_origin_func_t = font_get_glyph_origin_func_t
+    font_get_glyph_v_origin_func_t = font_get_glyph_origin_func_t
+    font_get_glyph_kerning_func_t = ct.CFUNCTYPE(position_t, ct.c_void_p, ct.c_void_p, codepoint_t, codepoint_t, ct.c_void_p)
+    font_get_glyph_h_kerning_func_t = font_get_glyph_kerning_func_t
+    font_get_glyph_v_kerning_func_t = font_get_glyph_kerning_func_t
+    font_get_glyph_extents_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.POINTER(glyph_extents_t), ct.c_void_p)
+    font_get_glyph_contour_point_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.c_uint, ct.POINTER(position_t), ct.POINTER(position_t), ct.c_void_p)
+    font_get_glyph_name_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.c_void_p, ct.c_uint, ct.c_void_p)
+    font_get_glyph_from_name_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_int, ct.POINTER(codepoint_t), ct.c_void_p)
 
     # from hb-shape.h:
 
