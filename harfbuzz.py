@@ -1813,8 +1813,8 @@ class Face :
         "\n" \
         "    def reference_table(face, tag, user_data)\n" \
         "\n" \
-        "where face is this Face, tag is the integer tag identifying the table," \
-        " and must return a Blob. The interpretation of user_data is up to you." \
+        "where face is the Face instance, tag is the integer tag identifying the" \
+        " table, and must return a Blob. The interpretation of user_data is up to you." \
         " The destroy action may be None, but if not, it should be declared as\n" \
         "\n" \
         "     def destroy(user_data)\n" \
@@ -1824,11 +1824,15 @@ class Face :
         @HB.reference_table_func_t
         def wrap_reference_table(c_face, c_tag, c_user_data) :
             result = reference_table(Face(hb.hb_face_reference(c_face)), c_tag.value, user_data)
-            if not isinstance(result, Blob) :
-                raise TypeError("reference_table must return a Blob")
+            if isinstance(result, Blob) :
+                c_result = hb.hb_blob_reference(result._hbobj)
+            elif result == None :
+                c_result = None
+            else :
+                raise TypeError("reference_table must return a Blob or None")
             #end if
             return \
-                hb.hb_blob_reference(result._hbobj)
+                c_result
         #end wrap_reference_table
 
         if destroy != None :
