@@ -2121,7 +2121,7 @@ class Face :
 
         def table_get_lookup_count(self, table_tag) :
             return \
-                hb_ot_layout_table_get_lookup_count(self._hbobj, table_tag)
+                hb.hb_ot_layout_table_get_lookup_count(self._hbobj, table_tag)
         #end table_get_lookup_count
 
         def collect_lookups(self, table_tag, scripts, languages, features) :
@@ -2635,7 +2635,7 @@ def ot_shape_glyphs_closure(font, buffer, features, glyphs = None) :
         c_features = None
         nr_features = 0
     #end if
-    hb_ot_shape_glyphs_closure(font._hbobj, buffer._hbobj, c_features, nr_features, c_glyphs._hbobj)
+    hb.hb_ot_shape_glyphs_closure(font._hbobj, buffer._hbobj, c_features, nr_features, c_glyphs._hbobj)
     return \
         c_glyphs.from_hb()
 #end ot_shape_glyphs_closure
@@ -2697,8 +2697,8 @@ class ShapePlan :
             ShapePlan \
               (
                 (
-                    hb_shape_plan_create,
-                    hb_shape_plan_create_cached,
+                    hb.hb_shape_plan_create,
+                    hb.hb_shape_plan_create_cached,
                 )[cached]
                 (face._hbobj, c_props, c_user_features, nr_user_features, c_shaper_list)
               )
