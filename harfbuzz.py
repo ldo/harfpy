@@ -370,10 +370,14 @@ hb.hb_blob_get_data.restype = ct.c_void_p
 hb.hb_blob_get_data.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
 hb.hb_blob_get_data_writable.restype = ct.c_void_p
 hb.hb_blob_get_data_writable.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+hb.hb_blob_reference.restype = ct.c_void_p
+hb.hb_blob_reference.argtypes = (ct.c_void_p,)
 
 hb.hb_buffer_destroy.restype = None
 hb.hb_buffer_create.restype = ct.c_void_p
 hb.hb_buffer_create.argtypes = ()
+hb.hb_buffer_reference.restype = ct.c_void_p
+hb.hb_buffer_reference.argtypes = (ct.c_void_p,)
 hb.hb_buffer_destroy.restype = None
 hb.hb_buffer_destroy.argtypes = (ct.c_void_p,)
 hb.hb_buffer_get_empty.restype = ct.c_void_p
@@ -469,6 +473,8 @@ hb.hb_font_funcs_make_immutable.restype = None
 hb.hb_font_funcs_make_immutable.argtypes = (ct.c_void_p,)
 hb.hb_font_funcs_is_immutable.restype = HB.bool_t
 hb.hb_font_funcs_is_immutable.argtypes = (ct.c_void_p,)
+hb.hb_font_funcs_reference.restype = ct.c_void_p
+hb.hb_font_funcs_reference.argtypes = (ct.c_void_p,)
 
 hb.hb_ft_face_create_referenced.restype = ct.c_void_p
 hb.hb_ft_face_create_referenced.argtypes = (ct.c_void_p,)
@@ -596,6 +602,9 @@ class Blob :
             self = super().__new__(celf)
             self._hbobj = _hbobj
             celf._instances[_hbobj] = self
+        else :
+            hb.hb_blob_destroy(self._hbobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -631,7 +640,7 @@ class Blob :
     def get_empty() :
         "returns the empty Blob."
         return \
-            Blob(hb.hb_blob_get_empty())
+            Blob(hb.hb_blob_reference(hb.hb_blob_get_empty()))
     #end get_empty
 
     def __len__(self) :
@@ -749,6 +758,9 @@ class Buffer :
             self = super().__new__(celf)
             self._hbobj = _hbobj
             celf._instances[_hbobj] = self
+        else :
+            hb.hb_buffer_destroy(self._hbobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -772,7 +784,7 @@ class Buffer :
     def get_empty() :
         "returns the empty Buffer instance."
         return \
-            Buffer(hb.hb_buffer_get_empty())
+            Buffer(hb.hb_buffer_reference(hb.hb_buffer_get_empty()))
     #end get_empty
 
     def reset(self) :
@@ -1066,6 +1078,18 @@ class Face :
 
     @staticmethod
     def create_for_tables(reference_table, user_data, destroy) :
+        "creates a Face which calls the specified reference_table action to access" \
+        " the font tables. This should be declared as\n" \
+        "\n" \
+        "    def reference_table(face, tag, user_data)\n"
+        "\n" \
+        "where face is this Face, tag is the integer tag identifying the table," \
+        " and must return a Blob. The interpretation of user_data is up to you." \
+        " The destroy action may be None, but if not, it should be declared as\n" \
+        "\n" \
+        "     def destroy(user_data)\n" \
+        "\n" \
+        "and will be called when the Face is destroyed."
 
         @HB.reference_table_func_t
         def wrap_reference_table(c_face, c_tag, c_user_data) :
@@ -1074,7 +1098,7 @@ class Face :
                 raise TypeError("reference_table must return a Blob")
             #end if
             return \
-                result._hbobj
+                hb.hb_blob_reference(result._hbobj)
         #end wrap_reference_table
 
         if destroy != None :
@@ -1095,8 +1119,9 @@ class Face :
 
     @staticmethod
     def get_empty() :
+        "returns the (unique) empty Face."
         return \
-            Face(hb.hb_face_get_empty())
+            Face(hb.hb_face_reference(hb.hb_face_get_empty()))
     #end get_empty
 
     if freetype != None :
@@ -1128,11 +1153,24 @@ class Font :
     __slots__ = \
         ( # to forestall typos
             "_hbobj",
+            "__weakref__",
         )
 
-    def __init__(self, _hbobj) :
-        self._hbobj = _hbobj
-    #end __init__
+    _instances = WeakValueDictionary()
+
+    def __new__(celf, _hbobj) :
+        self = celf._instances.get(_hbobj)
+        if self == None :
+            self = super().__new__(celf)
+            self._hbobj = _hbobj
+            celf._instances[_hbobj] = self
+        else :
+            hb.hb_font_destroy(self._hbobj)
+              # lose extra reference created by caller
+        #end if
+        return \
+            self
+    #end __new__
 
     def __del__(self) :
         if hb != None and self._hbobj != None :
@@ -1154,6 +1192,21 @@ class Font :
         return \
             Font(hb.hb_font_create_sub_font(self._hbobj))
     #end create_sub_font
+
+    # TODO: get/set immutable, ppem, scale, parent
+
+    # TODO: get/set glyph_contour_point_func, glyph_extents_func, glyph_from_name_func,
+    # glyph_func, glyph_kerning_func, h_advance_func, h_kerning_func, h_origin_func,
+    # glyph_name_func, v_advance_func, v_kerning_func, v_origin_func,
+    # font_h/v_extents_func, font_extents_func
+    # TODO: set_funcs, set_funcs_data
+
+    # TODO: getting corresponding information computed by above functions
+
+    # TODO: glyph to/from string, subtract_glyph_origin_for_direction,
+    # get_extents_for_direction
+
+    # TODO: user data?
 
     if freetype != None :
 
@@ -1208,6 +1261,9 @@ class FontFuncs :
             self = super().__new__(celf)
             self._hbobj = _hbobj
             celf._instances[_hbobj] = self
+        else :
+            hb.hb_font_funcs_destroy(self._hbobj)
+              # lose extra reference created by caller
         #end if
         return \
             self
@@ -1223,13 +1279,13 @@ class FontFuncs :
     @staticmethod
     def create() :
         return \
-            FonFunc(hb.hb_font_funcs_create())
+            FontFuncs(hb.hb_font_funcs_create())
     #end create
 
     @staticmethod
     def get_empty() :
         return \
-            FonFunc(hb.hb_font_funcs_get_empty())
+            FontFuncs(hb.hb_font_funcs_reference(hb.hb_font_funcs_get_empty()))
     #end get_empty
 
     # TODO: user_data
