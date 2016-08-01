@@ -1934,6 +1934,7 @@ class Face :
             self._hbobj = _hbobj
         #end __init__
 
+        @property
         def has_glyph_classes(self) :
             return \
                 hb.hb_ot_layout_has_glyph_classes(self._hbobj) != 0
@@ -2157,6 +2158,7 @@ class Face :
 
         # GSUB
 
+        @property
         def has_substitution(self) :
             return \
                 hb.hb_ot_layout_has_substitution(self._hbobj) != 0
@@ -2182,6 +2184,7 @@ class Face :
 
         # GPOS
 
+        @property
         def has_positioning(self) :
             return \
                 hb.hb_ot_layout_has_positioning(self._hbobj) != 0
