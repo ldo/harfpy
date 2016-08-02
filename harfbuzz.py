@@ -2442,15 +2442,15 @@ class Font :
         #end ft_create
 
         @property
-        def load_flags(self) :
+        def ft_load_flags(self) :
             return \
                 hb.hb_ft_font_get_load_flags(self._hbobj)
-        #end load_flags
+        #end ft_load_flags
 
-        @load_flags.setter
-        def load_flags(self, load_flags) :
+        @ft_load_flags.setter
+        def ft_load_flags(self, load_flags) :
             hb.hb_ft_font_set_load_flags(self._hbobj, load_flags)
-        #end load_flags
+        #end ft_load_flags
 
         # Note: cannot implement get_face because that requires
         # reconstructing a freetype.Face wrapper object, which
