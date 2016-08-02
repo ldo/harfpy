@@ -14,7 +14,7 @@ The basic steps in doing a piece of high-quality text rendering on Linux are:
 * Make sure all text is encoded in Unicode. (This should go without saying...)
 * Use FriBidi to reorder a string of unicode-encoded text from logical
   (reading) order to visual (rendering) order. (This step can be
-  skipped in simpler cases.)
+  skipped in cases where you do not mix text of different directions.)
 * Use FreeType to load a suitable font.
 * Use HarfBuzz to choose and lay out suitable glyphs for the specified text,
   controlled by appropriate features selected from the specified font.
