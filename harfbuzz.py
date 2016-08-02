@@ -110,32 +110,32 @@ class HARFBUZZ :
     DIRECTION_TTB = 6
     DIRECTION_BTT = 7
 
-    def HB_DIRECTION_IS_VALID(dirn) :
+    def DIRECTION_IS_VALID(dirn) :
         return \
             dirn & ~3 == 4
-    #end HB_DIRECTION_IS_VALID
+    #end DIRECTION_IS_VALID
 
     # Direction must be valid for the following
 
-    def HB_DIRECTION_IS_HORIZONTAL(dirn) :
+    def DIRECTION_IS_HORIZONTAL(dirn) :
         return \
             dirn & ~1 == 4
-    #end HB_DIRECTION_IS_HORIZONTAL
+    #end DIRECTION_IS_HORIZONTAL
 
-    def HB_DIRECTION_IS_VERTICAL(dirn) :
+    def DIRECTION_IS_VERTICAL(dirn) :
         return \
             dirn & ~1 == 6
-    #end HB_DIRECTION_IS_VERTICAL
+    #end DIRECTION_IS_VERTICAL
 
-    def HB_DIRECTION_IS_FORWARD(dirn) :
+    def DIRECTION_IS_FORWARD(dirn) :
         return \
             dirn & ~2 == 4
-    #end HB_DIRECTION_IS_FORWARD
+    #end DIRECTION_IS_FORWARD
 
-    def HB_DIRECTION_IS_BACKWARD(dirn) :
+    def DIRECTION_IS_BACKWARD(dirn) :
         return \
             dirn & ~2 == 5
-    #end HB_DIRECTION_IS_BACKWARD
+    #end DIRECTION_IS_BACKWARD
 
     def DIRECTION_REVERSE(dirn) :
         return \
