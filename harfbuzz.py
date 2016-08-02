@@ -776,6 +776,33 @@ def def_callback_wrapper(celf, method_name, docstring, callback_field_name, dest
     setattr(celf, method_name, set_callback)
 #end def_callback_wrapper
 
+def def_immutable(celf, hb_query, hb_set) :
+
+    def get_immutable(self) :
+        return \
+            getattr(hb, hb_query)(self._hbobj) != 0
+    #end set_immutable
+
+    def set_immutable(self, immut) :
+        if not isinstance(immut, bool) :
+            raise TypeError("new setting must be a bool")
+        elif not immut :
+            raise ValueError("cannot clear immutable setting")
+        #end if
+        getattr(hb, hb_set)(self._hbobj)
+    #end set_immutable
+
+#begin def_immutable
+    class_name = celf.__name__
+    get_immutable._name_ = "immutable"
+    get_immutable.__doc__ = "is the %s immutable." % class_name
+    set_immutable._name_ = "immutable"
+    set_immutable.__doc__ = "makes the %s immutable." % class_name
+    immutable = property(get_immutable)
+    immutable = immutable.setter(set_immutable)
+    setattr(celf, "immutable", immutable)
+#end def_immutable
+
 def shaper_list_to_hb(shaper_list) :
     "converts a list of strings to a null-terminated ctypes array of" \
     " pointers to char. Returns a tuple of 3 items: the number of shaper" \
@@ -963,6 +990,10 @@ hb.hb_face_reference.restype = ct.c_void_p
 hb.hb_face_reference.argtypes = (ct.c_void_p,)
 hb.hb_face_get_empty.restype = ct.c_void_p
 hb.hb_face_get_empty.argtypes = ()
+hb.hb_face_is_immutable.restype = HB.bool_t
+hb.hb_face_is_immutable.argtypes = (ct.c_void_p,)
+hb.hb_face_make_immutable.restype = None
+hb.hb_face_make_immutable.argtypes = (ct.c_void_p,)
 
 hb.hb_font_create.restype = ct.c_void_p
 hb.hb_font_create.argtypes = (ct.c_void_p,)
@@ -972,6 +1003,10 @@ hb.hb_font_destroy.restype = None
 hb.hb_font_destroy.argtypes = (ct.c_void_p,)
 hb.hb_font_reference.restype = ct.c_void_p
 hb.hb_font_reference.argtypes = (ct.c_void_p,)
+hb.hb_font_is_immutable.restype = HB.bool_t
+hb.hb_font_is_immutable.argtypes = (ct.c_void_p,)
+hb.hb_font_make_immutable.restype = None
+hb.hb_font_make_immutable.argtypes = (ct.c_void_p,)
 
 hb.hb_font_funcs_create.restype = ct.c_void_p
 hb.hb_font_funcs_create.argtypes = ()
@@ -1332,24 +1367,6 @@ class UnicodeFuncs :
     # TODO: user_data?
 
     @property
-    def immutable(self) :
-        "is the UnicodeFuncs immutable."
-        return \
-            hb.hb_unicode_funcs_is_immutable(self._hbobj) != 0
-    #end immutable
-
-    @immutable.setter
-    def immutable(self, immut) :
-        "blocks further changes."
-        if not isinstance(immut, bool) :
-            raise TypeError("new setting must be a bool")
-        elif not immut :
-            raise ValueError("cannot clear immutable setting")
-        #end if
-        hb.hb_unicode_funcs_make_immutable(self._hbobj)
-    #end immutable
-
-    @property
     def parent(self) :
         return \
             UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_parent(self._hbobj)))
@@ -1358,6 +1375,12 @@ class UnicodeFuncs :
     # TODO: set the actual funcs
 
 #end UnicodeFuncs
+def_immutable \
+  (
+    celf = UnicodeFuncs,
+    hb_query = "hb_unicode_funcs_is_immutable",
+    hb_set = "hb_unicode_funcs_make_immutable",
+  )
 
 # from hb-blob.h:
 
@@ -1439,28 +1462,16 @@ class Blob :
             addr, length.value
     #end data
 
-    @property
-    def immutable(self) :
-        "is the Blob immutable."
-        return \
-            hb.hb_blob_is_immutable(self._hbobj) != 0
-    #end immutable
-
-    @immutable.setter
-    def immutable(self, immut) :
-        "blocks further access to the memory area for writes."
-        if not isinstance(immut, bool) :
-            raise TypeError("new setting must be a bool")
-        elif not immut :
-            raise ValueError("cannot clear immutable setting")
-        #end if
-        hb.hb_blob_make_immutable(self._hbobj)
-    #end immutable
-
     # TODO: destroy_func
     # TODO: user_data?
 
 #end Blob
+def_immutable \
+  (
+    celf = Blob,
+    hb_query = "hb_blob_is_immutable",
+    hb_set = "hb_blob_make_immutable",
+  )
 
 # from hb-buffer.h:
 
@@ -1992,8 +2003,8 @@ class Face :
 
     #end if
 
-    # TODO: get/set glyph_count, index, upem, user_data, immutable,
-    # reference_blob? reference_table?
+    # TODO: get/set glyph_count, index, upem,
+    # reference_blob? reference_table? user_data?
 
     # from hb-ot-layout.h:
 
@@ -2304,6 +2315,12 @@ class Face :
     #end ot_layout
 
 #end Face
+def_immutable \
+  (
+    celf = Face,
+    hb_query = "hb_face_is_immutable",
+    hb_set = "hb_face_make_immutable",
+  )
 
 # from hb-font.h:
 
@@ -2354,7 +2371,7 @@ class Font :
             Font(hb.hb_font_create_sub_font(self._hbobj))
     #end create_sub_font
 
-    # TODO: get/set immutable, ppem, scale, parent
+    # TODO: get/set ppem, scale, parent
 
     # TODO: get/set glyph_contour_point_func, glyph_extents_func, glyph_from_name_func,
     # glyph_func, glyph_kerning_func, h_advance_func, h_kerning_func, h_origin_func,
@@ -2459,6 +2476,12 @@ class Font :
     #end ot_layout
 
 #end Font
+def_immutable \
+  (
+    celf = Font,
+    hb_query = "hb_font_is_immutable",
+    hb_set = "hb_font_make_immutable",
+  )
 
 class FontFuncs :
     "wrapper around hb_font_funcs_t objects. Do not instantiate directly; use" \
@@ -2565,22 +2588,6 @@ class FontFuncs :
 
     # TODO: user_data?
 
-    @property
-    def immutable(self) :
-        return \
-            hb.hb_font_funcs_is_immutable(self._hbobj) != 0
-    #end immutable
-
-    @immutable.setter
-    def immutable(self, immut) :
-        if not isinstance(immut, bool) :
-            raise TypeError("new setting must be a bool")
-        elif not immut :
-            raise ValueError("cannot clear immutable setting")
-        #end if
-        hb.hb_font_funcs_make_immutable(self._hbobj)
-    #end immutable
-
     # set_font_h_extents_func
     # set_font_v_extents_func
     # set_nominal_glyph_func
@@ -2598,6 +2605,12 @@ class FontFuncs :
     # all defined below
 
 #end FontFuncs
+def_immutable \
+  (
+    celf = FontFuncs,
+    hb_query = "hb_font_funcs_is_immutable",
+    hb_set = "hb_font_funcs_make_immutable",
+  )
 def def_fontfuncs_extra() :
 
     def def_wrap_get_font_extents_func(self, get_font_extents) :
@@ -3113,5 +3126,4 @@ class ShapePlan :
 
 #end ShapePlan
 
-del def_struct_class # my work is done
-del def_callback_wrapper # so is mine
+del def_struct_class, def_callback_wrapper, def_immutable # my work is done
