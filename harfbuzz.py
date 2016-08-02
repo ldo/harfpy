@@ -1364,6 +1364,8 @@ class UnicodeFuncs :
             UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_empty()))
     #end get_empty
 
+    # immutable defined below
+
     # TODO: user_data?
 
     @property
@@ -1461,6 +1463,8 @@ class Blob :
         return \
             addr, length.value
     #end data
+
+    # immutable defined below
 
     # TODO: destroy_func
     # TODO: user_data?
@@ -2029,6 +2033,8 @@ class Face :
 
     #end if
 
+    # immutable defined below
+
     # TODO: get/set glyph_count, index, upem,
     # reference_blob? reference_table? user_data?
 
@@ -2397,6 +2403,8 @@ class Font :
             Font(hb.hb_font_create_sub_font(self._hbobj))
     #end create_sub_font
 
+    # immutable defined below
+
     # TODO: get/set ppem, scale, parent
 
     # TODO: get/set glyph_contour_point_func, glyph_extents_func, glyph_from_name_func,
@@ -2614,6 +2622,7 @@ class FontFuncs :
 
     # TODO: user_data?
 
+    # immutable
     # set_font_h_extents_func
     # set_font_v_extents_func
     # set_nominal_glyph_func
