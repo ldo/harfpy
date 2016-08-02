@@ -1818,6 +1818,32 @@ class Buffer :
             tuple(GlyphPosition.from_hb(arr[i]) for i in range(nr_glyphs.value))
     #end glyph_positions
 
+    if qahirah != None :
+
+        def get_glyphs(self, origin = None) :
+            "returns a list of qahirah.Glyph objects, optionally offset by the" \
+            " specified Vector origin."
+            glyph_infos = self.glyph_infos
+            glyph_positions = self.glyph_positions
+            result = []
+            if origin != None :
+                pos = origin
+            else :
+                pos = qahirah.Vector(0, 0)
+            #end if
+            for i in range(len(glyph_infos)) :
+                result.append \
+                  (
+                    qahirah.Glyph(glyph_infos[i].codepoint, pos + glyph_positions[i].offset)
+                  )
+                pos += glyph_positions[i].advance
+            #end for
+            return \
+                result
+        #end get_glyphs
+
+    #end if
+
     @property
     def replacement_codepoint(self) :
         return \
