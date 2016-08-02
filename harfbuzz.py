@@ -745,6 +745,37 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
         result_class
 #end def_struct_class
 
+def def_callback_wrapper(celf, method_name, docstring, callback_field_name, destroy_field_name, def_wrap_callback_func, hb_proc) :
+    # Common routine for defining a set-callback method. These all have the same form,
+    # where the caller specifies
+    #  * the callback function
+    #  * an additional user_data pointer (meaning is up the caller)
+    #  * an optional destroy callback which is passed the user_data pointer
+    #    when the containing object is destroyed.
+    # The only variation is in the arguments and result type of the callback.
+
+    def set_callback(self, callback_func, user_data, destroy) :
+        # This becomes the actual set-callback method.
+        wrap_callback_func = def_wrap_callback_func(self, callback_func)
+        if destroy != None :
+            @HB.destroy_func_t
+            def wrap_destroy(c_user_data) :
+                destroy(user_data)
+            #end wrap_destroy
+        else :
+            wrap_destroy = None
+        #end if
+        setattr(self, callback_field_name, wrap_callback_func)
+        setattr(self, destroy_field_name, wrap_destroy)
+        getattr(hb, hb_proc)(self._hbobj, wrap_callback_func, None, wrap_destroy)
+    #end set_callback
+
+#begin def_callback_wrapper
+    set_callback.__name__ = method_name
+    set_callback.__doc__ = docstring
+    setattr(celf, method_name, set_callback)
+#end def_callback_wrapper
+
 def shaper_list_to_hb(shaper_list) :
     "converts a list of strings to a null-terminated ctypes array of" \
     " pointers to char. Returns a tuple of 3 items: the number of shaper" \
@@ -954,6 +985,34 @@ hb.hb_font_funcs_is_immutable.restype = HB.bool_t
 hb.hb_font_funcs_is_immutable.argtypes = (ct.c_void_p,)
 hb.hb_font_funcs_reference.restype = ct.c_void_p
 hb.hb_font_funcs_reference.argtypes = (ct.c_void_p,)
+hb.hb_font_funcs_set_font_h_extents_func.restype = None
+hb.hb_font_funcs_set_font_h_extents_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_font_v_extents_func.restype = None
+hb.hb_font_funcs_set_font_v_extents_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_nominal_glyph_func.restype = None
+hb.hb_font_funcs_set_nominal_glyph_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_variation_glyph_func.restype = None
+hb.hb_font_funcs_set_variation_glyph_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_h_advance_func.restype = None
+hb.hb_font_funcs_set_glyph_h_advance_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_v_advance_func.restype = None
+hb.hb_font_funcs_set_glyph_v_advance_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_h_origin_func.restype = None
+hb.hb_font_funcs_set_glyph_h_origin_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_v_origin_func.restype = None
+hb.hb_font_funcs_set_glyph_v_origin_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_h_kerning_func.restype = None
+hb.hb_font_funcs_set_glyph_h_kerning_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_v_kerning_func.restype = None
+hb.hb_font_funcs_set_glyph_v_kerning_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_extents_func.restype = None
+hb.hb_font_funcs_set_glyph_extents_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_contour_point_func.restype = None
+hb.hb_font_funcs_set_glyph_contour_point_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_name_func.restype = None
+hb.hb_font_funcs_set_glyph_name_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_funcs_set_glyph_from_name_func.restype = None
+hb.hb_font_funcs_set_glyph_from_name_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
 hb.hb_ft_face_create_referenced.restype = ct.c_void_p
 hb.hb_ft_face_create_referenced.argtypes = (ct.c_void_p,)
@@ -1443,6 +1502,16 @@ GlyphPosition = def_struct_class \
     extra = GlyphPositionExtra
   )
 del GlyphPositionExtra
+FontExtents = def_struct_class \
+  (
+    name = "FontExtents",
+    ctname = "font_extents_t"
+  )
+GlyphExtents = def_struct_class \
+  (
+    name = "GlyphExtents",
+    ctname = "glyph_extents_t"
+  )
 
 SegmentProperties = def_struct_class \
   (
@@ -1765,7 +1834,12 @@ class Buffer :
 
     # TODO: (de)serialize, segment properties
 
-    def set_message_func(self, message_func, user_data, destroy) :
+    # set_message_func defined below
+
+#end Buffer
+def def_buffer_extra() :
+
+    def def_wrap_message_func(self, message_func) :
 
         @HB.message_func_t
         def wrap_message_func(c_buffer, c_font, message, c_user_data) :
@@ -1779,22 +1853,25 @@ class Buffer :
                   )
         #end wrap_message_func
 
-        if destroy != None :
-            @HB.destroy_func_t
-            def wrap_message_destroy(c_user_data) :
-                destroy(user_data)
-            #end wrap_message_destroy
-        else :
-            wrap_message_destroy = None
-        #end if
+    #begin def_wrap_message_func
+        return \
+            wrap_message_func
+    #end def_wrap_message_func
 
-        self._wrap_message_func = None
-        self._wrap_message_destroy = wrap_message_destroy
-        hb.hb_buffer_set_message_func \
-            (self._hbobj, self._wrap_message_func, None, self._wrap_message_destroy)
-    #end set_message_func
-
-#end Buffer
+#begin def_buffer_extra
+    def_callback_wrapper \
+      (
+        celf = Buffer,
+        method_name = "set_message_func",
+        docstring = None,
+        callback_field_name = "_wrap_message_func",
+        destroy_field_name = "_wrap_message_destroy",
+        def_wrap_callback_func = def_wrap_message_func,
+        hb_proc = "hb_buffer_set_message_func",
+      )
+#end def_buffer_extra
+def_buffer_extra()
+del def_buffer_extra
 
 # from hb-face.h:
 
@@ -2387,6 +2464,36 @@ class FontFuncs :
         ( # to forestall typos
             "_hbobj",
             "__weakref__",
+            # need to keep references to ctypes-wrapped functions
+            # so they don't disappear prematurely:
+            "_wrap_font_h_extents_func",
+            "_wrap_font_h_extents_destroy",
+            "_wrap_font_v_extents_func",
+            "_wrap_font_v_extents_destroy",
+            "_wrap_nominal_glyph_func",
+            "_wrap_nominal_glyph_destroy",
+            "_wrap_variation_glyph_func",
+            "_wrap_variation_glyph_destroy",
+            "_wrap_glyph_h_advance_func",
+            "_wrap_glyph_h_advance_destroy",
+            "_wrap_glyph_v_advance_func",
+            "_wrap_glyph_v_advance_destroy",
+            "_wrap_glyph_h_origin_func",
+            "_wrap_glyph_h_origin_destroy",
+            "_wrap_glyph_v_origin_func",
+            "_wrap_glyph_v_origin_destroy",
+            "_wrap_glyph_h_kerning_func",
+            "_wrap_glyph_h_kerning_destroy",
+            "_wrap_glyph_v_kerning_func",
+            "_wrap_glyph_v_kerning_destroy",
+            "_wrap_glyph_extents_func",
+            "_wrap_glyph_extents_destroy",
+            "_wrap_glyph_contour_point_func",
+            "_wrap_glyph_contour_point_destroy",
+            "_wrap_glyph_name_func",
+            "_wrap_glyph_name_destroy",
+            "_wrap_glyph_from_name_func",
+            "_wrap_glyph_from_name_destroy",
         )
 
     _instances = WeakValueDictionary()
@@ -2396,6 +2503,34 @@ class FontFuncs :
         if self == None :
             self = super().__new__(celf)
             self._hbobj = _hbobj
+            self._wrap_font_h_extents_func = None
+            self._wrap_font_h_extents_destroy = None
+            self._wrap_font_v_extents_func = None
+            self._wrap_font_v_extents_destroy = None
+            self._wrap_nominal_glyph_func = None
+            self._wrap_nominal_glyph_destroy = None
+            self._wrap_variation_glyph_func = None
+            self._wrap_variation_glyph_destroy = None
+            self._wrap_glyph_h_advance_func = None
+            self._wrap_glyph_h_advance_destroy = None
+            self._wrap_glyph_v_advance_func = None
+            self._wrap_glyph_v_advance_destroy = None
+            self._wrap_glyph_h_origin_func = None
+            self._wrap_glyph_h_origin_destroy = None
+            self._wrap_glyph_v_origin_func = None
+            self._wrap_glyph_v_origin_destroy = None
+            self._wrap_glyph_h_kerning_func = None
+            self._wrap_glyph_h_kerning_destroy = None
+            self._wrap_glyph_v_kerning_func = None
+            self._wrap_glyph_v_kerning_destroy = None
+            self._wrap_glyph_extents_func = None
+            self._wrap_glyph_extents_destroy = None
+            self._wrap_glyph_contour_point_func = None
+            self._wrap_glyph_contour_point_destroy = None
+            self._wrap_glyph_name_func = None
+            self._wrap_glyph_name_destroy = None
+            self._wrap_glyph_from_name_func = None
+            self._wrap_glyph_from_name_destroy = None
             celf._instances[_hbobj] = self
         else :
             hb.hb_font_funcs_destroy(self._hbobj)
@@ -2442,9 +2577,236 @@ class FontFuncs :
         hb.hb_font_funcs_make_immutable(self._hbobj)
     #end immutable
 
-    # TBD: actual funcs
+    # set_font_h_extents_func
+    # set_font_v_extents_func
+    # set_nominal_glyph_func
+    # set_variation_glyph_func
+    # set_glyph_h_advance_func
+    # set_glyph_v_advance_func
+    # set_glyph_h_origin_func
+    # set_glyph_v_origin_func
+    # set_glyph_h_kerning_func
+    # set_glyph_v_kerning_func
+    # set_glyph_extents_func
+    # set_glyph_contour_point_func
+    # set_glyph_name_func
+    # set_glyph_from_name_func
+    # all defined below
 
 #end FontFuncs
+def def_fontfuncs_extra() :
+
+    def def_wrap_get_font_extents_func(self, get_font_extents) :
+
+        @HB.font_get_font_extents_func_t
+        def wrap_get_font_extents(c_font, font_data, c_metrics, c_user_data) :
+            metrics = get_font_extents(self, font_data, user_data)
+            if metrics != None :
+                c_metrics.ascender = metrics.ascender
+                c_metrics.descender = metrics.descender
+                c_metrics.line_gap = metrics.line_gap
+            #end if
+            return \
+                metrics != None
+        #end wrap_get_font_extents
+
+    #begin def_wrap_get_font_extents_func
+        return \
+            wrap_get_font_extents
+    #end def_wrap_get_font_extents_func
+
+    def def_wrap_get_nominal_glyph_func(self, get_nominal_glyph) :
+
+        @HB.font_get_nominal_glyph_func_t
+        def wrap_get_nominal_glyph(c_font, font_data, unicode, c_glyph, c_user_data) :
+            glyph = get_nominal_glyph(self, font_data, unicode, user_data)
+            if glyph != None :
+                c_glyph.value = glyph
+            #end if
+            return \
+                glyph != None
+        #end wrap_get_nominal_glyph
+
+    #begin def_wrap_get_nominal_glyph_func
+        return \
+            wrap_get_nominal_glyph
+    #end def_wrap_get_nominal_glyph_func
+
+    def def_wrap_get_variation_glyph_func(self, get_variation_glyph) :
+
+        @HB.font_get_variation_glyph_func_t
+        def wrap_get_variation_glyph(c_font, font_data, unicode, variation_selector, c_glyph, c_user_data) :
+            glyph = get_variation_glyph(self, font_data, unicode, variation_selector, user_data)
+            if glyph != None :
+                c_glyph.value = glyph
+            #end if
+            return \
+                glyph != None
+        #end wrap_get_variation_glyph
+
+    #begin def_wrap_get_variation_glyph_func
+        return \
+            wrap_get_variation_glyph
+    #end def_wrap_get_variation_glyph_func
+
+    def def_wrap_get_glyph_advance_func(self, get_glyph_advance) :
+
+        @HB.font_get_glyph_advance_func_t
+        def wrap_get_glyph_advance(c_font, font_data, glyph, c_user_data) :
+            return \
+                get_glyph_advance(self, font_data, glyph, user_data)
+        #end wrap_get_glyph_advance
+
+    #begin def_wrap_get_glyph_advance_func
+        return \
+            wrap_get_glyph_advance
+    #end def_wrap_get_glyph_advance_func
+
+    def def_wrap_get_glyph_origin_func(self, get_glyph_origin) :
+
+        @HB.font_get_glyph_origin_func_t
+        def wrap_get_glyph_origin(c_font, font_data, glyph, c_x, c_y, c_user_data) :
+            pos = get_glyph_origin(self, font_data, glyph, user_data)
+            if pos != None :
+                c_x.value = pos[0]
+                c_y.value = pos[1]
+            #end if
+            return \
+                pos != None
+        #end wrap_get_glyph_origin
+
+    #begin def_wrap_get_glyph_origin_func
+        return \
+            wrap_get_glyph_origin
+    #end def_wrap_get_glyph_origin_func
+
+    def def_wrap_get_glyph_kerning_func(self, get_glyph_kerning) :
+
+        @HB.font_get_glyph_kerning_func_t
+        def wrap_get_glyph_kerning(c_font, font_data, first_glyph, second_glyph, c_user_data) :
+            return \
+                get_glyph_kerning(self, font_data, first_glyph, second_glyph, user_data)
+        #end wrap_get_glyph_kerning
+
+    #begin def_wrap_get_glyph_kerning_func
+        return \
+            wrap_get_glyph_kerning
+    #end def_wrap_get_glyph_kerning_func
+
+    def def_wrap_get_glyph_extents_func(self, get_glyph_extents) :
+
+        @HB.font_get_glyph_extents_func_t
+        def wrap_get_glyph_extents(c_font, font_data, glyph, c_extents, c_user_data) :
+            extents = get_glyph_extents(self, font_data, glyph, user_data)
+            if extents != None :
+                c_extents.x_bearing = extents.x_bearing
+                c_extents.y_bearing = extents.y_bearing
+                c_extents.width = extents.width
+                c_extents.height = extents.height
+            #end if
+            return \
+                extents != None
+        #end wrap_get_glyph_extents
+
+    #begin def_wrap_get_glyph_extents_func
+        return \
+            wrap_get_glyph_extents
+    #end def_wrap_get_glyph_extents_func
+
+    def def_wrap_get_glyph_contour_point_func(self, get_glyph_contour_point) :
+
+        @HB.font_get_glyph_contour_point_func_t
+        def wrap_get_glyph_contour_point(c_font, font_data, glyph, point_index, c_x, c_y, c_user_data) :
+            pos = get_glyph_contour_point(self, font_data, glyph, point_index, user_data)
+            if pos != None :
+                c_x.value = pos[0]
+                c_y.value = pos[1]
+            #end if
+            return \
+                pos != None
+        #end wrap_get_glyph_contour_point
+
+    #begin def_wrap_get_glyph_contour_point_func
+        return \
+            wrap_get_glyph_contour_point
+    #end def_wrap_get_glyph_contour_point_func
+
+    def def_wrap_get_glyph_name_func(self, get_glyph_name) :
+
+        @HB.font_get_glyph_name_func_t
+        def wrap_get_glyph_name_func(c_font, font_data, glyph, c_name, size, c_user_data) :
+            name = get_glyph_name(self, font_data, glyph, user_data)
+            if size > 0 :
+                if name != None :
+                    c_name.value = name.encode()[:size - 1] + b"\x00"
+                else :
+                    c_name[0] = 0
+                #end if
+            #end if
+            return \
+                name != None
+        #end wrap_get_glyph_name_func
+
+    #begin def_wrap_get_glyph_name_func
+        return \
+            wrap_get_glyph_name_func
+    #end def_wrap_get_glyph_name_func
+
+    def def_wrap_get_glyph_from_name_func(self, get_glyph_from_name) :
+
+        @HB.font_get_glyph_from_name_func_t
+        def wrap_get_glyph_from_name(c_font, font_data, c_name, c_len, c_glyph, c_user_data) :
+            if c_len >= 0 :
+                name = c_name[:c_len].decode()
+            else :
+                name = c_name.value.decode() # nul-terminated
+            #end if
+            glyph = get_glyph_from_name(self, font_data, name, user_data)
+            if glyph != None :
+                c_glyph.value = glyph
+            #end if
+            return \
+                glyph != None
+        #end wrap_get_glyph_from_name
+
+    #begin def_wrap_get_glyph_from_name_func
+        return \
+            wrap_get_glyph_from_name
+    #end def_wrap_get_glyph_from_name_func
+
+#begin def_fontfuncs_extra
+    for basename, def_func in \
+        (
+            ("font_h_extents", def_wrap_get_font_extents_func),
+            ("font_v_extents", def_wrap_get_font_extents_func),
+            ("nominal_glyph", def_wrap_get_nominal_glyph_func),
+            ("variation_glyph", def_wrap_get_variation_glyph_func),
+            ("glyph_h_advance", def_wrap_get_glyph_advance_func),
+            ("glyph_v_advance", def_wrap_get_glyph_advance_func),
+            ("glyph_h_origin", def_wrap_get_glyph_origin_func),
+            ("glyph_v_origin", def_wrap_get_glyph_origin_func),
+            ("glyph_h_kerning", def_wrap_get_glyph_kerning_func),
+            ("glyph_v_kerning", def_wrap_get_glyph_kerning_func),
+            ("glyph_extents", def_wrap_get_glyph_extents_func),
+            ("glyph_contour_point", def_wrap_get_glyph_contour_point_func),
+            ("glyph_name", def_wrap_get_glyph_name_func),
+            ("glyph_from_name", def_wrap_get_glyph_from_name_func),
+        ) \
+    :
+        def_callback_wrapper \
+          (
+            celf = FontFuncs,
+            method_name = "set_%s_func" % basename,
+            docstring = None,
+            callback_field_name = "_wrap_%s_func" % basename,
+            destroy_field_name = "_wrap_%s_destroy" % basename,
+            def_wrap_callback_func = def_func,
+            hb_proc = "hb_font_funcs_set_%s_func" % basename,
+          )
+    #end for
+#end def_fontfuncs_extra
+def_fontfuncs_extra()
+del def_fontfuncs_extra
 
 # from hb-shape.h:
 
@@ -2748,3 +3110,4 @@ class ShapePlan :
 #end ShapePlan
 
 del def_struct_class # my work is done
+del def_callback_wrapper # so is mine
