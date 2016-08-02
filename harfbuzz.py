@@ -41,26 +41,6 @@ except ImportError :
 
 hb = ct.cdll.LoadLibrary("libharfbuzz.so.0")
 
-def seq_to_ct(seq, ct_type, conv = None, zeroterm = False) :
-    "extracts the elements of a Python sequence value into a ctypes array" \
-    " of type ct_type, optionally applying the conv function to each value.\n" \
-    "\n" \
-    "Why doesn’t ctypes make this easy?"
-    if conv == None :
-        conv = lambda x : x
-    #end if
-    nr_elts = len(seq) + int(zeroterm)
-    result = (nr_elts * ct_type)()
-    for i in range(nr_elts) :
-        result[i] = conv(seq[i])
-    #end for
-    if zeroterm :
-        result[nr_elts] = conv(0)
-    #end if
-    return \
-        result
-#end seq_to_ct
-
 class HARFBUZZ :
     "useful definitions adapted from harfbuzz/*.h. You will need to use the constants" \
     " and “macro” functions, but apart from that, see the more Pythonic wrappers" \
@@ -657,6 +637,10 @@ class HARFBUZZ :
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
 
+#+
+# Internal class-construction helpers
+#-
+
 def def_struct_class(name, ctname, conv = None, extra = None) :
     # defines a class with attributes that are a straightforward mapping
     # of a ctypes struct. Optionally includes extra members from extra
@@ -802,6 +786,30 @@ def def_immutable(celf, hb_query, hb_set) :
     immutable = immutable.setter(set_immutable)
     setattr(celf, "immutable", immutable)
 #end def_immutable
+
+#+
+# Useful stuff
+#-
+
+def seq_to_ct(seq, ct_type, conv = None, zeroterm = False) :
+    "extracts the elements of a Python sequence value into a ctypes array" \
+    " of type ct_type, optionally applying the conv function to each value.\n" \
+    "\n" \
+    "Why doesn’t ctypes make this easy?"
+    if conv == None :
+        conv = lambda x : x
+    #end if
+    nr_elts = len(seq) + int(zeroterm)
+    result = (nr_elts * ct_type)()
+    for i in range(nr_elts) :
+        result[i] = conv(seq[i])
+    #end for
+    if zeroterm :
+        result[nr_elts] = conv(0)
+    #end if
+    return \
+        result
+#end seq_to_ct
 
 def shaper_list_to_hb(shaper_list) :
     "converts a list of strings to a null-terminated ctypes array of" \
