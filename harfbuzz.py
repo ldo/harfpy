@@ -1022,6 +1022,8 @@ hb.hb_ft_font_set_load_flags.restype = None
 hb.hb_ft_font_set_load_flags.argtypes = (ct.c_void_p, ct.c_int)
 hb.hb_ft_font_get_load_flags.restype = ct.c_int
 hb.hb_ft_font_get_load_flags.argtypes = (ct.c_void_p,)
+hb.hb_ft_font_set_funcs.restype = None
+hb.hb_ft_font_set_funcs.argtypes = (ct.c_void_p,)
 
 hb.hb_feature_from_string.restype = HB.bool_t
 hb.hb_feature_from_string.argtypes = (ct.c_void_p, ct.c_int, ct.c_void_p)
@@ -2396,7 +2398,9 @@ class Font :
         # cannot safely be done without the associated library
         # for disposal purposes.
 
-        # TODO: set_funcs
+        def ft_set_funcs(self) :
+            hb.hb_ft_font_set_funcs(self._hbobj)
+        #end ft_set_funcs
 
     #end if
 
