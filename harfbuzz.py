@@ -1612,7 +1612,7 @@ class Buffer :
     def clear_contents(self) :
         "similar to reset, but does not clear the Unicode functions" \
         " or the replacement code point."
-        hb.hb_clear_contents(self._hbobj)
+        hb.hb_buffer_clear_contents(self._hbobj)
     #end clear_contents
 
     def pre_allocate(self, size) :
