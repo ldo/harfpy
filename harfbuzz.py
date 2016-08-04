@@ -1833,8 +1833,9 @@ class Buffer :
     if qahirah != None :
 
         def get_glyphs(self, origin = None) :
-            "returns a list of qahirah.Glyph objects, optionally offset by the" \
-            " specified Vector origin."
+            "returns a a tuple of two items, a list of qahirah.Glyph objects," \
+            " and the Vector origin for the following glyph run. All positions can" \
+            " optionally offset by the specified Vector origin."
             glyph_infos = self.glyph_infos
             glyph_positions = self.glyph_positions
             result = []
@@ -1851,7 +1852,7 @@ class Buffer :
                 pos += glyph_positions[i].advance
             #end for
             return \
-                result
+                (result, pos)
         #end get_glyphs
 
     #end if
