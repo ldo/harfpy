@@ -1546,7 +1546,12 @@ SegmentProperties = def_struct_class \
                 {
                     "to" : lambda l : l._hbobj,
                     "from" : Language,
-                }
+                },
+            "script" :
+                {
+                    "to" : HB.TAG,
+                    "from" : lambda t : HB.UNTAG(t, True),
+                },
         }
   )
 
