@@ -109,7 +109,7 @@ Create a `Buffer`:
 
 Put the text into the buffer:
 
-    buf.add_str(text_line, 0, len(text_line))
+    buf.add_str(text_line)
 
 Let HarfBuzz figure out the run properties:
 
@@ -231,7 +231,7 @@ method provided by HarfPy:
     glyph_pos = Vector(0, 0)
     for substr, pos1, pos2, level in fb.each_embedding_run(vis_line, vis_embedding_levels) :
         buf.reset()
-        buf.add_str(substr, 0, len(substr))
+        buf.add_str(substr)
         if FB.LEVEL_IS_RTL(level) :
             # HarfBuzz always wants to start with logical order, not display order,
             # so undo FriBidi reordering

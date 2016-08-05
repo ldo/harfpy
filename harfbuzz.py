@@ -1671,7 +1671,13 @@ class Buffer :
         self.check_alloc()
     #end add_codepoints
 
-    def add_str(self, text, item_offset, item_length) :
+    def add_str(self, text, item_offset = None, item_length = None) :
+        if item_offset == None :
+            item_offset = 0
+        #end if
+        if item_length == None :
+            item_length = len(text)
+        #end if
         self.add_codepoints \
           (
             text = tuple(ord(c) for c in text),
