@@ -793,9 +793,7 @@ def def_immutable(celf, hb_query, hb_set) :
 
 def seq_to_ct(seq, ct_type, conv = None, zeroterm = False) :
     "extracts the elements of a Python sequence value into a ctypes array" \
-    " of type ct_type, optionally applying the conv function to each value.\n" \
-    "\n" \
-    "Why doesn’t ctypes make this easy?"
+    " of type ct_type, optionally applying the conv function to each value."
     if conv == None :
         conv = lambda x : x
     #end if
