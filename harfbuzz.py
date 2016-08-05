@@ -1354,7 +1354,7 @@ class UnicodeFuncs :
 
     def __del__(self) :
         if hb != None and self._hbobj != None :
-            hb.hb_blob_destroy(self._hbobj)
+            hb.hb_unicode_funcs_destroy(self._hbobj)
             self._hbobj = None
         #end if
     #end __del__
