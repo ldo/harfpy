@@ -1274,17 +1274,33 @@ class Language :
 
 #end Language
 
+def tag_from_bytes(b) :
+    "constructs a tag from a four-byte bytes value."
+    return \
+        hb.hb_tag_from_string(b, len(b))
+#end tag_from_string
+
+def tag_to_bytes(tag) :
+    "converts a tag to a four-byte bytes value."
+    buf = (4 * ct.c_ubyte)()
+    hb.hb_tag_to_string(tag, ct.byref(buf))
+    return \
+        bytes(buf)
+#end tag_to_bytes
+
 def tag_from_string(s) :
+    "constructs a tag from a four-character string."
     sb = s.encode()
     return \
         hb.hb_tag_from_string(sb, len(sb))
 #end tag_from_string
 
 def tag_to_string(tag) :
+    "converts a tag to a four-character string."
     buf = (4 * ct.c_ubyte)()
     hb.hb_tag_to_string(tag, ct.byref(buf))
     return \
-        HB.TAG(*tuple(buf[i] for i in range(4)))
+        bytes(buf).decode()
 #end tag_to_string
 
 def script_from_iso15924_tag(tag) :
