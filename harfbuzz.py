@@ -1860,7 +1860,7 @@ class Buffer :
         def get_glyphs(self, origin = None) :
             "returns a a tuple of two items, a list of qahirah.Glyph objects," \
             " and the Vector origin for the following glyph run. All positions can" \
-            " optionally offset by the specified Vector origin."
+            " be optionally offset by the specified Vector origin."
             glyph_infos = self.glyph_infos
             glyph_positions = self.glyph_positions
             result = []
