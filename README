@@ -279,5 +279,13 @@ And finally, save the `ImageSurface` contents to a PNG file for viewing:
 
 And that’s it.
 
+
+More Info About HarfBuzz
+========================
+
+The API documentation seems to be rather lacking. A good starting
+point for finding out more is the [HarfBuzz
+Wiki](https://github.com/behdad/harfbuzz/wiki).
+
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
 2016 August 5
