@@ -1247,12 +1247,14 @@ class Language :
 
     @classmethod
     def default(celf) :
+        "returns the currently-configured default Language."
         return \
             Language(hb.hb_language_get_default())
     #end default
 
     @classmethod
     def from_string(celf, s) :
+        "returns the Language object for the specified language string, e.g. “en-nz”."
         sb = s.encode()
         result = hb.hb_language_from_string(sb, len(sb))
         if result == None :
@@ -1263,6 +1265,7 @@ class Language :
     #end from_string
 
     def to_string(self) :
+        "returns the language string for this Language object, e.g. “en-nz”."
         return \
             hb.hb_language_to_string(self._hbobj).decode() # automatically stops at NUL?
     #end to_string
@@ -1409,8 +1412,8 @@ def_immutable \
 # from hb-blob.h:
 
 class Blob :
-    "wraps the hb_blob_t opaque type. Do not instantiate directly; use" \
-    " the create and get_empty methods."
+    "wraps the hb_blob_t opaque type. This is used to manage storage for Face objects." \
+    " Do not instantiate directly; use the create and get_empty methods."
 
     __slots__ = \
         ( # to forestall typos
@@ -1572,7 +1575,10 @@ SegmentProperties = def_struct_class \
   )
 
 class Buffer :
-    "a HarfBuzz buffer. Do not instantiate directly; call the create or get_empty methods."
+    "a HarfBuzz buffer. This is where the text shaping is actually done." \
+    " Note that a Buffer can only manage a single run of text (language, script," \
+    " direction = “segment”) at once."
+    " Do not instantiate directly; call the create or get_empty methods."
 
     __slots__ = \
         ( # to forestall typos
@@ -1947,8 +1953,8 @@ del def_buffer_extra
 # from hb-face.h:
 
 class Face :
-    "wrapper around hb_face_t objects. Do not instantiate directly; use" \
-    " create or get_empty methods."
+    "wrapper around hb_face_t objects, analogous to Cairo’s font_face_t objects." \
+    " Do not instantiate directly; use create or get_empty methods."
 
     __slots__ = \
         ( # to forestall typos
@@ -2385,8 +2391,8 @@ def_immutable \
 # from hb-font.h:
 
 class Font :
-    "wrapper around hb_font_t objects. Do not instantiate directly; use" \
-    " create methods."
+    "wrapper around hb_font_t objects, analogous to Cairo’s scaled_font_t objects." \
+    " Do not instantiate directly; use create methods."
 
     __slots__ = \
         ( # to forestall typos
