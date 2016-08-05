@@ -652,6 +652,19 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
 
         __slots__ = tuple(field[0] for field in ctstruct._fields_) # to forestall typos
 
+        def __init__(self, *args, **kwargs) :
+            for field in self.__slots__ :
+                if field in kwargs :
+                    setattr(self, field, kwargs[field])
+                    del kwargs[field]
+                #end if
+            #end for
+            unrecognized = ", ".join(k for k in kwargs)
+            if len(unrecognized) != 0 :
+                raise TypeError("unrecognized fields for %s: %s" % (name, unrecognized))
+            #end if
+        #end __init__
+
         def to_hb(self) :
             "returns a HarfBuzz representation of the structure."
             result = ctstruct()
