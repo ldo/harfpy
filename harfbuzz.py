@@ -2364,26 +2364,43 @@ class Face :
                 hb.hb_ot_layout_has_positioning(self._hbobj) != 0
         #end has_positioning
 
-        def get_size_params(self) :
-            # Optical 'size' feature info.  Returns true if found.
+        @property
+        def size_params(self) :
+            # Optical 'size' feature info. Returns 5-tuple of values if found,
+            # else None.
             # http://www.microsoft.com/typography/otspec/features_pt.htm#size
             design_size = ct.c_uint()
             subfamily_id = ct.c_uint()
             subfamily_name_id = ct.c_uint()
             range_start = ct.c_uint()
             range_end = ct.c_uint()
-            hb.hb_ot_layout_get_size_params \
-              (
-                self._hbobj,
-                ct.byref(design_size),
-                ct.byref(subfamily_id),
-                ct.byref(subfamily_name_id),
-                ct.byref(range_start),
-                ct.byref(range_end)
-              )
+            if (
+                    hb.hb_ot_layout_get_size_params \
+                      (
+                        self._hbobj,
+                        ct.byref(design_size),
+                        ct.byref(subfamily_id),
+                        ct.byref(subfamily_name_id),
+                        ct.byref(range_start),
+                        ct.byref(range_end),
+                      )
+                !=
+                    0
+            ) :
+                result = \
+                    (
+                        design_size.value,
+                        subfamily_id.value,
+                        subfamily_name_id.value,
+                        range_start.value,
+                        range_end.value,
+                    )
+            else :
+                result = None
+            #end if
             return \
-                (design_size.value, subfamily_id.value, subfamily_name_id.value, range_start.value, range_end.value)
-        #end get_size_params
+                result
+        #end size_params
 
     #end OTLayout
 
