@@ -2472,7 +2472,10 @@ def_immutable \
 def def_face_props(celf) :
     # get/set index, upem and glyph_count all have the same form:
     # all these properties are unsigned integers.
-    for propname in ("index", "upem", "glyph_count") :
+
+    def def_face_prop(propname) :
+        # need separate inner function so each method gets
+        # correct values for hb_getter and hb_setter
         hb_getter = "hb_face_get_%s" % propname
         hb_setter = "hb_face_set_%s" % propname
 
@@ -2492,6 +2495,11 @@ def def_face_props(celf) :
         propmethod = property(getter)
         propmethod = propmethod.setter(setter)
         setattr(celf, propname, propmethod)
+    #end def_face_prop
+
+#begin def_face_props
+    for propname in ("index", "upem", "glyph_count") :
+        def_face_prop(propname)
     #end for
 #end def_face_props
 def_face_props(Face)
