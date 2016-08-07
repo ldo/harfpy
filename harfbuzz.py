@@ -791,9 +791,9 @@ def def_immutable(celf, hb_query, hb_set) :
 
 #begin def_immutable
     class_name = celf.__name__
-    get_immutable._name_ = "immutable"
+    get_immutable.__name__ = "immutable"
     get_immutable.__doc__ = "is the %s immutable." % class_name
-    set_immutable._name_ = "immutable"
+    set_immutable.__name__ = "immutable"
     set_immutable.__doc__ = "makes the %s immutable." % class_name
     immutable = property(get_immutable)
     immutable = immutable.setter(set_immutable)
