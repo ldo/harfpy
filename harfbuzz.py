@@ -535,6 +535,10 @@ class HARFBUZZ :
 
     buffer_message_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.c_char_p, ct.c_void_p)
 
+    BUFFER_SERIALIZE_FORMAT_TEXT = TAG(b'TEXT')
+    BUFFER_SERIALIZE_FORMAT_JSON = TAG(b'JSON')
+    BUFFER_SERIALIZE_FORMAT_INVALID = TAG_NONE
+
     # from hb-face.h:
 
     reference_table_func_t = ct.CFUNCTYPE(ct.c_void_p, ct.c_void_p, tag_t, ct.c_void_p)
@@ -998,6 +1002,16 @@ hb.hb_buffer_get_replacement_codepoint.restype = HB.codepoint_t
 hb.hb_buffer_get_replacement_codepoint.argtypes = (ct.c_void_p,)
 hb.hb_buffer_set_message_func.restype = None
 hb.hb_buffer_set_message_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_buffer_serialize_format_from_string.restype = HB.tag_t
+hb.hb_buffer_serialize_format_from_string.argtypes = (ct.c_char_p, ct.c_int)
+hb.hb_buffer_serialize_format_to_string.restype = ct.c_char_p
+hb.hb_buffer_serialize_format_to_string.argtypes = (HB.tag_t,)
+hb.hb_buffer_serialize_list_formats.restype = ct.POINTER(ct.c_char_p)
+hb.hb_buffer_serialize_list_formats.argtypes = ()
+hb.hb_buffer_serialize_glyphs.restype = ct.c_uint
+hb.hb_buffer_serialize_glyphs.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_uint), ct.c_void_p, HB.tag_t, ct.c_uint)
+hb.hb_buffer_deserialize_glyphs.restype = HB.bool_t
+hb.hb_buffer_deserialize_glyphs.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_void_p, HB.tag_t)
 
 hb.hb_segment_properties_equal.restype = HB.bool_t
 hb.hb_segment_properties_equal.argtypes = (ct.c_void_p, ct.c_void_p)
@@ -2024,6 +2038,63 @@ def def_buffer_extra() :
 #end def_buffer_extra
 def_buffer_extra()
 del def_buffer_extra
+
+class SerializeFormat :
+    "a high-level encapsulation of hb_buffer_serialize_format_t values." \
+    " Do not instantiate directly; use from_string and get_list methods."
+
+    __slots__ = \
+        ( # to forestall typos
+            "_tag",
+            "__weakref__",
+        )
+
+    _instances = WeakValueDictionary()
+
+    def __new__(celf, _tag) :
+        self = celf._instances.get(_tag)
+        if self == None :
+            self = super().__new__(celf)
+            self._tag = _tag
+            celf._instances[_tag] = self
+        #end if
+        return \
+            self
+    #end __new__
+
+    # no __del__ -- these objects are never freed
+
+    @classmethod
+    def from_string(celf, s) :
+        sb = s.encode()
+        return \
+            celf(hb.hb_buffer_serialize_format_from_string(sb, len(sb)))
+    #end from_string
+
+    def to_string(self) :
+        return \
+            hb.hb_buffer_serialize_format_to_string(self._tag).decode()
+    #end to_string
+
+    @classmethod
+    def get_list(celf) :
+        result = []
+        formats = hb.hb_buffer_serialize_list_formats()
+        i = 0
+        while bool(formats[i]) :
+            result.append(celf.from_string(formats[i].decode()))
+            i += 1
+        #end while
+        return \
+            tuple(result)
+    #end get_list
+
+    def __repr__(self) :
+        return \
+            "%s(%s)" % (type(self).__name__, HB.UNTAG(self._tag, True))
+    #end __repr__
+
+#end SerializeFormat
 
 # from hb-face.h:
 
