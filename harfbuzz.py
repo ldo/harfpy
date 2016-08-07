@@ -1525,7 +1525,6 @@ class Blob :
 
     # immutable defined below
 
-    # TODO: destroy_func
     # TODO: user_data?
 
 #end Blob
@@ -2845,11 +2844,16 @@ def_immutable \
   )
 def def_fontfuncs_extra() :
 
+    def get_font_data(c_font_data) :
+        return \
+            Font(hb.hb_font_reference(c_font_data))._font_data
+    #end get_font_data
+
     def def_wrap_get_font_extents_func(self, get_font_extents) :
 
         @HB.font_get_font_extents_func_t
         def wrap_get_font_extents(c_font, c_font_data, c_metrics, c_user_data) :
-            metrics = get_font_extents(self, Font(c_font_data)._font_data, user_data)
+            metrics = get_font_extents(self, get_font_data(c_font_data), user_data)
             if metrics != None :
                 c_metrics.ascender = metrics.ascender
                 c_metrics.descender = metrics.descender
@@ -2868,7 +2872,7 @@ def def_fontfuncs_extra() :
 
         @HB.font_get_nominal_glyph_func_t
         def wrap_get_nominal_glyph(c_font, c_font_data, unicode, c_glyph, c_user_data) :
-            glyph = get_nominal_glyph(self, Font(c_font_data)._font_data, unicode, user_data)
+            glyph = get_nominal_glyph(self, get_font_data(c_font_data), unicode, user_data)
             if glyph != None :
                 c_glyph.value = glyph
             #end if
@@ -2885,7 +2889,7 @@ def def_fontfuncs_extra() :
 
         @HB.font_get_variation_glyph_func_t
         def wrap_get_variation_glyph(c_font, c_font_data, unicode, variation_selector, c_glyph, c_user_data) :
-            glyph = get_variation_glyph(self, Font(c_font_data)._font_data, unicode, variation_selector, user_data)
+            glyph = get_variation_glyph(self, get_font_data(c_font_data), unicode, variation_selector, user_data)
             if glyph != None :
                 c_glyph.value = glyph
             #end if
@@ -2903,7 +2907,7 @@ def def_fontfuncs_extra() :
         @HB.font_get_glyph_advance_func_t
         def wrap_get_glyph_advance(c_font, c_font_data, glyph, c_user_data) :
             return \
-                get_glyph_advance(self, Font(c_font_data)._font_data, glyph, user_data)
+                get_glyph_advance(self, get_font_data(c_font_data), glyph, user_data)
         #end wrap_get_glyph_advance
 
     #begin def_wrap_get_glyph_advance_func
@@ -2915,7 +2919,7 @@ def def_fontfuncs_extra() :
 
         @HB.font_get_glyph_origin_func_t
         def wrap_get_glyph_origin(c_font, c_font_data, glyph, c_x, c_y, c_user_data) :
-            pos = get_glyph_origin(self, Font(c_font_data)._font_data, glyph, user_data)
+            pos = get_glyph_origin(self, get_font_data(c_font_data), glyph, user_data)
             if pos != None :
                 c_x.value = pos[0]
                 c_y.value = pos[1]
@@ -2934,7 +2938,7 @@ def def_fontfuncs_extra() :
         @HB.font_get_glyph_kerning_func_t
         def wrap_get_glyph_kerning(c_font, c_font_data, first_glyph, second_glyph, c_user_data) :
             return \
-                get_glyph_kerning(self, Font(c_font_data)._font_data, first_glyph, second_glyph, user_data)
+                get_glyph_kerning(self, get_font_data(c_font_data), first_glyph, second_glyph, user_data)
         #end wrap_get_glyph_kerning
 
     #begin def_wrap_get_glyph_kerning_func
@@ -2946,7 +2950,7 @@ def def_fontfuncs_extra() :
 
         @HB.font_get_glyph_extents_func_t
         def wrap_get_glyph_extents(c_font, c_font_data, glyph, c_extents, c_user_data) :
-            extents = get_glyph_extents(self, Font(c_font_data)._font_data, glyph, user_data)
+            extents = get_glyph_extents(self, get_font_data(c_font_data), glyph, user_data)
             if extents != None :
                 c_extents.x_bearing = extents.x_bearing
                 c_extents.y_bearing = extents.y_bearing
@@ -2966,7 +2970,7 @@ def def_fontfuncs_extra() :
 
         @HB.font_get_glyph_contour_point_func_t
         def wrap_get_glyph_contour_point(c_font, c_font_data, glyph, point_index, c_x, c_y, c_user_data) :
-            pos = get_glyph_contour_point(self, Font(c_font_data)._font_data, glyph, point_index, user_data)
+            pos = get_glyph_contour_point(self, get_font_data(c_font_data), glyph, point_index, user_data)
             if pos != None :
                 c_x.value = pos[0]
                 c_y.value = pos[1]
@@ -2984,7 +2988,7 @@ def def_fontfuncs_extra() :
 
         @HB.font_get_glyph_name_func_t
         def wrap_get_glyph_name_func(c_font, c_font_data, glyph, c_name, size, c_user_data) :
-            name = get_glyph_name(self, Font(c_font_data)._font_data, glyph, user_data)
+            name = get_glyph_name(self, get_font_data(c_font_data), glyph, user_data)
             if size > 0 :
                 if name != None :
                     c_name.value = name.encode()[:size - 1] + b"\x00"
@@ -3010,7 +3014,7 @@ def def_fontfuncs_extra() :
             else :
                 name = c_name.value.decode() # nul-terminated
             #end if
-            glyph = get_glyph_from_name(self, Font(c_font_data)._font_data, name, user_data)
+            glyph = get_glyph_from_name(self, get_font_data(c_font_data), name, user_data)
             if glyph != None :
                 c_glyph.value = glyph
             #end if
