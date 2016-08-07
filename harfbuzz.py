@@ -449,6 +449,8 @@ class HARFBUZZ :
     unicode_decompose_compatibility_func_t = \
         ct.CFUNCTYPE(ct.c_uint, ct.c_void_p, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
 
+    UNICODE_MAX_DECOMPOSITION_LEN = 18 + 1 # codepoints
+
     # from hb-blob.h:
 
     memory_mode = ct.c_uint
@@ -1438,6 +1440,24 @@ class UnicodeFuncs :
         ( # to forestall typos
             "_hbobj",
             "__weakref__",
+            # need to keep references to ctypes-wrapped functions
+            # so they don't disappear prematurely:
+            "_wrap_combining_class_func",
+            "_wrap_combining_class_destroy",
+            "_wrap_eastasian_width_func",
+            "_wrap_eastasian_width_destroy",
+            "_wrap_general_category_func",
+            "_wrap_general_category_destroy",
+            "_wrap_mirroring_func",
+            "_wrap_mirroring_destroy",
+            "_wrap_script_func",
+            "_wrap_script_destroy",
+            "_wrap_compose_func",
+            "_wrap_compose_destroy",
+            "_wrap_decompose_func",
+            "_wrap_decompose_destroy",
+            "_wrap_decompose_compatibility_func",
+            "_wrap_decompose_compatibility_destroy",
         )
 
     _instances = WeakValueDictionary()
@@ -1446,6 +1466,22 @@ class UnicodeFuncs :
         self = celf._instances.get(_hbobj)
         if self == None :
             self = super().__new__(celf)
+            self._wrap_combining_class_func = None
+            self._wrap_combining_class_destroy = None
+            self._wrap_eastasian_width_func = None
+            self._wrap_eastasian_width_destroy = None
+            self._wrap_general_category_func = None
+            self._wrap_general_category_destroy = None
+            self._wrap_mirroring_func = None
+            self._wrap_mirroring_destroy = None
+            self._wrap_script_func = None
+            self._wrap_script_destroy = None
+            self._wrap_compose_func = None
+            self._wrap_compose_destroy = None
+            self._wrap_decompose_func = None
+            self._wrap_decompose_destroy = None
+            self._wrap_decompose_compatibility_func = None
+            self._wrap_decompose_compatibility_destroy = None
             self._hbobj = _hbobj
             celf._instances[_hbobj] = self
         else :
@@ -1551,14 +1587,10 @@ class UnicodeFuncs :
     #end decompose
 
     def decompose_compatibility(self, u) :
-        decomposed = HB.codepoint_t()
-        if hb.hb_unicode_decompose_compatibility(self._hbobj, u, ct.byref(decomposed)) != 0 :
-            result = decomposed.value
-        else :
-            result = None
-        #end if
+        decomposed = (HB.codepoint_t * HB.UNICODE_MAX_DECOMPOSITION_LEN)()
+        decomposed_len = hb.hb_unicode_decompose_compatibility(self._hbobj, u, ct.byref(decomposed))
         return \
-            result
+            decomposed[:decomposed_len]
     #end decompose_compatibility
 
 #end UnicodeFuncs
@@ -1568,6 +1600,164 @@ def_immutable \
     hb_query = "hb_unicode_funcs_is_immutable",
     hb_set = "hb_unicode_funcs_make_immutable",
   )
+def def_unicodefuncs_extra() :
+
+    def def_wrap_combining_class_func(self, combining_class_func, user_data) :
+
+        @HB.unicode_combining_class_func_t
+        def wrap_combining_class_func(c_funcs, unicode, c_user_data) :
+            return \
+                combining_class_func(self, unicode, user_data)
+        #end wrap_combining_class_func
+
+    #begin def_wrap_combining_class_func
+        return \
+            wrap_combining_class_func
+    #end def_wrap_combining_class_func
+
+    def def_wrap_eastasian_width_func(self, eastasian_width_func, user_data) :
+
+        @HB.unicode_eastasian_width_func_t
+        def wrap_eastasian_width_func(c_funcs, unicode, c_user_data) :
+            return \
+                eastasian_width_func(self, unicode, user_data)
+        #end wrap_eastasian_width_func
+
+    #begin def_wrap_eastasian_width_func
+        return \
+            wrap_eastasian_width_func
+    #end def_wrap_eastasian_width_func
+
+    def def_wrap_general_category_func(self, general_category_func, user_data) :
+
+        @HB.unicode_general_category_func_t
+        def wrap_general_category_func(c_funcs, unicode, c_user_data) :
+            return \
+                general_category_func(self, unicode, user_data)
+        #end wrap_general_category_func
+
+    #begin def_wrap_general_category_func
+        return \
+            wrap_general_category_func
+    #end def_wrap_general_category_func
+
+    def def_wrap_mirroring_func(self, mirroring_func, user_data) :
+
+        @HB.unicode_mirroring_func_t
+        def wrap_mirroring_func(c_funcs, unicode, c_user_data) :
+            return \
+                mirroring_func(self, unicode, user_data)
+        #end wrap_mirroring_func
+
+    #begin def_wrap_mirroring_func
+        return \
+            wrap_mirroring_func
+    #end def_wrap_mirroring_func
+
+    def def_wrap_script_func(self, script_func, user_data) :
+
+        @HB.unicode_script_func_t
+        def wrap_script_func(c_funcs, unicode, c_user_data) :
+            return \
+                script_func(self, unicode, user_data)
+        #end wrap_script_func
+
+    #begin def_wrap_script_func
+        return \
+            wrap_script_func
+    #end def_wrap_script_func
+
+    def def_wrap_compose_func(self, compose_func, user_data) :
+
+        @HB.unicode_compose_func_t
+        def wrap_compose_func(c_funcs, a, b, c_ab, c_user_data) :
+            result = compose_func(self, a, b, user_data)
+            if result != None :
+                c_ab.value = result
+            else :
+                c_ab.value = 0 # ?
+            #end if
+            return \
+                result != None
+        #end wrap_compose_func
+
+    #begin def_wrap_compose_func
+        return \
+            wrap_compose_func
+    #end def_wrap_compose_func
+
+    def def_wrap_decompose_func(self, decompose_func, user_data) :
+
+        @HB.unicode_decompose_func_t
+        def wrap_decompose_func(c_funcs, ab, c_a, c_b, c_user_data) :
+            result = decompose_func(self, ab, user_data)
+            if result != None :
+                c_a.value, c_b.value = result
+            else :
+                c_a.value, c_b.value = (0, 0)
+            #end if
+            return \
+                result != None
+        #end wrap_decompose_func
+
+    #begin def_wrap_decompose_func
+        return \
+            wrap_decompose_func
+    #end def_wrap_decompose_func
+
+    def def_wrap_decompose_compatibility_func(self, decompose_compatibility_func, user_data) :
+
+        @HB.unicode_decompose_compatibility_func_t
+        def wrap_decompose_compatibility_func(c_funcs, u, c_decomposed, c_user_data) :
+            result = decompose_compatibility_func(self, u, user_data)
+            if result == None :
+                result = ()
+            #end if
+            if len(result) > HB.UNICODE_MAX_DECOMPOSITION_LEN :
+                raise IndexError \
+                  (
+                        "decompose_compatibility result len %d exceeds %d"
+                    %
+                        (len(result), HB.UNICODE_MAX_DECOMPOSITION_LEN)
+                  )
+            #end if
+            c_decomposed[:len(result)] = result
+            return \
+                len(result)
+        #end wrap_decompose_compatibility_func
+
+    #begin def_wrap_decompose_compatibility_func
+        return \
+            wrap_decompose_compatibility_func
+    #end def_wrap_decompose_compatibility_func
+
+#begin def_unicodefuncs_extra
+    for basename, def_func in \
+        (
+            ("combining_class", def_wrap_combining_class_func),
+            ("eastasian_width", def_wrap_eastasian_width_func),
+            ("general_category", def_wrap_general_category_func),
+            ("mirroring", def_wrap_mirroring_func),
+            ("script", def_wrap_script_func),
+            ("compose", def_wrap_compose_func),
+            ("decompose", def_wrap_decompose_func),
+            ("decompose_compatibility", def_wrap_decompose_compatibility_func),
+        ) \
+    :
+        def_callback_wrapper \
+          (
+            celf = UnicodeFuncs,
+            method_name = "set_%s_func" % basename,
+            docstring = None,
+            callback_field_name = "_wrap_%s_func" % basename,
+            destroy_field_name = "_wrap_%s_destroy" % basename,
+            def_wrap_callback_func = def_func,
+            hb_proc = "hb_unicode_funcs_set_%s_func" % basename,
+          )
+    #end for
+#end def_unicodefuncs_extra
+def_unicodefuncs_extra()
+del def_unicodefuncs_extra
 
 # from hb-blob.h:
 
