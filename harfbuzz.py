@@ -910,6 +910,24 @@ hb.hb_unicode_funcs_is_immutable.restype = HB.bool_t
 hb.hb_unicode_funcs_is_immutable.argtypes = (ct.c_void_p,)
 hb.hb_unicode_funcs_get_parent.restype = ct.c_void_p
 hb.hb_unicode_funcs_get_parent.argtypes = (ct.c_void_p,)
+hb.hb_unicode_funcs_set_combining_class_func.restype = None
+hb.hb_unicode_funcs_set_combining_class_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_funcs_set_combining_class_func.restype = None
+hb.hb_unicode_funcs_set_combining_class_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_funcs_set_eastasian_width_func.restype = None
+hb.hb_unicode_funcs_set_eastasian_width_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_funcs_set_general_category_func.restype = None
+hb.hb_unicode_funcs_set_general_category_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_funcs_set_mirroring_func.restype = None
+hb.hb_unicode_funcs_set_mirroring_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_funcs_set_script_func.restype = None
+hb.hb_unicode_funcs_set_script_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_funcs_set_compose_func.restype = None
+hb.hb_unicode_funcs_set_compose_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_funcs_set_decompose_func.restype = None
+hb.hb_unicode_funcs_set_decompose_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_funcs_set_decompose_compatibility_func.restype = None
+hb.hb_unicode_funcs_set_decompose_compatibility_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
 hb.hb_blob_create.restype = ct.c_void_p
 hb.hb_blob_create.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
@@ -2864,6 +2882,7 @@ def_immutable \
     hb_set = "hb_font_make_immutable",
   )
 def def_font_extra(celf) :
+
     def def_prop(propname, proptype, docextra) :
         # need separate inner function so each method gets
         # correct values for hb_getter and hb_setter
