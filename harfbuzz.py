@@ -928,6 +928,22 @@ hb.hb_unicode_funcs_set_decompose_func.restype = None
 hb.hb_unicode_funcs_set_decompose_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_unicode_funcs_set_decompose_compatibility_func.restype = None
 hb.hb_unicode_funcs_set_decompose_compatibility_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_unicode_combining_class.restype = HB.unicode_combining_class_t
+hb.hb_unicode_combining_class.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_unicode_eastasian_width.restype = ct.c_uint
+hb.hb_unicode_eastasian_width.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_unicode_general_category.restype = HB.unicode_general_category_t
+hb.hb_unicode_general_category.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_unicode_mirroring.restype = HB.codepoint_t
+hb.hb_unicode_mirroring.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_unicode_script.restype = HB.script_t
+hb.hb_unicode_script.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_unicode_compose.restype = HB.bool_t
+hb.hb_unicode_compose.argbyptes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t, ct.POINTER(HB.codepoint_t))
+hb.hb_unicode_decompose.restype = HB.bool_t
+hb.hb_unicode_decompose.argbyptes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.codepoint_t), ct.POINTER(HB.codepoint_t))
+hb.hb_unicode_decompose_compatibility.restype = ct.c_uint
+hb.hb_unicode_decompose_compatibility.argbyptes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.codepoint_t))
 
 hb.hb_blob_create.restype = ct.c_void_p
 hb.hb_blob_create.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
@@ -1485,6 +1501,65 @@ class UnicodeFuncs :
     #end parent
 
     # TODO: set the actual funcs
+
+    def combining_class(self, unicode) :
+        return \
+            hb.hb_unicode_combining_class(self._hbobj, unicode)
+    #end combining_class
+
+    def eastasian_width(self, unicode) :
+        return \
+            hb.hb_unicode_eastasian_width(self._hbobj, unicode)
+    #end eastasian_width
+
+    def general_category(self, unicode) :
+        return \
+            hb.hb_unicode_general_category(self._hbobj, unicode)
+    #end general_category
+
+    def mirroring(self, unicode) :
+        return \
+            hb.hb_unicode_mirroring(self._hbobj, unicode)
+    #end mirroring
+
+    def script(self, unicode) :
+        return \
+            hb.hb_unicode_script(self._hbobj, unicode)
+    #end script
+
+    def compose(self, a, b) :
+        ab = HB.codepoint_t()
+        if hb.hb_unicode_compose(self._hbobj, a, b, ct.byref(ab)) != 0 :
+            result = ab.value
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end compose
+
+    def decompose(self, ab) :
+        a = HB.codepoint_t()
+        b = HB.codepoint_t()
+        if hb.hb_unicode_decompose(self._hbobj, ab, ct.byref(a), ct.byref(b)) != 0 :
+            result = (a.value, b.value)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end decompose
+
+    def decompose_compatibility(self, u) :
+        decomposed = HB.codepoint_t()
+        if hb.hb_unicode_decompose_compatibility(self._hbobj, u, ct.byref(decomposed)) != 0 :
+            result = decomposed.value
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end decompose_compatibility
 
 #end UnicodeFuncs
 def_immutable \
