@@ -939,11 +939,11 @@ hb.hb_unicode_mirroring.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_unicode_script.restype = HB.script_t
 hb.hb_unicode_script.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_unicode_compose.restype = HB.bool_t
-hb.hb_unicode_compose.argbyptes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t, ct.POINTER(HB.codepoint_t))
+hb.hb_unicode_compose.argtypes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t, ct.POINTER(HB.codepoint_t))
 hb.hb_unicode_decompose.restype = HB.bool_t
-hb.hb_unicode_decompose.argbyptes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.codepoint_t), ct.POINTER(HB.codepoint_t))
+hb.hb_unicode_decompose.argtypes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.codepoint_t), ct.POINTER(HB.codepoint_t))
 hb.hb_unicode_decompose_compatibility.restype = ct.c_uint
-hb.hb_unicode_decompose_compatibility.argbyptes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.codepoint_t))
+hb.hb_unicode_decompose_compatibility.argtypes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.codepoint_t))
 
 hb.hb_blob_create.restype = ct.c_void_p
 hb.hb_blob_create.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
