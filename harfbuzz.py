@@ -1018,6 +1018,18 @@ hb.hb_face_is_immutable.restype = HB.bool_t
 hb.hb_face_is_immutable.argtypes = (ct.c_void_p,)
 hb.hb_face_make_immutable.restype = None
 hb.hb_face_make_immutable.argtypes = (ct.c_void_p,)
+hb.hb_face_set_index.restype = None
+hb.hb_face_set_index.argtypes = (ct.c_void_p, ct.c_uint)
+hb.hb_face_get_index.restype = ct.c_uint
+hb.hb_face_get_index.argtypes = (ct.c_void_p,)
+hb.hb_face_set_upem.restype = None
+hb.hb_face_set_upem.argtypes = (ct.c_void_p, ct.c_uint)
+hb.hb_face_get_upem.restype = ct.c_uint
+hb.hb_face_get_upem.argtypes = (ct.c_void_p,)
+hb.hb_face_set_glyph_count.restype = None
+hb.hb_face_set_glyph_count.argtypes = (ct.c_void_p, ct.c_uint)
+hb.hb_face_get_glyph_count.restype = ct.c_uint
+hb.hb_face_get_glyph_count.argtypes = (ct.c_void_p,)
 
 hb.hb_font_create.restype = ct.c_void_p
 hb.hb_font_create.argtypes = (ct.c_void_p,)
@@ -2117,8 +2129,9 @@ class Face :
 
     # immutable defined below
 
-    # TODO: get/set glyph_count, index, upem,
-    # reference_blob? reference_table? user_data?
+    # get/set glyph_count, index, upem defined below
+
+    # TODO: reference_blob? reference_table? user_data?
 
     # from hb-ot-layout.h:
 
@@ -2452,6 +2465,33 @@ def_immutable \
     hb_query = "hb_face_is_immutable",
     hb_set = "hb_face_make_immutable",
   )
+def def_face_props(celf) :
+    # get/set index, upem and glyph_count all have the same form:
+    # all these properties are unsigned integers.
+    for propname in ("index", "upem", "glyph_count") :
+        hb_getter = "hb_face_get_%s" % propname
+        hb_setter = "hb_face_set_%s" % propname
+
+        def getter(self) :
+            return \
+                getattr(hb, hb_getter)(self._hbobj)
+        #end getter
+
+        def setter(self, newval) :
+            getattr(hb, hb_setter)(self._hbobj, newval)
+        #end setter
+
+        getter.__name__ = propname
+        getter.__doc__ = "the %s property." % propname
+        setter.__name__ = propname
+        setter.__doc__ = "sets the %s property." % propname
+        propmethod = property(getter)
+        propmethod = propmethod.setter(setter)
+        setattr(celf, propname, propmethod)
+    #end for
+#end def_face_props
+def_face_props(Face)
+del def_face_props
 
 # from hb-font.h:
 
