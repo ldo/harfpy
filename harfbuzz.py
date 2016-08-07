@@ -999,6 +999,11 @@ hb.hb_buffer_get_replacement_codepoint.argtypes = (ct.c_void_p,)
 hb.hb_buffer_set_message_func.restype = None
 hb.hb_buffer_set_message_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
+hb.hb_segment_properties_equal.restype = HB.bool_t
+hb.hb_segment_properties_equal.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_segment_properties_hash.restype = ct.c_uint
+hb.hb_segment_properties_hash.argtypes = (ct.c_void_p,)
+
 hb.hb_face_create.restype = ct.c_void_p
 hb.hb_face_create.argtypes = (ct.c_void_p, ct.c_uint)
 hb.hb_face_create_for_tables.restype = ct.c_void_p
@@ -1568,6 +1573,26 @@ GlyphExtents = def_struct_class \
     ctname = "glyph_extents_t"
   )
 
+SegmentProperties = None # forward
+class SegmentPropertiesExtra :
+    # extra members for SegmentProperties class.
+
+    def __eq__(s1, s2) :
+        if isinstance(s2, SegmentProperties) :
+            result = hb.hb_segment_properties_equal(s1,_hbobj, s2._hbobj) != 0
+        else :
+            result = NotImplemented
+        #end if
+        return \
+            result
+    #end __eq__
+
+    def __hash__(self) :
+        return \
+            hb.hb_segment_properties_hash(self._hbobj)
+    #end __hash__
+
+#end SegmentPropertiesExtra
 SegmentProperties = def_struct_class \
   (
     name = "SegmentProperties",
@@ -1584,8 +1609,10 @@ SegmentProperties = def_struct_class \
                     "to" : HB.TAG,
                     "from" : lambda t : HB.UNTAG(t, True),
                 },
-        }
+        },
+    extra = SegmentPropertiesExtra
   )
+del SegmentPropertiesExtra
 
 class Buffer :
     "a HarfBuzz buffer. This is where the text shaping is actually done." \
@@ -1928,7 +1955,9 @@ class Buffer :
         hb.hb_buffer_reverse_clusters(self._hbobj)
     #end reverse_clusters
 
-    # TODO: (de)serialize, segment properties
+    # TODO: (de)serialize
+
+    # segment properties methods are in SegmentPropertiesExtra (above)
 
     # set_message_func defined below
 
