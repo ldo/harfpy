@@ -2026,9 +2026,7 @@ class Buffer :
         if font != None and not isinstance(font, Font) :
             raise TypeError("font must be None or a Font")
         #end if
-        if not isinstance(format, SerializeFormat) :
-            raise TypeError("format must be a SerializeFormat")
-        #end if
+        format = SerializeFormat.make_serialize(format)
         pos = 0
         end = len(self)
         tempbuf = array.array("B", (0,) * 512)
@@ -2048,9 +2046,7 @@ class Buffer :
         if font != None and not isinstance(font, Font) :
             raise TypeError("font must be None or a Font")
         #end if
-        if not isinstance(format, SerializeFormat) :
-            raise TypeError("format must be a SerializeFormat")
-        #end if
+        format = SerializeFormat.make_serialize(format)
         tempbuf = array.array("B", b)
         end_ptr = ct.c_void_p()
         if (
@@ -2137,6 +2133,21 @@ class SerializeFormat :
     #end __new__
 
     # no __del__ -- these objects are never freed
+
+    @classmethod
+    def make_serialize(celf, t) :
+        if isinstance(t, SerializeFormat) :
+            result = t
+        elif isinstance(t, int) :
+            result = celf(t)
+        elif isinstance(t, bytes) :
+            result = celf(HB.TAG(t))
+        else :
+            raise TypeError("bad SerializeFormat")
+        #end if
+        return \
+            result
+    #end make_serialize
 
     @classmethod
     def from_string(celf, s) :
