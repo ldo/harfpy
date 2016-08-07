@@ -26,6 +26,7 @@
 #-
 
 import ctypes as ct
+import array
 from weakref import \
     WeakValueDictionary
 try :
@@ -534,6 +535,12 @@ class HARFBUZZ :
     #end glyph_position_t
 
     buffer_message_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.c_char_p, ct.c_void_p)
+
+    BUFFER_SERIALIZE_FLAG_DEFAULT = 0x00000000
+    BUFFER_SERIALIZE_FLAG_NO_CLUSTERS = 0x00000001
+    BUFFER_SERIALIZE_FLAG_NO_POSITIONS = 0x00000002
+    BUFFER_SERIALIZE_FLAG_NO_GLYPH_NAMES = 0x00000004
+    BUFFER_SERIALIZE_FLAG_GLYPH_EXTENTS = 0x00000008
 
     BUFFER_SERIALIZE_FORMAT_TEXT = TAG(b'TEXT')
     BUFFER_SERIALIZE_FORMAT_JSON = TAG(b'JSON')
@@ -1996,7 +2003,56 @@ class Buffer :
         hb.hb_buffer_reverse_clusters(self._hbobj)
     #end reverse_clusters
 
-    # TODO: (de)serialize
+    def serialize_glyphs(self, font, format, flags) :
+        "returns a bytes value."
+        if font != None and not isinstance(font, Font) :
+            raise TypeError("font must be None or a Font")
+        #end if
+        if not isinstance(format, SerializeFormat) :
+            raise TypeError("format must be a SerializeFormat")
+        #end if
+        pos = 0
+        end = len(self)
+        tempbuf = array.array("B", (0,) * 512)
+        nr_items = 0
+        buf_consumed = ct.c_uint()
+        result = b""
+        while pos != end :
+            seg_items = hb.hb_buffer_serialize_glyphs(self._hbobj, pos, end, tempbuf.buffer_info()[0], tempbuf.buffer_info()[1], ct.byref(buf_consumed), (lambda : None, lambda : font._hbobj)[font != None](), format._tag, flags)
+            result += bytes(tempbuf[:buf_consumed.value])
+            pos += seg_items
+        #end while
+        return \
+            result
+    #end serialize_glyphs
+
+    def deserialize_glyphs(self, b, font, format) :
+        if font != None and not isinstance(font, Font) :
+            raise TypeError("font must be None or a Font")
+        #end if
+        if not isinstance(format, SerializeFormat) :
+            raise TypeError("format must be a SerializeFormat")
+        #end if
+        tempbuf = array.array("B", b)
+        end_ptr = ct.c_void_p()
+        if (
+            not hb.hb_buffer_deserialize_glyphs
+              (
+                self._hbobj,
+                tempbuf.buffer_info()[0],
+                tempbuf.buffer_info()[1],
+                ct.byref(end_ptr),
+                (lambda : None, lambda : font._hbobj)[font != None](),
+                format._tag
+              )
+        ) :
+            raise RuntimeError \
+              (
+                    "hb.hb_buffer_deserialize_glyphs failed at %d of %d bytes processed"
+                %
+                    (end_ptr.value - tempbuf.buffer_info()[0], len(b))
+              )
+    #end deserialize_glyphs
 
     # segment properties methods are in SegmentPropertiesExtra (above)
 
