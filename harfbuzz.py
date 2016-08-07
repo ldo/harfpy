@@ -1047,6 +1047,18 @@ hb.hb_font_set_funcs.restype = None
 hb.hb_font_set_funcs.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_font_set_funcs_data.restype = None
 hb.hb_font_set_funcs_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_set_parent.restype = None
+hb.hb_font_set_parent.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_font_get_parent.restype = ct.c_void_p
+hb.hb_font_get_parent.argtypes = (ct.c_void_p,)
+hb.hb_font_set_scale.restype = None
+hb.hb_font_set_scale.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
+hb.hb_font_get_scale.restype = None
+hb.hb_font_get_scale.argtypes = (ct.c_void_p, ct.POINTER(ct.c_int), ct.POINTER(ct.c_int))
+hb.hb_font_set_ppem.restype = None
+hb.hb_font_set_ppem.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint)
+hb.hb_font_get_ppem.restype = None
+hb.hb_font_get_ppem.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
 
 hb.hb_font_funcs_create.restype = ct.c_void_p
 hb.hb_font_funcs_create.argtypes = ()
@@ -2609,7 +2621,22 @@ class Font :
         hb.hb_font_set_funcs_data(self._hbobj, self._hbobj, wrap_destroy)
     #end set_funcs_data
 
-    # TODO: get/set ppem, scale, parent
+    @property
+    def parent(self) :
+        return \
+            Font(hb.hb_font_reference(hb.hb_font_get_parent(self._hbobj)))
+    #end parent
+
+    @parent.setter
+    def parent(self, new_parent) :
+        if new_parent != None and not isinstance(new_parent, Font) :
+            raise TypeError("new_parent must be None or a Font")
+        #end if
+        hb.hb_font_set_parent \
+            (self._hbobj, (lambda : None, lambda : new_parent._hbobj)[new_parent != None]())
+    #end parent
+
+    # get/set ppem, scale defined below
 
     # TODO: user data?
 
@@ -2709,6 +2736,54 @@ def_immutable \
     hb_query = "hb_font_is_immutable",
     hb_set = "hb_font_make_immutable",
   )
+def def_font_extra(celf) :
+    def def_prop(propname, proptype, docextra) :
+        # need separate inner function so each method gets
+        # correct values for hb_getter and hb_setter
+        hb_getter = "hb_font_get_%s" % propname
+        hb_setter = "hb_font_set_%s" % propname
+
+        def getter(self) :
+            x = proptype()
+            y = proptype()
+            getattr(hb, hb_getter)(self._hbobj, ct.byref(x), ct.byref(y))
+            return \
+                (x.value, y.value)
+        #end getter
+
+        def setter(self, new_xy) :
+            getattr(hb, hb_setter)(self._hbobj, new_xy[0], new_xy[1])
+        #end setter
+
+        getter.__name__ = propname
+        getter.__doc__ = \
+            (
+                "the %(name)s property as an (x, y) tuple.%(extra)s"
+            %
+                {
+                    "name" : propname,
+                    "extra" : (lambda : "", lambda : " " + docextra)[docextra != None](),
+                }
+            )
+        setter.__name__ = propname
+        setter.__doc__ = "sets the %s property to a new (x, y) tuple." % propname
+        propmethod = property(getter)
+        propmethod = propmethod.setter(setter)
+        setattr(celf, propname, propmethod)
+    #end def_prop
+
+#begin def_font_extra
+    for propname, proptype, docextra in \
+        (
+            ("ppem", ct.c_uint, "A zero value means no hinting in that direction."),
+            ("scale", ct.c_int, None),
+        ) \
+    :
+        def_prop(propname, proptype, docextra)
+    #end for
+#end def_font_extra
+def_font_extra(Font)
+del def_font_extra
 
 class FontFuncs :
     "wrapper around hb_font_funcs_t objects. Do not instantiate directly; use" \
