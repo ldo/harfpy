@@ -2499,6 +2499,7 @@ class Face :
 
     @staticmethod
     def create(blob, index) :
+        "creates a Face that gets its data from the specified Blob."
         if not isinstance(blob, Blob) :
             raise TypeError("blob must be a Blob")
         #end if
@@ -2564,6 +2565,7 @@ class Face :
 
         @staticmethod
         def ft_create(ft_face) :
+            "creates a Face from a freetype.Face."
             if not isinstance(ft_face, freetype.Face) :
                 raise TypeError("ft_face must be a freetype.Face")
             #end if
@@ -2989,6 +2991,7 @@ class Font :
 
     @staticmethod
     def create(face) :
+        "creates a Font from the specified Face."
         if not isinstance(face, Face) :
             raise TypeError("face must be a Face")
         #end if
@@ -3077,6 +3080,7 @@ class Font :
 
         @staticmethod
         def ft_create(ft_face) :
+            "creates a Font from a freetype.Face."
             if not isinstance(ft_face, freetype.Face) :
                 raise TypeError("ft_face must be a freetype.Face")
             #end if
