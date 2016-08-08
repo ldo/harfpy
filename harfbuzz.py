@@ -1596,7 +1596,7 @@ class UnicodeFuncs :
 
     def decompose_compatibility(self, u) :
         decomposed = (HB.codepoint_t * HB.UNICODE_MAX_DECOMPOSITION_LEN)()
-        decomposed_len = hb.hb_unicode_decompose_compatibility(self._hbobj, u, ct.byref(decomposed))
+        decomposed_len = hb.hb_unicode_decompose_compatibility(self._hbobj, u, decomposed)
         return \
             decomposed[:decomposed_len]
     #end decompose_compatibility
@@ -1729,7 +1729,9 @@ def def_unicodefuncs_extra() :
                         (len(result), HB.UNICODE_MAX_DECOMPOSITION_LEN)
                   )
             #end if
-            c_decomposed[:len(result)] = result
+            for i in range(len(result)) :
+                c_decomposed[i] = result[i]
+            #end for
             return \
                 len(result)
         #end wrap_decompose_compatibility_func
