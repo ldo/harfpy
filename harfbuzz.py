@@ -1536,7 +1536,15 @@ class UnicodeFuncs :
             UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_parent(self._hbobj)))
     #end parent
 
-    # TODO: set the actual funcs
+    # set_combining_class_func
+    # set_eastasian_width_func
+    # set_general_category_func
+    # set_mirroring_func
+    # set_script_func
+    # set_compose_func
+    # set_decompose_func
+    # set_decompose_compatibility_func
+    # all defined below
 
     def combining_class(self, unicode) :
         return \
