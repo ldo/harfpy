@@ -3006,22 +3006,16 @@ class Font :
 
     # immutable defined below
 
-    # TODO: get/set glyph_contour_point_func, glyph_extents_func, glyph_from_name_func,
-    # glyph_func, glyph_kerning_func, h_advance_func, h_kerning_func, h_origin_func,
-    # glyph_name_func, v_advance_func, v_kerning_func, v_origin_func,
-    # font_h/v_extents_func, font_extents_func
-
-    # TODO: getting corresponding information computed by above functions:
+    # TODO:
     # h_extents, v_extents, nominal_glyph, variation_glyph, glyph_h_advance,
     # glyph_v_advance, glyph_h_origin, glyph_v_origin, glyph_h_kerning,
     # glyph_v_kerning, glyph_extents, glyph_countour_point, glyph_name,
-    # glyph_from_name
-
-    # TODO: glyph to/from string, subtract_glyph_origin_for_direction,
+    # glyph_from_name,
     # get_glyph, get_extents_for_direction, get_glyph_advance_for_direction,
     # get_glyph_origin_for_direction, add_glyph_origin_for_direction,
     # subtract_glyph_origin_for_direction, get_glyph_kerning_for_direction,
-    # get_glyph_extents_for_origin, get_glyph_contour_point_for_origin
+    # get_glyph_extents_for_origin, get_glyph_contour_point_for_origin,
+    # glyph to/from string.
 
     def set_funcs(self, funcs, font_data, destroy) :
         if funcs != None and not isinstance(func, FontFuncs) :
