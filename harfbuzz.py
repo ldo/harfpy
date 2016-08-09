@@ -1,5 +1,5 @@
 #+
-# Python-3 binding for (parts of) HarfBuzz.
+# Python-3 binding for HarfBuzz.
 #
 # Additional recommended libraries:
 #     python_freetype <https://github.com/ldo/python_freetype> -- binding for FreeType
@@ -3192,11 +3192,111 @@ class Font :
             result
     #end get_glyph_from_name
 
-    # TODO: get_glyph, get_extents_for_direction, get_glyph_advance_for_direction,
-    # get_glyph_origin_for_direction, add_glyph_origin_for_direction,
-    # subtract_glyph_origin_for_direction, get_glyph_kerning_for_direction,
-    # get_glyph_extents_for_origin, get_glyph_contour_point_for_origin,
-    # glyph to/from string.
+    def get_glyph(self, unicode, variation_selector) :
+        glyph = HB.codepoint_t()
+        if hb.hb_font_get_glyph(self._hbobj, unicode, variation_selector, ct.byref(glyph)) != 0 :
+            result = glyph.value
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_glyph
+
+    def get_extents_for_direction(self, direction) :
+        extents = HB.font_extents_t()
+        hb.hb_font_get_extents_for_direction(self._hbobj, direction, ct.byref(extents))
+        return \
+            FontExtents.from_hb(extents)
+    #end get_extents_for_direction
+
+    def get_glyph_advance_for_direction(self, glyph, direction) :
+        x = HB.position_t()
+        y = HB.position_t()
+        hb.hb_font_get_glyph_advance_for_direction(self._hbobj, glyph, direction, ct.byref(x), ct.byref(y))
+        return \
+            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+    #end get_glyph_advance_for_direction
+
+    def get_glyph_origin_for_direction(self, glyph, direction) :
+        x = HB.position_t()
+        y = HB.position_t()
+        hb.hb_font_get_glyph_origin_for_direction(self._hbobj, glyph, direction, ct.byref(x), ct.byref(y))
+        return \
+            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+    #end get_glyph_origin_for_direction
+
+    def add_glyph_origin_for_direction(self, glyph, direction, origin) :
+        origin = tuple(origin)
+        x = HB.position_t(HB.to_position_t(origin[0]))
+        y = HB.position_t(HB.to_position_t(origin[1]))
+        hb.hb_font_add_glyph_origin_for_direction(self._hbobj, glyph, direction, ct.byref(x), ct.byref(y))
+        return \
+            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+    #end add_glyph_origin_for_direction
+
+    def subtract_glyph_origin_for_direction(self, glyph, direction, origin) :
+        origin = tuple(origin)
+        x = HB.position_t(HB.to_position_t(origin[0]))
+        y = HB.position_t(HB.to_position_t(origin[1]))
+        hb.hb_font_subtract_glyph_origin_for_direction(self._hbobj, glyph, direction, ct.byref(x), ct.byref(y))
+        return \
+            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+    #end subtract_glyph_origin_for_direction
+
+    def get_glyph_kerning_for_direction(self, first_glyph, second_glyph, direction) :
+        x = HB.position_t()
+        y = HB.position_t()
+        hb.hb_font_get_glyph_kerning_for_direction(self._hbobj, first_glyph, second_glyph, direction, ct.byref(x), ct.byref(y))
+        return \
+            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+    #end get_glyph_kerning_for_direction
+
+    def get_glyph_extents_for_direction(self, glyph, direction) :
+        extents = HB.glyph_extents_t()
+        if hb.hb_font_get_glyph_extents_for_origin(self._hbobj, glyph, direction, ct.byref(extents)) != 0 :
+            result = GlyphExtents.from_hb(extents)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_glyph_extents_for_direction
+
+    def get_glyph_contour_point_for_direction(self, glyph, point_index, direction) :
+        x = HB.position_t()
+        y = HB.position_t()
+        if hb.hb_font_get_glyph_contour_point_for_origin(self._hbobj, glyph, point_index, direction, ct.byref(x), ct.byref(y)) != 0 :
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_glyph_contour_point_for_direction
+
+    def glyph_to_string(self, glyph) :
+        "generates gidDDD if glyph has no name."
+        bufsize = 128 # big enough?
+        c_name = (ct.c_char * bufsize)()
+        hb.hb_font_glyph_to_string(self._hbobj, glyph, c_name, bufsize)
+        return \
+            c_name.value.decode() # nul-terminated
+    #end glyph_to_string
+
+    def glyph_from_string(self, name) :
+        "parses gidDDD and uniUUUU strings automatically."
+        c_name = (ct.c_char * len(name))()
+        c_name.value = name.encode()
+        c_glyph = HB.codepoint_t()
+        if hb.hb_font_glyph_from_string(self._hbobj, c_name, len(name), ct.byref(c_glyph)) != 0 :
+            result = c_glyph.value
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end glyph_from_string
 
     def set_funcs(self, funcs, font_data, destroy) :
         if funcs != None and not isinstance(func, FontFuncs) :
