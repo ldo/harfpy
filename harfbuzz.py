@@ -1796,23 +1796,32 @@ def def_unicodefuncs_extra() :
     #end def_wrap_decompose_compatibility_func
 
 #begin def_unicodefuncs_extra
-    for basename, def_func in \
+    for basename, def_func, protostr, resultstr in \
         (
-            ("combining_class", def_wrap_combining_class_func),
-            ("eastasian_width", def_wrap_eastasian_width_func),
-            ("general_category", def_wrap_general_category_func),
-            ("mirroring", def_wrap_mirroring_func),
-            ("script", def_wrap_script_func),
-            ("compose", def_wrap_compose_func),
-            ("decompose", def_wrap_decompose_func),
-            ("decompose_compatibility", def_wrap_decompose_compatibility_func),
+            ("combining_class", def_wrap_combining_class_func, "combining_class_func(self, unicode, user_data)", "n integer combining class code"),
+            ("eastasian_width", def_wrap_eastasian_width_func, "eastasian_width_func(self, unicode, user_data)", "n integer"),
+            ("general_category", def_wrap_general_category_func, "general_category_func(self, unicode, user_data)", "n integer general category code"),
+            ("mirroring", def_wrap_mirroring_func, "mirroring_func(self, unicode, user_data)", " unicode code point"),
+            ("script", def_wrap_script_func, "script_func(self, unicode, user_data)", "n integer script code"),
+            ("compose", def_wrap_compose_func, "compose_func(self, a, b, user_data)", " unicode code point or None"),
+            ("decompose", def_wrap_decompose_func, "decompose_func(self, ab, user_data)", " 2-tuple of Unicode code points or None"),
+            ("decompose_compatibility", def_wrap_decompose_compatibility_func, "decompose_compatibility_func(self, u, user_data)", " tuple of Unicode code points or None"),
         ) \
     :
         def_callback_wrapper \
           (
             celf = UnicodeFuncs,
             method_name = "set_%s_func" % basename,
-            docstring = None,
+            docstring =
+                    "sets the %(name)s_func callback, along with an optional destroy"
+                    " callback for the user_data. The callback_func should be declared"
+                    " as follows:\n"
+                    "\n"
+                    "    def %(proto)s\n"
+                    "\n"
+                    " where self is the UnicodeFuncs instance, and return a%(result)s."
+                %
+                    {"name" : basename, "proto" : protostr, "result" : resultstr},
             callback_field_name = "_wrap_%s_func" % basename,
             destroy_field_name = "_wrap_%s_destroy" % basename,
             def_wrap_callback_func = def_func,
