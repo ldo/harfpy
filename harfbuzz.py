@@ -1349,7 +1349,7 @@ def version() :
 def version_atleast(major, minor, micro) :
     "is the HarfBuzz version at least that specified."
     return \
-        bool(hb.hb_version_atleast(major, minor, micro))
+        hb.hb_version_atleast(major, minor, micro) != 0
 #end version_atleast
 
 def version_string() :
