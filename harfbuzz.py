@@ -1833,6 +1833,10 @@ class Blob :
         ( # to forestall typos
             "_hbobj",
             "__weakref__",
+            "_arr",
+            # need to keep references to ctypes-wrapped functions
+            # so they don't disappear prematurely:
+            "_wrap_destroy",
         )
 
     _instances = WeakValueDictionary()
@@ -1842,6 +1846,8 @@ class Blob :
         if self == None :
             self = super().__new__(celf)
             self._hbobj = _hbobj
+            self._arr = None
+            self._wrap_destroy = None
             celf._instances[_hbobj] = self
         else :
             hb.hb_blob_destroy(self._hbobj)
@@ -1858,16 +1864,33 @@ class Blob :
         #end if
     #end __del__
 
-    @staticmethod
-    def create_for_array(arr, mode, destroy) :
+    @classmethod
+    def create(celf, data, length, mode, user_data, destroy) :
+        "low-level Blob create routine: data is address of storage and length" \
+        " is its length in bytes."
+        if destroy != None :
+            @HB.destroy_func_t
+            def wrap_destroy(c_user_data) :
+                destroy(user_data)
+            #end wrap_destroy
+        else :
+            wrap_destroy = None
+        #end if
+        result = celf(hb.hb_blob_create(data, length, mode, None, wrap_destroy))
+        result._wrap_destroy = wrap_destroy
+        return \
+            result
+    #end create
+
+    @classmethod
+    def create_for_array(celf, arr, mode) :
         "creates a Blob that wraps the storage for the specified array.array object." \
         " mode is one of the MEMORY_MODE_XXX values."
-        if destroy != None :
-            raise NotImplementedError("no destroy arg for now")
-        #end if
         bufinfo = arr.buffer_info()
+        result = celf.create(bufinfo[0], bufinfo[1], mode, None, None)
+        result._arr = arr # keep a reference to ensure it doesn’t disappear prematurely
         return \
-            Blob(hb.hb_blob_create(bufinfo[0], bufinfo[1], mode, None, None))
+            result
     #end create_for_array
 
     def create_sub(self, offset, length) :
