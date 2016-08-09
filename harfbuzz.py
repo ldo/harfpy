@@ -3006,12 +3006,143 @@ class Font :
 
     # immutable defined below
 
-    # TODO:
-    # h_extents, v_extents, nominal_glyph, variation_glyph, glyph_h_advance,
-    # glyph_v_advance, glyph_h_origin, glyph_v_origin, glyph_h_kerning,
-    # glyph_v_kerning, glyph_extents, glyph_countour_point, glyph_name,
-    # glyph_from_name,
-    # get_glyph, get_extents_for_direction, get_glyph_advance_for_direction,
+    def get_h_extents(self) :
+        c_extents = HB.font_extents_t()
+        if hb_font_get_h_extents(self._hbobj, ct.byref(c_extents)) != 0 :
+            result = FontExtents.from_hb(c_extents)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_h_extents
+
+    def get_v_extents(self) :
+        c_extents = HB.font_extents_t()
+        if hb_font_get_v_extents(self._hbobj, ct.byref(c_extents)) != 0 :
+            result = FontExtents.from_hb(c_extents)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_v_extents
+
+    def get_nominal_glyph(self) :
+        glyph = HB.codepoint_t()
+        if hb_font_get_nominal_glyph(self._hbobj, ct.byref(glyph)) != 0 :
+            result = glyph.value
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_nominal_glyph
+
+    def get_variation_glyph(self) :
+        glyph = HB.codepoint_t()
+        if hb_font_get_variation_glyph(self._hbobj, ct.byref(glyph)) != 0 :
+            result = glyph.value
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_variation_glyph
+
+    def get_glyph_h_advance(self, glyph) :
+        return \
+            hb.hb_font_get_glyph_h_advance(self._hbobj, glyph)
+    #end get_glyph_h_advance
+
+    def get_glyph_v_advance(self, glyph) :
+        return \
+            hb.hb_font_get_glyph_v_advance(self._hbobj, glyph)
+    #end get_glyph_v_advance
+
+    def get_glyph_h_origin(self, glyph) :
+        x = HB.position_t()
+        y = HB.position_t()
+        if hb.hb_font_get_glyph_h_origin(self._hbobj, glyph, ct.byref(x), ct.byref(y)) != 0 :
+            result = (x.value, y.value)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_glyph_h_origin
+
+    def get_glyph_v_origin(self, glyph) :
+        x = HB.position_t()
+        y = HB.position_t()
+        if hb.hb_font_get_glyph_v_origin(self._hbobj, glyph, ct.byref(x), ct.byref(y)) != 0 :
+            result = (x.value, y.value)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_glyph_v_origin
+
+    def get_glyph_h_kerning(self, left_glyph, right_glyph) :
+        return \
+            hb.hb_font_get_glyph_h_kerning(self._hbobj, left_glyph, right_glyph)
+    #end get_glyph_h_kerning
+
+    def get_glyph_v_kerning(self, top_glyph, bottom_glyph) :
+        return \
+            hb.hb_font_get_glyph_v_kerning(self._hbobj, top_glyph, bottom_glyph)
+    #end get_glyph_v_kerning
+
+    def get_glyph_extents(self, glyph) :
+        c_extents = HB.font_extents_t()
+        if hb_font_get_glyph_extents(self._hbobj, glyph, ct.byref(c_extents)) != 0 :
+            result = FontExtents.from_hb(c_extents)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_glyph_extents
+
+    def get_glyph_contour_point(self, glyph) :
+        x = HB.position_t()
+        y = HB.position_t()
+        if hb.hb_font_get_glyph_contour_point(self._hbobj, glyph, point_index, ct.byref(x), ct.byref(y)) != 0 :
+            result = (x.value, y.value)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_glyph_contour_point
+
+    def get_glyph_name(self, glyph) :
+        bufsize = 128 # big enough?
+        c_name = (ct.c_char * bufsize)()
+        if hb.hb_font_get_glyph_name(self._hbobj, glyph, c_name, bufsize) != 0 :
+            result = c_name.value.decode() # nul-terminated
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end wrap_get_glyph_name_func
+
+    def get_glyph_from_name(self, name) :
+        c_name = (ct.c_char * len(name))()
+        c_name.value = name.encode()
+        c_glyph = HB.codepoint_t()
+        if hb.hb_font_get_glyph_from_name(self._hbobj, c_name, len(name), ct.byref(c_glyph)) != 0 :
+            result = c_glyph.value
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end get_glyph_from_name
+
+    # TODO: get_glyph, get_extents_for_direction, get_glyph_advance_for_direction,
     # get_glyph_origin_for_direction, add_glyph_origin_for_direction,
     # subtract_glyph_origin_for_direction, get_glyph_kerning_for_direction,
     # get_glyph_extents_for_origin, get_glyph_contour_point_for_origin,
