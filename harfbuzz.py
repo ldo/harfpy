@@ -3102,19 +3102,19 @@ class Font :
 
     def get_glyph_h_advance(self, glyph) :
         return \
-            hb.hb_font_get_glyph_h_advance(self._hbobj, glyph)
+            HB.from_position_t(hb.hb_font_get_glyph_h_advance(self._hbobj, glyph))
     #end get_glyph_h_advance
 
     def get_glyph_v_advance(self, glyph) :
         return \
-            hb.hb_font_get_glyph_v_advance(self._hbobj, glyph)
+            HB.from_position_t(hb.hb_font_get_glyph_v_advance(self._hbobj, glyph))
     #end get_glyph_v_advance
 
     def get_glyph_h_origin(self, glyph) :
         x = HB.position_t()
         y = HB.position_t()
         if hb.hb_font_get_glyph_h_origin(self._hbobj, glyph, ct.byref(x), ct.byref(y)) != 0 :
-            result = (x.value, y.value)
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
         else :
             result = None
         #end if
@@ -3126,7 +3126,7 @@ class Font :
         x = HB.position_t()
         y = HB.position_t()
         if hb.hb_font_get_glyph_v_origin(self._hbobj, glyph, ct.byref(x), ct.byref(y)) != 0 :
-            result = (x.value, y.value)
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
         else :
             result = None
         #end if
@@ -3136,12 +3136,12 @@ class Font :
 
     def get_glyph_h_kerning(self, left_glyph, right_glyph) :
         return \
-            hb.hb_font_get_glyph_h_kerning(self._hbobj, left_glyph, right_glyph)
+            HB.from_position_t(hb.hb_font_get_glyph_h_kerning(self._hbobj, left_glyph, right_glyph))
     #end get_glyph_h_kerning
 
     def get_glyph_v_kerning(self, top_glyph, bottom_glyph) :
         return \
-            hb.hb_font_get_glyph_v_kerning(self._hbobj, top_glyph, bottom_glyph)
+            HB.from_position_t(hb.hb_font_get_glyph_v_kerning(self._hbobj, top_glyph, bottom_glyph))
     #end get_glyph_v_kerning
 
     def get_glyph_extents(self, glyph) :
@@ -3159,7 +3159,7 @@ class Font :
         x = HB.position_t()
         y = HB.position_t()
         if hb.hb_font_get_glyph_contour_point(self._hbobj, glyph, point_index, ct.byref(x), ct.byref(y)) != 0 :
-            result = (x.value, y.value)
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
         else :
             result = None
         #end if
@@ -3593,7 +3593,7 @@ def def_fontfuncs_extra() :
         @HB.font_get_glyph_advance_func_t
         def wrap_get_glyph_advance(c_font, c_font_data, glyph, c_user_data) :
             return \
-                get_glyph_advance(self, get_font_data(c_font_data), glyph, user_data)
+                HB.to_position_t(get_glyph_advance(self, get_font_data(c_font_data), glyph, user_data))
         #end wrap_get_glyph_advance
 
     #begin def_wrap_get_glyph_advance_func
@@ -3607,8 +3607,8 @@ def def_fontfuncs_extra() :
         def wrap_get_glyph_origin(c_font, c_font_data, glyph, c_x, c_y, c_user_data) :
             pos = get_glyph_origin(self, get_font_data(c_font_data), glyph, user_data)
             if pos != None :
-                c_x.value = pos[0]
-                c_y.value = pos[1]
+                c_x.value = HB.to_position_t(pos[0])
+                c_y.value = HB.to_position_t(pos[1])
             #end if
             return \
                 pos != None
@@ -3624,7 +3624,7 @@ def def_fontfuncs_extra() :
         @HB.font_get_glyph_kerning_func_t
         def wrap_get_glyph_kerning(c_font, c_font_data, first_glyph, second_glyph, c_user_data) :
             return \
-                get_glyph_kerning(self, get_font_data(c_font_data), first_glyph, second_glyph, user_data)
+                HB.to_position_t(get_glyph_kerning(self, get_font_data(c_font_data), first_glyph, second_glyph, user_data))
         #end wrap_get_glyph_kerning
 
     #begin def_wrap_get_glyph_kerning_func
@@ -3638,6 +3638,7 @@ def def_fontfuncs_extra() :
         def wrap_get_glyph_extents(c_font, c_font_data, glyph, c_extents, c_user_data) :
             extents = get_glyph_extents(self, get_font_data(c_font_data), glyph, user_data)
             if extents != None :
+                extents = extents.to_hb()
                 c_extents.x_bearing = extents.x_bearing
                 c_extents.y_bearing = extents.y_bearing
                 c_extents.width = extents.width
@@ -3658,8 +3659,8 @@ def def_fontfuncs_extra() :
         def wrap_get_glyph_contour_point(c_font, c_font_data, glyph, point_index, c_x, c_y, c_user_data) :
             pos = get_glyph_contour_point(self, get_font_data(c_font_data), glyph, point_index, user_data)
             if pos != None :
-                c_x.value = pos[0]
-                c_y.value = pos[1]
+                c_x.value = HB.to_position_t(pos[0])
+                c_y.value = HB.to_position_t(pos[1])
             #end if
             return \
                 pos != None
