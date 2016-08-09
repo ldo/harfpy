@@ -3842,29 +3842,39 @@ def def_fontfuncs_extra() :
     #end def_wrap_get_glyph_from_name_func
 
 #begin def_fontfuncs_extra
-    for basename, def_func in \
+    for basename, def_func, protostr, resultstr in \
         (
-            ("font_h_extents", def_wrap_get_font_extents_func),
-            ("font_v_extents", def_wrap_get_font_extents_func),
-            ("nominal_glyph", def_wrap_get_nominal_glyph_func),
-            ("variation_glyph", def_wrap_get_variation_glyph_func),
-            ("glyph_h_advance", def_wrap_get_glyph_advance_func),
-            ("glyph_v_advance", def_wrap_get_glyph_advance_func),
-            ("glyph_h_origin", def_wrap_get_glyph_origin_func),
-            ("glyph_v_origin", def_wrap_get_glyph_origin_func),
-            ("glyph_h_kerning", def_wrap_get_glyph_kerning_func),
-            ("glyph_v_kerning", def_wrap_get_glyph_kerning_func),
-            ("glyph_extents", def_wrap_get_glyph_extents_func),
-            ("glyph_contour_point", def_wrap_get_glyph_contour_point_func),
-            ("glyph_name", def_wrap_get_glyph_name_func),
-            ("glyph_from_name", def_wrap_get_glyph_from_name_func),
+            ("font_h_extents", def_wrap_get_font_extents_func, "get_font_h_extents(self, font_data, user_data)", " FontExtents or None"),
+            ("font_v_extents", def_wrap_get_font_extents_func, "get_font_v_extents(self, font_data, user_data)", " FontExtents or None"),
+            ("nominal_glyph", def_wrap_get_nominal_glyph_func, "get_nominal_glyph(self, font_data, unicode, user_data)", "n integer glyph code or None"),
+            ("variation_glyph", def_wrap_get_variation_glyph_func, "get_variation_glyph(self, font_data, unicode, variation_selector, user_data)", "n integer glyph code or None"),
+            ("glyph_h_advance", def_wrap_get_glyph_advance_func, "get_glyph_h_advance(self, font_data, glyph, user_data)", " float"),
+            ("glyph_v_advance", def_wrap_get_glyph_advance_func, "get_glyph_v_advance(self, font_data, glyph, user_data)", " float"),
+            ("glyph_h_origin", def_wrap_get_glyph_origin_func, "get_glyph_h_origin(self, font_data, glyph, user_data)", " 2-tuple, qahirah.Vector or None"),
+            ("glyph_v_origin", def_wrap_get_glyph_origin_func, "get_glyph_v_origin(self, font_data, glyph, user_data)", " 2-tuple, qahirah.Vector or None"),
+            ("glyph_h_kerning", def_wrap_get_glyph_kerning_func, "get_glyph_h_kerning(self, font_data, first_glyph, second_glyph, user_data)", " float"),
+            ("glyph_v_kerning", def_wrap_get_glyph_kerning_func, "get_glyph_v_kerning(self, font_data, first_glyph, second_glyph, user_data)", " float"),
+            ("glyph_extents", def_wrap_get_glyph_extents_func, "get_glyph_extents(self, font_data, glyph, user_data)", " GlyphExtents or None"),
+            ("glyph_contour_point", def_wrap_get_glyph_contour_point_func, "get_glyph_contour_point(self, font_data, glyph, point_index, user_data)", " 2-tuple, qahirah.Vector or None"),
+            ("glyph_name", def_wrap_get_glyph_name_func, "get_glyph_name_func(self, font_data, glyph, user_data)", " string or None"),
+            ("glyph_from_name", def_wrap_get_glyph_from_name_func, "get_glyph_from_name(self, font_data, name, user_data)", "n integer glyph code or None"),
         ) \
     :
         def_callback_wrapper \
           (
             celf = FontFuncs,
             method_name = "set_%s_func" % basename,
-            docstring = None,
+            docstring =
+                    "sets the %(name)s_func callback, along with an optional destroy"
+                    " callback for the user_data. The callback_func should be declared"
+                    " as follows:\n"
+                    "\n"
+                    "    def %(proto)s\n"
+                    "\n"
+                    " where self is the FontFuncs instance and font_data was what was"
+                    " passed to set_font_funcs for the Font, and return a%(result)s."
+                %
+                    {"name" : basename, "proto" : protostr, "result" : resultstr},
             callback_field_name = "_wrap_%s_func" % basename,
             destroy_field_name = "_wrap_%s_destroy" % basename,
             def_wrap_callback_func = def_func,
