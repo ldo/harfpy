@@ -3122,9 +3122,9 @@ class Font :
             result
     #end get_v_extents
 
-    def get_nominal_glyph(self) :
+    def get_nominal_glyph(self, unicode) :
         glyph = HB.codepoint_t()
-        if hb_font_get_nominal_glyph(self._hbobj, ct.byref(glyph)) != 0 :
+        if hb_font_get_nominal_glyph(self._hbobj, unicode, ct.byref(glyph)) != 0 :
             result = glyph.value
         else :
             result = None
@@ -3133,9 +3133,9 @@ class Font :
             result
     #end get_nominal_glyph
 
-    def get_variation_glyph(self) :
+    def get_variation_glyph(self, unicode, variation_selector) :
         glyph = HB.codepoint_t()
-        if hb_font_get_variation_glyph(self._hbobj, ct.byref(glyph)) != 0 :
+        if hb_font_get_variation_glyph(self._hbobj, unicode, variation_selector, ct.byref(glyph)) != 0 :
             result = glyph.value
         else :
             result = None
@@ -3199,7 +3199,7 @@ class Font :
             result
     #end get_glyph_extents
 
-    def get_glyph_contour_point(self, glyph) :
+    def get_glyph_contour_point(self, glyph, point_index) :
         x = HB.position_t()
         y = HB.position_t()
         if hb.hb_font_get_glyph_contour_point(self._hbobj, glyph, point_index, ct.byref(x), ct.byref(y)) != 0 :
@@ -3247,9 +3247,9 @@ class Font :
             result
     #end get_glyph
 
-    def get_extents_for_direction(self, direction) :
+    def get_extents_for_direction(self, glyph, direction) :
         extents = HB.font_extents_t()
-        hb.hb_font_get_extents_for_direction(self._hbobj, direction, ct.byref(extents))
+        hb.hb_font_get_extents_for_direction(self._hbobj, glyph, direction, ct.byref(extents))
         return \
             FontExtents.from_hb(extents)
     #end get_extents_for_direction
