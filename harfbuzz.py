@@ -1601,31 +1601,37 @@ class UnicodeFuncs :
     # all defined below
 
     def combining_class(self, unicode) :
+        "invokes the combining_class_func."
         return \
             hb.hb_unicode_combining_class(self._hbobj, unicode)
     #end combining_class
 
     def eastasian_width(self, unicode) :
+        "invokes the eastasian_width_func."
         return \
             hb.hb_unicode_eastasian_width(self._hbobj, unicode)
     #end eastasian_width
 
     def general_category(self, unicode) :
+        "invokes the general_category_func."
         return \
             hb.hb_unicode_general_category(self._hbobj, unicode)
     #end general_category
 
     def mirroring(self, unicode) :
+        "invokes the mirroring_func."
         return \
             hb.hb_unicode_mirroring(self._hbobj, unicode)
     #end mirroring
 
     def script(self, unicode) :
+        "invokes the script_func."
         return \
             hb.hb_unicode_script(self._hbobj, unicode)
     #end script
 
     def compose(self, a, b) :
+        "invokes the compose_func."
         ab = HB.codepoint_t()
         if hb.hb_unicode_compose(self._hbobj, a, b, ct.byref(ab)) != 0 :
             result = ab.value
@@ -1637,6 +1643,7 @@ class UnicodeFuncs :
     #end compose
 
     def decompose(self, ab) :
+        "invokes the decompose_func."
         a = HB.codepoint_t()
         b = HB.codepoint_t()
         if hb.hb_unicode_decompose(self._hbobj, ab, ct.byref(a), ct.byref(b)) != 0 :
@@ -1649,6 +1656,7 @@ class UnicodeFuncs :
     #end decompose
 
     def decompose_compatibility(self, u) :
+        "invokes the decompose_compatibility_func."
         decomposed = (HB.codepoint_t * HB.UNICODE_MAX_DECOMPOSITION_LEN)()
         decomposed_len = hb.hb_unicode_decompose_compatibility(self._hbobj, u, decomposed)
         return \
