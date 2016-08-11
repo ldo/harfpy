@@ -2116,7 +2116,7 @@ class Buffer :
     #end clear_contents
 
     def pre_allocate(self, size) :
-        if not hb.hb_buffer_pre_allocate(self._hbobj, size) :
+        if hb.hb_buffer_pre_allocate(self._hbobj, size) == 0 :
             raise RuntimeError("pre_allocate failed")
         #end if
     #end pre_allocate
@@ -2128,7 +2128,7 @@ class Buffer :
 
     def check_alloc(self) :
         "checks that the last buffer allocation was successful."
-        if not hb.hb_buffer_allocation_successful(self._hbobj) :
+        if hb.hb_buffer_allocation_successful(self._hbobj) == 0 :
             raise RuntimeError("allocation failure")
         #end if
     #end check_alloc
@@ -2264,7 +2264,7 @@ class Buffer :
 
     @length.setter
     def length(self, length) :
-        if not hb.hb_buffer_set_length(self._hbobj, length) :
+        if hb.hb_buffer_set_length(self._hbobj, length) == 0 :
             raise RuntimeError("set_length failed")
         #end if
     #end length
@@ -2419,15 +2419,17 @@ class Buffer :
         tempbuf = array.array("B", b)
         end_ptr = ct.c_void_p()
         if (
-            not hb.hb_buffer_deserialize_glyphs
-              (
-                self._hbobj,
-                tempbuf.buffer_info()[0],
-                tempbuf.buffer_info()[1],
-                ct.byref(end_ptr),
-                (lambda : None, lambda : font._hbobj)[font != None](),
-                format._tag
-              )
+                hb.hb_buffer_deserialize_glyphs
+                  (
+                    self._hbobj,
+                    tempbuf.buffer_info()[0],
+                    tempbuf.buffer_info()[1],
+                    ct.byref(end_ptr),
+                    (lambda : None, lambda : font._hbobj)[font != None](),
+                    format._tag
+                  )
+            ==
+                0
         ) :
             raise RuntimeError \
               (
@@ -2618,7 +2620,7 @@ class Face :
 
         @HB.reference_table_func_t
         def wrap_reference_table(c_face, c_tag, c_user_data) :
-            result = reference_table(Face(hb.hb_face_reference(c_face)), c_tag.value, user_data)
+            result = reference_table(Face(hb.hb_face_reference(c_face)), c_tag, user_data)
             if isinstance(result, Blob) :
                 c_result = hb.hb_blob_reference(result._hbobj)
             elif result == None :
@@ -3912,7 +3914,7 @@ class FeatureExtra :
         "returns a Feature corresponding to the specified name string."
         sb = s.encode()
         result = HB.feature_t()
-        if not hb.hb_feature_from_string(sb, len(sb), ct.byref(result)) :
+        if hb.hb_feature_from_string(sb, len(sb), ct.byref(result)) == 0 :
             raise ValueError("failed to decode feature_from_string")
         #end if
         return \
