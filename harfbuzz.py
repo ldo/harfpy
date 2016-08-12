@@ -2341,7 +2341,9 @@ class Buffer :
         def get_glyphs(self, origin = None) :
             "returns a a tuple of two items, a list of qahirah.Glyph objects," \
             " and the Vector origin for the following glyph run. All positions can" \
-            " be optionally offset by the specified Vector origin."
+            " be optionally offset by the specified Vector origin. The signs of the" \
+            " y-coordinates are flipped to correspond to the usual Cairo convention" \
+            " of increasing downwards."
             glyph_infos = self.glyph_infos
             glyph_positions = self.glyph_positions
             result = []
@@ -2353,9 +2355,9 @@ class Buffer :
             for i in range(len(glyph_infos)) :
                 result.append \
                   (
-                    qahirah.Glyph(glyph_infos[i].codepoint, pos + glyph_positions[i].offset)
+                    qahirah.Glyph(glyph_infos[i].codepoint, pos + qahirah.Vector(0, -1) * glyph_positions[i].offset)
                   )
-                pos += glyph_positions[i].advance
+                pos += qahirah.Vector(0, -1) * glyph_positions[i].advance
             #end for
             return \
                 (result, pos)
