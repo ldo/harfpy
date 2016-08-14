@@ -1022,9 +1022,9 @@ hb.hb_buffer_set_length.argtypes = (ct.c_void_p, ct.c_uint)
 hb.hb_buffer_get_length.restype = ct.c_uint
 hb.hb_buffer_get_length.argtypes = (ct.c_void_p,)
 hb.hb_buffer_set_segment_properties.restype = None
-hb.hb_buffer_set_segment_properties.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_buffer_set_segment_properties.argtypes = (ct.c_void_p, ct.POINTER(HB.segment_properties_t))
 hb.hb_buffer_get_segment_properties.restype = None
-hb.hb_buffer_get_segment_properties.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_buffer_get_segment_properties.argtypes = (ct.c_void_p, ct.POINTER(HB.segment_properties_t))
 hb.hb_buffer_guess_segment_properties.restype = None
 hb.hb_buffer_guess_segment_properties.argtypes = (ct.c_void_p,)
 hb.hb_buffer_get_glyph_infos.restype = ct.c_void_p
@@ -4170,15 +4170,15 @@ class ShapePlan :
         if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
             raise TypeError("font must be a Font and buffer must be a Buffer")
         #end if
-        if user_features != None :
-            c_user_features = seq_to_ct(user_features, HB.feature_t, lambda f : f.to_hb())
-            nr_user_features = len(user_features)
+        if features != None :
+            c_features = seq_to_ct(features, HB.feature_t, lambda f : f.to_hb())
+            nr_features = len(features)
         else :
-            c_user_features = None
-            nr_user_features = 0
+            c_features = None
+            nr_features = 0
         #end if
         return \
-            hb.hb_shape_plan_execute(self._hbobj, font._hbobj, buffer._hbobj, c_user_features, nr_user_features) != 0
+            hb.hb_shape_plan_execute(self._hbobj, font._hbobj, buffer._hbobj, c_features, nr_features) != 0
     #end execute
 
     @staticmethod
