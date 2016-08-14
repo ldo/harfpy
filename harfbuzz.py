@@ -682,7 +682,7 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
             "returns a HarfBuzz representation of the structure."
             result = ctstruct()
             for name, cttype in ctstruct._fields_ :
-                val = getattr(self, name)
+                val = getattr(self, name, None)
                 if val != None and conv != None and name in conv :
                     val = conv[name]["to"](val)
                 #end if
@@ -1320,9 +1320,9 @@ hb.hb_ot_shape_plan_collect_lookups.restype = None
 hb.hb_ot_shape_plan_collect_lookups.argtypes = (ct.c_void_p, HB.tag_t, ct.c_void_p)
 
 hb.hb_shape_plan_create.restype = ct.c_void_p
-hb.hb_shape_plan_create.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
+hb.hb_shape_plan_create.argtypes = (ct.c_void_p, ct.POINTER(HB.segment_properties_t), ct.c_void_p, ct.c_uint, ct.c_void_p)
 hb.hb_shape_plan_create_cached.restype = ct.c_void_p
-hb.hb_shape_plan_create_cached.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_void_p)
+hb.hb_shape_plan_create_cached.argtypes = (ct.c_void_p, ct.POINTER(HB.segment_properties_t), ct.c_void_p, ct.c_uint, ct.c_void_p)
 hb.hb_shape_plan_destroy.restype = None
 hb.hb_shape_plan_destroy.argtypes = (ct.c_void_p,)
 hb.hb_shape_plan_execute.restype = HB.bool_t
@@ -4142,6 +4142,9 @@ class ShapePlan :
     def create(face, props, user_features, shaper_list, cached) :
         if not isinstance(face, Face) :
             raise TypeError("face must be a Face")
+        #end if
+        if not isinstance(props, SegmentProperties) :
+            raise TypeError("props must be a SegmentProperties")
         #end if
         c_props = props.to_hb()
         if user_features != None :
