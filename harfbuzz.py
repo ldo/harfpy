@@ -1576,6 +1576,16 @@ class UnicodeFuncs :
 
     @staticmethod
     def get_empty() :
+        "returns the “empty” UnicodeFuncs object. Its functions behave as" \
+        " follows:\n" \
+        "    combining_class always returns HB.UNICODE_COMBINING_CLASS_NOT_REORDERED\n" \
+        "    eastasian_width always returns 1\n" \
+        "    general_category always returns HB.UNICODE_GENERAL_CATEGORY_OTHER_LETTER\n" \
+        "    unicode_mirroring always returns the passed character\n" \
+        "    unicode_script always returns HB.SCRIPT_UNKNOWN\n" \
+        "    unicode_compose always returns None\n" \
+        "    unicode_decompose always returns None\n" \
+        "    unicode_decompose_compatibility always an empty sequence."
         return \
             UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_empty()))
     #end get_empty
