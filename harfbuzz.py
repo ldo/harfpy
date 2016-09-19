@@ -1576,8 +1576,9 @@ class UnicodeFuncs :
 
     @staticmethod
     def get_empty() :
-        "returns the “empty” UnicodeFuncs object. Its functions behave as" \
+        "returns the (unique) “empty” UnicodeFuncs object. Its functions behave as" \
         " follows:\n" \
+        "\n" \
         "    combining_class always returns HB.UNICODE_COMBINING_CLASS_NOT_REORDERED\n" \
         "    eastasian_width always returns 1\n" \
         "    general_category always returns HB.UNICODE_GENERAL_CATEGORY_OTHER_LETTER\n" \
@@ -1929,7 +1930,8 @@ class Blob :
 
     @staticmethod
     def get_empty() :
-        "returns the empty Blob."
+        "returns the (unique) empty Blob. This has a null data pointer, zero length," \
+        " and its memory mode is readonly."
         return \
             Blob(hb.hb_blob_reference(hb.hb_blob_get_empty()))
     #end get_empty
@@ -2109,7 +2111,7 @@ class Buffer :
 
     @staticmethod
     def get_empty() :
-        "returns the empty Buffer instance."
+        "returns the (unique) empty Buffer instance."
         return \
             Buffer(hb.hb_buffer_reference(hb.hb_buffer_get_empty()))
     #end get_empty
@@ -2662,7 +2664,7 @@ class Face :
 
     @staticmethod
     def get_empty() :
-        "returns the (unique) empty Face."
+        "returns the (unique) empty Face. This has no glyphs and is immutable."
         return \
             Face(hb.hb_face_reference(hb.hb_face_get_empty()))
     #end get_empty
@@ -3656,6 +3658,20 @@ class FontFuncs :
 
     @staticmethod
     def get_empty() :
+        "returns the (unique) “empty” FontFuncs object. Its functions behave as" \
+        " follows:\n" \
+        "\n" \
+        "    font_h_extents and font_v_extents are all zeroes\n" \
+        "    nominal_glyph is always zero\n" \
+        "    variation_glyph is always zero\n" \
+        "    glyph_h_advance is always the font’s x_scale\n" \
+        "    glyph_v_advance is always the font’s y_scale\n" \
+        "    glyph_h_origin and glyph_v_origin are always zero\n" \
+        "    glyph_h_kerning and glyph_v_kerning are always zero\n" \
+        "    glyph_extents are all zeroes\n" \
+        "    glyph_contour_point always returns (0, 0)\n" \
+        "    glyph_name is always the empty string\n" \
+        "    glyph_from_name is always zero."
         return \
             FontFuncs(hb.hb_font_funcs_reference(hb.hb_font_funcs_get_empty()))
     #end get_empty
