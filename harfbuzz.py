@@ -1754,9 +1754,9 @@ def def_unicodefuncs_extra() :
         def wrap_compose_func(c_funcs, a, b, c_ab, c_user_data) :
             result = compose_func(self, a, b, user_data)
             if result != None :
-                c_ab.value = result
+                c_ab[0] = result
             else :
-                c_ab.value = 0 # ?
+                c_ab[0] = 0 # ?
             #end if
             return \
                 result != None
@@ -1773,9 +1773,9 @@ def def_unicodefuncs_extra() :
         def wrap_decompose_func(c_funcs, ab, c_a, c_b, c_user_data) :
             result = decompose_func(self, ab, user_data)
             if result != None :
-                c_a.value, c_b.value = result
+                c_a[0], c_b[0] = result
             else :
-                c_a.value, c_b.value = (0, 0)
+                c_a[0], c_b[0] = (0, 0)
             #end if
             return \
                 result != None
@@ -3734,7 +3734,7 @@ def def_fontfuncs_extra() :
         def wrap_get_nominal_glyph(c_font, c_font_data, unicode, c_glyph, c_user_data) :
             glyph = get_nominal_glyph(self, get_font_data(c_font_data), unicode, user_data)
             if glyph != None :
-                c_glyph.value = glyph
+                c_glyph[0] = glyph
             #end if
             return \
                 glyph != None
@@ -3751,7 +3751,7 @@ def def_fontfuncs_extra() :
         def wrap_get_variation_glyph(c_font, c_font_data, unicode, variation_selector, c_glyph, c_user_data) :
             glyph = get_variation_glyph(self, get_font_data(c_font_data), unicode, variation_selector, user_data)
             if glyph != None :
-                c_glyph.value = glyph
+                c_glyph[0] = glyph
             #end if
             return \
                 glyph != None
@@ -3781,8 +3781,8 @@ def def_fontfuncs_extra() :
         def wrap_get_glyph_origin(c_font, c_font_data, glyph, c_x, c_y, c_user_data) :
             pos = get_glyph_origin(self, get_font_data(c_font_data), glyph, user_data)
             if pos != None :
-                c_x.value = HB.to_position_t(pos[0])
-                c_y.value = HB.to_position_t(pos[1])
+                c_x[0] = HB.to_position_t(pos[0])
+                c_y[0] = HB.to_position_t(pos[1])
             #end if
             return \
                 pos != None
@@ -3833,8 +3833,8 @@ def def_fontfuncs_extra() :
         def wrap_get_glyph_contour_point(c_font, c_font_data, glyph, point_index, c_x, c_y, c_user_data) :
             pos = get_glyph_contour_point(self, get_font_data(c_font_data), glyph, point_index, user_data)
             if pos != None :
-                c_x.value = HB.to_position_t(pos[0])
-                c_y.value = HB.to_position_t(pos[1])
+                c_x[0] = HB.to_position_t(pos[0])
+                c_y[0] = HB.to_position_t(pos[1])
             #end if
             return \
                 pos != None
@@ -3877,7 +3877,7 @@ def def_fontfuncs_extra() :
             #end if
             glyph = get_glyph_from_name(self, get_font_data(c_font_data), name, user_data)
             if glyph != None :
-                c_glyph.value = glyph
+                c_glyph[0] = glyph
             #end if
             return \
                 glyph != None
