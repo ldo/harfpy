@@ -604,8 +604,8 @@ class HARFBUZZ :
     font_get_glyph_v_kerning_func_t = font_get_glyph_kerning_func_t
     font_get_glyph_extents_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.POINTER(glyph_extents_t), ct.c_void_p)
     font_get_glyph_contour_point_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.c_uint, ct.POINTER(position_t), ct.POINTER(position_t), ct.c_void_p)
-    font_get_glyph_name_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.c_void_p, ct.c_uint, ct.c_void_p)
-    font_get_glyph_from_name_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_int, ct.POINTER(codepoint_t), ct.c_void_p)
+    font_get_glyph_name_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.POINTER(ct.c_char), ct.c_uint, ct.c_void_p)
+    font_get_glyph_from_name_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.POINTER(ct.c_char), ct.c_int, ct.POINTER(codepoint_t), ct.c_void_p)
 
     # from hb-shape.h:
 
@@ -3867,7 +3867,10 @@ def def_fontfuncs_extra() :
             name = get_glyph_name(self, get_font_data(c_font_data), glyph, user_data)
             if size > 0 :
                 if name != None :
-                    c_name.value = name.encode()[:size - 1] + b"\x00"
+                    enc_name = name.encode()[:size - 1] + b"\x00"
+                    for i in range(len(enc_name)) :
+                        c_name[i] = enc_name[i]
+                    #end for
                 else :
                     c_name[0] = 0
                 #end if
