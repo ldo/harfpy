@@ -3118,7 +3118,7 @@ class Font :
 
     def get_h_extents(self) :
         c_extents = HB.font_extents_t()
-        if hb_font_get_h_extents(self._hbobj, ct.byref(c_extents)) != 0 :
+        if hb.hb_font_get_h_extents(self._hbobj, ct.byref(c_extents)) != 0 :
             result = FontExtents.from_hb(c_extents)
         else :
             result = None
@@ -3129,7 +3129,7 @@ class Font :
 
     def get_v_extents(self) :
         c_extents = HB.font_extents_t()
-        if hb_font_get_v_extents(self._hbobj, ct.byref(c_extents)) != 0 :
+        if hb.hb_font_get_v_extents(self._hbobj, ct.byref(c_extents)) != 0 :
             result = FontExtents.from_hb(c_extents)
         else :
             result = None
@@ -3140,7 +3140,7 @@ class Font :
 
     def get_nominal_glyph(self, unicode) :
         glyph = HB.codepoint_t()
-        if hb_font_get_nominal_glyph(self._hbobj, unicode, ct.byref(glyph)) != 0 :
+        if hb.hb_font_get_nominal_glyph(self._hbobj, unicode, ct.byref(glyph)) != 0 :
             result = glyph.value
         else :
             result = None
@@ -3151,7 +3151,7 @@ class Font :
 
     def get_variation_glyph(self, unicode, variation_selector) :
         glyph = HB.codepoint_t()
-        if hb_font_get_variation_glyph(self._hbobj, unicode, variation_selector, ct.byref(glyph)) != 0 :
+        if hb.hb_font_get_variation_glyph(self._hbobj, unicode, variation_selector, ct.byref(glyph)) != 0 :
             result = glyph.value
         else :
             result = None
@@ -3359,7 +3359,7 @@ class Font :
     #end glyph_from_string
 
     def set_funcs(self, funcs, font_data, destroy) :
-        if funcs != None and not isinstance(func, FontFuncs) :
+        if funcs != None and not isinstance(funcs, FontFuncs) :
             raise TypeError("funcs must be None or a FontFuncs")
         #end if
         if destroy != None :
