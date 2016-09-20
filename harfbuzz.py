@@ -683,10 +683,12 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
             result = ctstruct()
             for name, cttype in ctstruct._fields_ :
                 val = getattr(self, name, None)
-                if val != None and conv != None and name in conv :
-                    val = conv[name]["to"](val)
+                if val != None :
+                    if conv != None and name in conv :
+                        val = conv[name]["to"](val)
+                    #end if
+                    setattr(result, name, val)
                 #end if
-                setattr(result, name, val)
             #end for
             return \
                 result
@@ -724,6 +726,7 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
                           (
                             "%s = %s" % (field[0], getattr(self, field[0]))
                             for field in ctstruct._fields_
+                            if hasattr(self, field[0])
                           ),
                     )
                 )
@@ -2012,12 +2015,25 @@ del GlyphPositionExtra
 FontExtents = def_struct_class \
   (
     name = "FontExtents",
-    ctname = "font_extents_t"
+    ctname = "font_extents_t",
+    conv =
+        {
+            "ascender" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+            "descender" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+            "line_gap" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+        }
   )
 GlyphExtents = def_struct_class \
   (
     name = "GlyphExtents",
-    ctname = "glyph_extents_t"
+    ctname = "glyph_extents_t",
+    conv =
+        {
+            "x_bearing" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+            "y_bearing" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+            "width" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+            "height" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+        }
   )
 
 SegmentProperties = None # forward
@@ -3715,9 +3731,8 @@ def def_fontfuncs_extra() :
         def wrap_get_font_extents(c_font, c_font_data, c_metrics, c_user_data) :
             metrics = get_font_extents(self, get_font_data(c_font_data), user_data)
             if metrics != None :
-                c_metrics.ascender = metrics.ascender
-                c_metrics.descender = metrics.descender
-                c_metrics.line_gap = metrics.line_gap
+                metrics = metrics.to_hb()
+                c_metrics[0] = metrics
             #end if
             return \
                 metrics != None
@@ -3813,10 +3828,10 @@ def def_fontfuncs_extra() :
             extents = get_glyph_extents(self, get_font_data(c_font_data), glyph, user_data)
             if extents != None :
                 extents = extents.to_hb()
-                c_extents.x_bearing = extents.x_bearing
-                c_extents.y_bearing = extents.y_bearing
-                c_extents.width = extents.width
-                c_extents.height = extents.height
+                c_extents[0].x_bearing = extents.x_bearing
+                c_extents[0].y_bearing = extents.y_bearing
+                c_extents[0].width = extents.width
+                c_extents[0].height = extents.height
             #end if
             return \
                 extents != None
