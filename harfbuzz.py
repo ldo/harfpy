@@ -3221,9 +3221,9 @@ class Font :
     #end get_glyph_v_kerning
 
     def get_glyph_extents(self, glyph) :
-        c_extents = HB.font_extents_t()
-        if hb_font_get_glyph_extents(self._hbobj, glyph, ct.byref(c_extents)) != 0 :
-            result = FontExtents.from_hb(c_extents)
+        c_extents = HB.glyph_extents_t()
+        if hb.hb_font_get_glyph_extents(self._hbobj, glyph, ct.byref(c_extents)) != 0 :
+            result = GlyphExtents.from_hb(c_extents)
         else :
             result = None
         #end if
