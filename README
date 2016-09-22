@@ -269,7 +269,6 @@ Actually render the glyphs into a Cairo context:
         .set_source_colour(Colour.grey(0))
         .set_font_face(qah_face)
         .set_font_size(text_size)
-        .move_to((0, 0))
         .show_glyphs(glyphs)
     )
 
@@ -289,4 +288,4 @@ point for finding out more is the [HarfBuzz
 Wiki](https://github.com/behdad/harfbuzz/wiki).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2016 August 6
+2016 September 22
