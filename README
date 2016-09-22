@@ -278,7 +278,7 @@ And finally, save the `ImageSurface` contents to a PNG file for viewing:
     pix.flush().write_to_png("%s.png" % os.path.basename(sys.argv[0]))
 
 For more complete example scripts, see my
-[harfpy_exampes](https://github.com/ldo/harfpy_examples) repo.
+[harfpy_examples](https://github.com/ldo/harfpy_examples) repo.
 
 
 More Info About HarfBuzz
