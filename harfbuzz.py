@@ -2940,7 +2940,7 @@ class Face :
             glyphs_input = (Set.NULL, Set.to_hb)[want_glyphs_input]()
             glyphs_after = (Set.NULL, Set.to_hb)[want_glyphs_after]()
             glyphs_output = (Set.NULL, Set.to_hb)[want_glyphs_output]()
-            hb.hb_ot_layout_lookup_collect_glyphs(self._hbobj, lookup_index, glyphs_before._hbobj, glyphs_input._hbobj, glyphs_after._hbobj, glyphs_output._hbobj)
+            hb.hb_ot_layout_lookup_collect_glyphs(self._hbobj, table_tag, lookup_index, glyphs_before._hbobj, glyphs_input._hbobj, glyphs_after._hbobj, glyphs_output._hbobj)
             return \
                 (glyphs_before.from_hb(), glyphs_input.from_hb(), glyphs_after.from_hb(), glyphs_output.from_hb())
         #end lookup_collect_glyphs
