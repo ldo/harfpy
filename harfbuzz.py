@@ -972,12 +972,11 @@ hb.hb_blob_reference.restype = ct.c_void_p
 hb.hb_blob_reference.argtypes = (ct.c_void_p,)
 
 hb.hb_buffer_destroy.restype = None
+hb.hb_buffer_destroy.argtypes = (ct.c_void_p,)
 hb.hb_buffer_create.restype = ct.c_void_p
 hb.hb_buffer_create.argtypes = ()
 hb.hb_buffer_reference.restype = ct.c_void_p
 hb.hb_buffer_reference.argtypes = (ct.c_void_p,)
-hb.hb_buffer_destroy.restype = None
-hb.hb_buffer_destroy.argtypes = (ct.c_void_p,)
 hb.hb_buffer_get_empty.restype = ct.c_void_p
 hb.hb_buffer_get_empty.argtypes = ()
 hb.hb_buffer_reset.restype = None
