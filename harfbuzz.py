@@ -1220,6 +1220,8 @@ hb.hb_ft_face_create_referenced.restype = ct.c_void_p
 hb.hb_ft_face_create_referenced.argtypes = (ct.c_void_p,)
 hb.hb_ft_font_create_referenced.restype = ct.c_void_p
 hb.hb_ft_font_create_referenced.argtypes = (ct.c_void_p,)
+hb.hb_ft_font_get_face.restype = ct.c_void_p
+hb.hb_ft_font_get_face.argtypes = (ct.c_void_p,)
 hb.hb_ft_font_set_load_flags.restype = None
 hb.hb_ft_font_set_load_flags.argtypes = (ct.c_void_p, ct.c_int)
 hb.hb_ft_font_get_load_flags.restype = ct.c_int
@@ -3457,10 +3459,11 @@ class Font :
             hb.hb_ft_font_set_load_flags(self._hbobj, load_flags)
         #end ft_load_flags
 
-        # Note: cannot implement get_face because that requires
-        # reconstructing a freetype.Face wrapper object, which
-        # cannot safely be done without the associated library
-        # for disposal purposes.
+        @property
+        def ft_face(self) :
+            return \
+                freetype.Face(None, hb.hb_ft_font_get_face(self._hbobj), None)
+        #end ft_face
 
         def ft_set_funcs(self) :
             hb.hb_ft_font_set_funcs(self._hbobj)
