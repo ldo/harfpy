@@ -1114,6 +1114,8 @@ hb.hb_font_set_parent.restype = None
 hb.hb_font_set_parent.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_font_get_parent.restype = ct.c_void_p
 hb.hb_font_get_parent.argtypes = (ct.c_void_p,)
+hb.hb_font_get_face.restype = ct.c_void_p
+hb.hb_font_get_face.argtypes = (ct.c_void_p,)
 hb.hb_font_set_scale.restype = None
 hb.hb_font_set_scale.argtypes = (ct.c_void_p, ct.c_int, ct.c_int)
 hb.hb_font_get_scale.restype = None
@@ -3419,6 +3421,12 @@ class Font :
         hb.hb_font_set_parent \
             (self._hbobj, (lambda : None, lambda : new_parent._hbobj)[new_parent != None]())
     #end parent
+
+    @property
+    def face(self) :
+        return \
+            Face(hb.hb_face_reference(hb.hb_font_get_face(self._hbobj)))
+    #end face
 
     # get/set ppem, scale defined below
 
