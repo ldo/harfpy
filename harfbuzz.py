@@ -2481,7 +2481,7 @@ def def_buffer_extra() :
 
     def def_wrap_message_func(self, message_func, user_data) :
 
-        @HB.message_func_t
+        @HB.buffer_message_func_t
         def wrap_message_func(c_buffer, c_font, message, c_user_data) :
             return \
                 message_func \
