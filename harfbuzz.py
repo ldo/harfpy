@@ -2595,6 +2595,7 @@ class Face :
         ( # to forestall typos
             "_hbobj",
             "__weakref__",
+            "_arr", # from parent Blob, if any
             # need to keep references to ctypes-wrapped functions
             # so they don't disappear prematurely:
             "_wrap_reference_table",
@@ -2608,6 +2609,7 @@ class Face :
         if self == None :
             self = super().__new__(celf)
             self._hbobj = _hbobj
+            self._arr = None # to begin with
             self._wrap_reference_table = None
             self._wrap_destroy = None
             celf._instances[_hbobj] = self
@@ -2632,8 +2634,10 @@ class Face :
         if not isinstance(blob, Blob) :
             raise TypeError("blob must be a Blob")
         #end if
+        result = Face(hb.hb_face_create(blob._hbobj, index))
+        result._arr = blob._arr # in case Blob goes away
         return \
-            Face(hb.hb_face_create(blob._hbobj, index))
+            result
     #end create
 
     @staticmethod
@@ -2644,7 +2648,8 @@ class Face :
         "    def reference_table(face, tag, user_data)\n" \
         "\n" \
         "where face is the Face instance, tag is the integer tag identifying the" \
-        " table, and must return a Blob. The interpretation of user_data is up to you." \
+        " table, and must return a Blob, which should remain valid for as long as the" \
+        " Face is referenced. The interpretation of user_data is up to you." \
         " The destroy action may be None, but if not, it should be declared as\n" \
         "\n" \
         "     def destroy(user_data)\n" \
@@ -2675,6 +2680,8 @@ class Face :
         #end if
 
         result = Face(hb.hb_face_create_for_tables(wrap_reference_table, None, wrap_destroy))
+        # note I cannot save any references to Blob._arr -- user will have to
+        # ensure these do not vanish prematurely
         result._wrap_reference_table = wrap_reference_table
         result._wrap_destroy = wrap_destroy
         return \
@@ -3089,6 +3096,7 @@ class Font :
             "_hbobj",
             "__weakref__",
             "_font_data", # for the FontFuncs
+            "_arr", # from parent Blob, if any
             # need to keep references to ctypes-wrapped functions
             # so they don't disappear prematurely:
             "_wrap_destroy",
@@ -3102,6 +3110,7 @@ class Font :
             self = super().__new__(celf)
             self._hbobj = _hbobj
             self._font_data = None
+            self._arr = None # to begin with
             celf._instances[_hbobj] = self
         else :
             hb.hb_font_destroy(self._hbobj)
@@ -3124,13 +3133,17 @@ class Font :
         if not isinstance(face, Face) :
             raise TypeError("face must be a Face")
         #end if
+        result = Font(hb.hb_font_create(face._hbobj))
+        result._arr = face._arr # in case any Blob goes away
         return \
-            Font(hb.hb_font_create(face._hbobj))
+            result
     #end create
 
     def create_sub_font(self) :
+        result = Font(hb.hb_font_create_sub_font(self._hbobj))
+        result._arr = self._arr # in case any Blob goes away
         return \
-            Font(hb.hb_font_create_sub_font(self._hbobj))
+            result
     #end create_sub_font
 
     # immutable defined below
