@@ -3534,22 +3534,29 @@ def_immutable \
   )
 def def_font_extra(celf) :
 
-    def def_prop(propname, proptype, docextra) :
+    def def_prop(propname, proptype, docextra, conv_to_hb, conv_from_hb) :
         # need separate inner function so each method gets
         # correct values for hb_getter and hb_setter
         hb_getter = "hb_font_get_%s" % propname
         hb_setter = "hb_font_set_%s" % propname
+
+        if conv_to_hb == None :
+            conv_to_hb = lambda x : x
+        #end if
+        if conv_from_hb == None :
+            conv_from_hb = lambda x : x
+        #end if
 
         def getter(self) :
             x = proptype()
             y = proptype()
             getattr(hb, hb_getter)(self._hbobj, ct.byref(x), ct.byref(y))
             return \
-                (x.value, y.value)
+                (conv_from_hb(x.value), conv_from_hb(y.value))
         #end getter
 
         def setter(self, new_xy) :
-            getattr(hb, hb_setter)(self._hbobj, new_xy[0], new_xy[1])
+            getattr(hb, hb_setter)(self._hbobj, conv_to_hb(new_xy[0]), conv_to_hb(new_xy[1]))
         #end setter
 
         getter.__name__ = propname
@@ -3570,13 +3577,13 @@ def def_font_extra(celf) :
     #end def_prop
 
 #begin def_font_extra
-    for propname, proptype, docextra in \
+    for propname, proptype, docextra, conv_to_hb, conv_from_hb in \
         (
-            ("ppem", ct.c_uint, "A zero value means no hinting in that direction."),
-            ("scale", ct.c_int, None),
+            ("ppem", ct.c_uint, "A zero value means no hinting in that direction.", None, None),
+            ("scale", ct.c_int, None, HB.to_position_t, HB.from_position_t),
         ) \
     :
-        def_prop(propname, proptype, docextra)
+        def_prop(propname, proptype, docextra, conv_to_hb, conv_from_hb)
     #end for
 #end def_font_extra
 def_font_extra(Font)
