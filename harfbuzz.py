@@ -678,14 +678,28 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
             #end if
         #end __init__
 
-        def to_hb(self) :
+        def to_hb(self, autoscale = None) :
             "returns a HarfBuzz representation of the structure."
             result = ctstruct()
             for name, cttype in ctstruct._fields_ :
                 val = getattr(self, name, None)
                 if val != None :
                     if conv != None and name in conv :
-                        val = conv[name]["to"](val)
+                        conv_to = conv[name]["to"]
+                        if conv_to is HB.to_position_t :
+                            if autoscale == None :
+                                raise TypeError \
+                                  (
+                                        "missing autoscale arg in %s.to_hb conversion"
+                                    %
+                                        type(self).__name__
+                                  )
+                            #end if
+                            if not autoscale :
+                                conv_to = round
+                            #end if
+                        #end if
+                        val = conv_to(val)
                     #end if
                     setattr(result, name, val)
                 #end if
@@ -694,14 +708,28 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
                 result
         #end to_hb
 
-        @staticmethod
-        def from_hb(r) :
+        @classmethod
+        def from_hb(celf, r, autoscale = None) :
             "decodes the HarfBuzz representation of the structure."
-            result = result_class()
+            result = celf()
             for name, cttype in ctstruct._fields_ :
                 val = getattr(r, name)
                 if val != None and conv != None and name in conv :
-                    val = conv[name]["from"](val)
+                    conv_from = conv[name]["from"]
+                    if conv_from is HB.from_position_t :
+                        if autoscale == None :
+                            raise TypeError \
+                              (
+                                "missing autoscale arg in %s.from_hb conversion" % celf.__name__
+                              )
+                        #end if
+                        if not autoscale :
+                            conv_from = None
+                        #end if
+                    #end if
+                    if conv_from != None :
+                        val = conv_from(val)
+                    #end if
                 #end if
                 setattr(result, name, val)
             #end for
@@ -2090,6 +2118,7 @@ class Buffer :
         ( # to forestall typos
             "_hbobj",
             "__weakref__",
+            "autoscale", # setting from last font passed to a shape operation
             # need to keep references to ctypes-wrapped functions
             # so they don't disappear prematurely:
             "_wrap_message_func",
@@ -2103,6 +2132,7 @@ class Buffer :
         if self == None :
             self = super().__new__(celf)
             self._hbobj = _hbobj
+            self.autoscale = False # to begin with
             self._wrap_message_func = None
             self._wrap_message_destroy = None
             celf._instances[_hbobj] = self
@@ -2364,7 +2394,7 @@ class Buffer :
             ct.POINTER(HB.glyph_position_t)
           )
         return \
-            tuple(GlyphPosition.from_hb(arr[i]) for i in range(nr_glyphs.value))
+            tuple(GlyphPosition.from_hb(arr[i], self.autoscale) for i in range(nr_glyphs.value))
     #end glyph_positions
 
     if qahirah != None :
@@ -2487,7 +2517,7 @@ def def_buffer_extra() :
                 message_func \
                   (
                     self,
-                    Font(hb.hb_font_reference(c_font)),
+                    Font(hb.hb_font_reference(c_font), None),
                     message.decode(),
                     user_data
                   )
@@ -2593,6 +2623,7 @@ class Face :
 
     __slots__ = \
         ( # to forestall typos
+            "autoscale",
             "_hbobj",
             "__weakref__",
             "_arr", # from parent Blob, if any
@@ -2604,16 +2635,19 @@ class Face :
 
     _instances = WeakValueDictionary()
 
-    def __new__(celf, _hbobj) :
+    def __new__(celf, _hbobj, autoscale) :
         self = celf._instances.get(_hbobj)
         if self == None :
             self = super().__new__(celf)
+            assert autoscale != None, "missing autoscale flag"
+            self.autoscale = autoscale
             self._hbobj = _hbobj
             self._arr = None # to begin with
             self._wrap_reference_table = None
             self._wrap_destroy = None
             celf._instances[_hbobj] = self
         else :
+            assert autoscale == None or autoscale == self.autoscale, "inconsistent autoscale settings"
             hb.hb_face_destroy(self._hbobj)
               # lose extra reference created by caller
         #end if
@@ -2629,19 +2663,19 @@ class Face :
     #end __del__
 
     @staticmethod
-    def create(blob, index) :
+    def create(blob, index, autoscale) :
         "creates a Face that gets its data from the specified Blob."
         if not isinstance(blob, Blob) :
             raise TypeError("blob must be a Blob")
         #end if
-        result = Face(hb.hb_face_create(blob._hbobj, index))
+        result = Face(hb.hb_face_create(blob._hbobj, index), autoscale)
         result._arr = blob._arr # in case Blob goes away
         return \
             result
     #end create
 
     @staticmethod
-    def create_for_tables(reference_table, user_data, destroy) :
+    def create_for_tables(reference_table, user_data, destroy, autoscale) :
         "creates a Face which calls the specified reference_table action to access" \
         " the font tables. This should be declared as\n" \
         "\n" \
@@ -2658,7 +2692,7 @@ class Face :
 
         @HB.reference_table_func_t
         def wrap_reference_table(c_face, c_tag, c_user_data) :
-            result = reference_table(Face(hb.hb_face_reference(c_face)), c_tag, user_data)
+            result = reference_table(Face(hb.hb_face_reference(c_face), autoscale), c_tag, user_data)
             if isinstance(result, Blob) :
                 c_result = hb.hb_blob_reference(result._hbobj)
             elif result == None :
@@ -2679,7 +2713,7 @@ class Face :
             wrap_destroy = None
         #end if
 
-        result = Face(hb.hb_face_create_for_tables(wrap_reference_table, None, wrap_destroy))
+        result = Face(hb.hb_face_create_for_tables(wrap_reference_table, None, wrap_destroy), autoscale)
         # note I cannot save any references to Blob._arr -- user will have to
         # ensure these do not vanish prematurely
         result._wrap_reference_table = wrap_reference_table
@@ -2692,7 +2726,7 @@ class Face :
     def get_empty() :
         "returns the (unique) empty Face. This has no glyphs and is immutable."
         return \
-            Face(hb.hb_face_reference(hb.hb_face_get_empty()))
+            Face(hb.hb_face_reference(hb.hb_face_get_empty()), False)
     #end get_empty
 
     if freetype != None :
@@ -2706,7 +2740,7 @@ class Face :
                 raise TypeError("ft_face must be a freetype.Face")
             #end if
             return \
-                Face(hb.hb_ft_face_create_referenced(ft_face._ftobj))
+                Face(hb.hb_ft_face_create_referenced(ft_face._ftobj), True)
         #end ft_create
 
     #end if
@@ -3093,6 +3127,7 @@ class Font :
 
     __slots__ = \
         ( # to forestall typos
+            "autoscale",
             "_hbobj",
             "__weakref__",
             "_font_data", # for the FontFuncs
@@ -3104,15 +3139,18 @@ class Font :
 
     _instances = WeakValueDictionary()
 
-    def __new__(celf, _hbobj) :
+    def __new__(celf, _hbobj, autoscale) :
         self = celf._instances.get(_hbobj)
         if self == None :
             self = super().__new__(celf)
+            assert autoscale != None, "missing autoscale flag"
+            self.autoscale = autoscale
             self._hbobj = _hbobj
             self._font_data = None
             self._arr = None # to begin with
             celf._instances[_hbobj] = self
         else :
+            assert autoscale == None or autoscale == self.autoscale, "inconsistent autoscale settings"
             hb.hb_font_destroy(self._hbobj)
               # lose extra reference created by caller
         #end if
@@ -3133,14 +3171,14 @@ class Font :
         if not isinstance(face, Face) :
             raise TypeError("face must be a Face")
         #end if
-        result = Font(hb.hb_font_create(face._hbobj))
+        result = Font(hb.hb_font_create(face._hbobj), face.autoscale)
         result._arr = face._arr # in case any Blob goes away
         return \
             result
     #end create
 
     def create_sub_font(self) :
-        result = Font(hb.hb_font_create_sub_font(self._hbobj))
+        result = Font(hb.hb_font_create_sub_font(self._hbobj), self.autoscale)
         result._arr = self._arr # in case any Blob goes away
         return \
             result
@@ -3151,7 +3189,7 @@ class Font :
     def get_h_extents(self) :
         c_extents = HB.font_extents_t()
         if hb.hb_font_get_h_extents(self._hbobj, ct.byref(c_extents)) != 0 :
-            result = FontExtents.from_hb(c_extents)
+            result = FontExtents.from_hb(c_extents, self.autoscale)
         else :
             result = None
         #end if
@@ -3162,7 +3200,7 @@ class Font :
     def get_v_extents(self) :
         c_extents = HB.font_extents_t()
         if hb.hb_font_get_v_extents(self._hbobj, ct.byref(c_extents)) != 0 :
-            result = FontExtents.from_hb(c_extents)
+            result = FontExtents.from_hb(c_extents, self.autoscale)
         else :
             result = None
         #end if
@@ -3193,20 +3231,32 @@ class Font :
     #end get_variation_glyph
 
     def get_glyph_h_advance(self, glyph) :
+        result = hb.hb_font_get_glyph_h_advance(self._hbobj, glyph)
+        if self.autoscale :
+            result = HB.from_position_t(result)
+        #end if
         return \
-            HB.from_position_t(hb.hb_font_get_glyph_h_advance(self._hbobj, glyph))
+            result
     #end get_glyph_h_advance
 
     def get_glyph_v_advance(self, glyph) :
+        result = hb.hb_font_get_glyph_v_advance(self._hbobj, glyph)
+        if self.autoscale :
+            result = HB.from_position_t(result)
+        #end if
         return \
-            HB.from_position_t(hb.hb_font_get_glyph_v_advance(self._hbobj, glyph))
+            result
     #end get_glyph_v_advance
 
     def get_glyph_h_origin(self, glyph) :
         x = HB.position_t()
         y = HB.position_t()
         if hb.hb_font_get_glyph_h_origin(self._hbobj, glyph, ct.byref(x), ct.byref(y)) != 0 :
-            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            if self.autoscale :
+                result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            else :
+                result = (x.value, y.value)
+            #end if
         else :
             result = None
         #end if
@@ -3218,7 +3268,11 @@ class Font :
         x = HB.position_t()
         y = HB.position_t()
         if hb.hb_font_get_glyph_v_origin(self._hbobj, glyph, ct.byref(x), ct.byref(y)) != 0 :
-            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            if self.autoscale :
+                result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            else :
+                result = (x.value, y.value)
+            #end if
         else :
             result = None
         #end if
@@ -3227,19 +3281,27 @@ class Font :
     #end get_glyph_v_origin
 
     def get_glyph_h_kerning(self, left_glyph, right_glyph) :
+        result = hb.hb_font_get_glyph_h_kerning(self._hbobj, left_glyph, right_glyph)
+        if self.autoscale :
+            result = HB.from_position_t(result)
+        #end if
         return \
-            HB.from_position_t(hb.hb_font_get_glyph_h_kerning(self._hbobj, left_glyph, right_glyph))
+            result
     #end get_glyph_h_kerning
 
     def get_glyph_v_kerning(self, top_glyph, bottom_glyph) :
+        result = hb.hb_font_get_glyph_v_kerning(self._hbobj, top_glyph, bottom_glyph)
+        if self.autoscale :
+            result = HB.from_position_t(result)
+        #end if
         return \
-            HB.from_position_t(hb.hb_font_get_glyph_v_kerning(self._hbobj, top_glyph, bottom_glyph))
+            result
     #end get_glyph_v_kerning
 
     def get_glyph_extents(self, glyph) :
         c_extents = HB.glyph_extents_t()
         if hb.hb_font_get_glyph_extents(self._hbobj, glyph, ct.byref(c_extents)) != 0 :
-            result = GlyphExtents.from_hb(c_extents)
+            result = GlyphExtents.from_hb(c_extents, self.autoscale)
         else :
             result = None
         #end if
@@ -3251,7 +3313,11 @@ class Font :
         x = HB.position_t()
         y = HB.position_t()
         if hb.hb_font_get_glyph_contour_point(self._hbobj, glyph, point_index, ct.byref(x), ct.byref(y)) != 0 :
-            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            if self.autoscale :
+                result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            else :
+                result = (x.value, y.value)
+            #end if
         else :
             result = None
         #end if
@@ -3299,55 +3365,90 @@ class Font :
         extents = HB.font_extents_t()
         hb.hb_font_get_extents_for_direction(self._hbobj, glyph, direction, ct.byref(extents))
         return \
-            FontExtents.from_hb(extents)
+            FontExtents.from_hb(extents, self.autoscale)
     #end get_extents_for_direction
 
     def get_glyph_advance_for_direction(self, glyph, direction) :
         x = HB.position_t()
         y = HB.position_t()
         hb.hb_font_get_glyph_advance_for_direction(self._hbobj, glyph, direction, ct.byref(x), ct.byref(y))
+        if self.autoscale :
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+        else :
+            result = (x.value, y.value)
+        #end if
         return \
-            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            result
     #end get_glyph_advance_for_direction
 
     def get_glyph_origin_for_direction(self, glyph, direction) :
         x = HB.position_t()
         y = HB.position_t()
         hb.hb_font_get_glyph_origin_for_direction(self._hbobj, glyph, direction, ct.byref(x), ct.byref(y))
+        if self.autoscale :
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+        else :
+            result = (x.value, y.value)
+        #end if
         return \
-            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            result
     #end get_glyph_origin_for_direction
 
     def add_glyph_origin_for_direction(self, glyph, direction, origin) :
         origin = tuple(origin)
-        x = HB.position_t(HB.to_position_t(origin[0]))
-        y = HB.position_t(HB.to_position_t(origin[1]))
+        if self.autoscale :
+            x = HB.position_t(HB.to_position_t(origin[0]))
+            y = HB.position_t(HB.to_position_t(origin[1]))
+        else :
+            x = HB.position_t(origin[0])
+            y = HB.position_t(origin[1])
+        #end if
         hb.hb_font_add_glyph_origin_for_direction(self._hbobj, glyph, direction, ct.byref(x), ct.byref(y))
+        if self.autoscale :
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+        else :
+            result = (x.value, y.value)
+        #end if
         return \
-            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            result
     #end add_glyph_origin_for_direction
 
     def subtract_glyph_origin_for_direction(self, glyph, direction, origin) :
         origin = tuple(origin)
-        x = HB.position_t(HB.to_position_t(origin[0]))
-        y = HB.position_t(HB.to_position_t(origin[1]))
+        if self.autoscale :
+            x = HB.position_t(HB.to_position_t(origin[0]))
+            y = HB.position_t(HB.to_position_t(origin[1]))
+        else :
+            x = HB.position_t(origin[0])
+            y = HB.position_t(origin[1])
+        #end if
         hb.hb_font_subtract_glyph_origin_for_direction(self._hbobj, glyph, direction, ct.byref(x), ct.byref(y))
+        if self.autoscale :
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+        else :
+            result = (x.value, y.value)
+        #end if
         return \
-            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            result
     #end subtract_glyph_origin_for_direction
 
     def get_glyph_kerning_for_direction(self, first_glyph, second_glyph, direction) :
         x = HB.position_t()
         y = HB.position_t()
         hb.hb_font_get_glyph_kerning_for_direction(self._hbobj, first_glyph, second_glyph, direction, ct.byref(x), ct.byref(y))
+        if self.autoscale :
+            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+        else :
+            result = (x.value, y.value)
+        #end if
         return \
-            (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            result
     #end get_glyph_kerning_for_direction
 
     def get_glyph_extents_for_direction(self, glyph, direction) :
         extents = HB.glyph_extents_t()
         if hb.hb_font_get_glyph_extents_for_origin(self._hbobj, glyph, direction, ct.byref(extents)) != 0 :
-            result = GlyphExtents.from_hb(extents)
+            result = GlyphExtents.from_hb(extents, self.autoscale)
         else :
             result = None
         #end if
@@ -3359,7 +3460,11 @@ class Font :
         x = HB.position_t()
         y = HB.position_t()
         if hb.hb_font_get_glyph_contour_point_for_origin(self._hbobj, glyph, point_index, direction, ct.byref(x), ct.byref(y)) != 0 :
-            result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            if self.autoscale :
+                result = (HB.from_position_t(x.value), HB.from_position_t(y.value))
+            else :
+                result = (x.value, y.value)
+            #end if
         else :
             result = None
         #end if
@@ -3425,7 +3530,7 @@ class Font :
     @property
     def parent(self) :
         return \
-            Font(hb.hb_font_reference(hb.hb_font_get_parent(self._hbobj)))
+            Font(hb.hb_font_reference(hb.hb_font_get_parent(self._hbobj)), None)
     #end parent
 
     @parent.setter
@@ -3440,7 +3545,7 @@ class Font :
     @property
     def face(self) :
         return \
-            Face(hb.hb_face_reference(hb.hb_font_get_face(self._hbobj)))
+            Face(hb.hb_face_reference(hb.hb_font_get_face(self._hbobj)), None)
     #end face
 
     # get/set ppem, scale defined below
@@ -3458,7 +3563,7 @@ class Font :
                 raise TypeError("ft_face must be a freetype.Face")
             #end if
             return \
-                Font(hb.hb_ft_font_create_referenced(ft_face._ftobj))
+                Font(hb.hb_ft_font_create_referenced(ft_face._ftobj), True)
         #end ft_create
 
         @property
@@ -3553,24 +3658,49 @@ def def_font_extra(celf) :
         hb_getter = "hb_font_get_%s" % propname
         hb_setter = "hb_font_set_%s" % propname
 
-        if conv_to_hb == None :
-            conv_to_hb = lambda x : x
-        #end if
-        if conv_from_hb == None :
-            conv_from_hb = lambda x : x
-        #end if
+        assert (conv_to_hb == None) == (conv_from_hb == None)
 
-        def getter(self) :
-            x = proptype()
-            y = proptype()
-            getattr(hb, hb_getter)(self._hbobj, ct.byref(x), ct.byref(y))
-            return \
-                (conv_from_hb(x.value), conv_from_hb(y.value))
-        #end getter
+        if conv_to_hb != None :
+            assert conv_to_hb is HB.to_position_t and conv_from_hb is HB.from_position_t
+              # the only case I need for now
 
-        def setter(self, new_xy) :
-            getattr(hb, hb_setter)(self._hbobj, conv_to_hb(new_xy[0]), conv_to_hb(new_xy[1]))
-        #end setter
+            def getter(self) :
+                x = proptype()
+                y = proptype()
+                getattr(hb, hb_getter)(self._hbobj, ct.byref(x), ct.byref(y))
+                if self.autoscale :
+                    result = (conv_from_hb(x.value), conv_from_hb(y.value))
+                else :
+                    result = (x.value, y.value)
+                #end if
+                return \
+                    result
+            #end getter
+
+            def setter(self, new_xy) :
+                if self.autoscale :
+                    new_xy = (conv_to_hb(new_xy[0]), conv_to_hb(new_xy[1]))
+                else :
+                    new_xy = (round(new_xy[0]), round(new_xy[1]))
+                #end if
+                getattr(hb, hb_setter)(self._hbobj, new_xy[0], new_xy[1])
+            #end setter
+
+        else :
+
+            def getter(self) :
+                x = proptype()
+                y = proptype()
+                getattr(hb, hb_getter)(self._hbobj, ct.byref(x), ct.byref(y))
+                return \
+                    (x.value, y.value)
+            #end getter
+
+            def setter(self, new_xy) :
+                getattr(hb, hb_setter)(self._hbobj, new_xy[0], new_xy[1])
+            #end setter
+
+        #end if
 
         getter.__name__ = propname
         getter.__doc__ = \
@@ -3604,13 +3734,16 @@ del def_font_extra
 
 class FontFuncs :
     "wrapper around hb_font_funcs_t objects. Do not instantiate directly; use" \
-    " create and get_empty methods."
+    " create and get_empty methods. The autoscale attribute indicates whether" \
+    " your callbacks return floating-point metrics that need to be multiplied by" \
+    " 64 to convert to HarfBuzz position_t values."
     # Note that the font_data actually comes from the _font_data field
     # of the Font that these funcs are set for. This way, the caller
     # can pass any Python object for font_data.
 
     __slots__ = \
         ( # to forestall typos
+            "autoscale",
             "_hbobj",
             "__weakref__",
             # need to keep references to ctypes-wrapped functions
@@ -3647,10 +3780,12 @@ class FontFuncs :
 
     _instances = WeakValueDictionary()
 
-    def __new__(celf, _hbobj) :
+    def __new__(celf, _hbobj, autoscale) :
         self = celf._instances.get(_hbobj)
         if self == None :
             self = super().__new__(celf)
+            assert autoscale != None, "missing autoscale flag"
+            self.autoscale = autoscale
             self._hbobj = _hbobj
             self._wrap_font_h_extents_func = None
             self._wrap_font_h_extents_destroy = None
@@ -3682,6 +3817,7 @@ class FontFuncs :
             self._wrap_glyph_from_name_destroy = None
             celf._instances[_hbobj] = self
         else :
+            assert autoscale == None or self.autoscale == autoscale, "inconsistent autoscale settings"
             hb.hb_font_funcs_destroy(self._hbobj)
               # lose extra reference created by caller
         #end if
@@ -3697,9 +3833,9 @@ class FontFuncs :
     #end __del__
 
     @staticmethod
-    def create() :
+    def create(autoscale) :
         return \
-            FontFuncs(hb.hb_font_funcs_create())
+            FontFuncs(hb.hb_font_funcs_create(), autoscale)
     #end create
 
     @staticmethod
@@ -3719,7 +3855,7 @@ class FontFuncs :
         "    glyph_name is always the empty string\n" \
         "    glyph_from_name is always zero."
         return \
-            FontFuncs(hb.hb_font_funcs_reference(hb.hb_font_funcs_get_empty()))
+            FontFuncs(hb.hb_font_funcs_reference(hb.hb_font_funcs_get_empty()), False)
     #end get_empty
 
     # TODO: user_data?
@@ -3752,7 +3888,7 @@ def def_fontfuncs_extra() :
 
     def get_font_data(c_font_data) :
         return \
-            Font(hb.hb_font_reference(c_font_data))._font_data
+            Font(hb.hb_font_reference(c_font_data), None)._font_data
     #end get_font_data
 
     def def_wrap_get_font_extents_func(self, get_font_extents, user_data) :
@@ -3761,7 +3897,7 @@ def def_fontfuncs_extra() :
         def wrap_get_font_extents(c_font, c_font_data, c_metrics, c_user_data) :
             metrics = get_font_extents(self, get_font_data(c_font_data), user_data)
             if metrics != None :
-                metrics = metrics.to_hb()
+                metrics = metrics.to_hb(self.autoscale)
                 c_metrics[0] = metrics
             #end if
             return \
@@ -3811,8 +3947,14 @@ def def_fontfuncs_extra() :
 
         @HB.font_get_glyph_advance_func_t
         def wrap_get_glyph_advance(c_font, c_font_data, glyph, c_user_data) :
+            result = get_glyph_advance(self, get_font_data(c_font_data), glyph, user_data)
+            if self.autoscale :
+                result = HB.to_position_t(result)
+            else :
+                result = round(result)
+            #end if
             return \
-                HB.to_position_t(get_glyph_advance(self, get_font_data(c_font_data), glyph, user_data))
+                result
         #end wrap_get_glyph_advance
 
     #begin def_wrap_get_glyph_advance_func
@@ -3826,8 +3968,13 @@ def def_fontfuncs_extra() :
         def wrap_get_glyph_origin(c_font, c_font_data, glyph, c_x, c_y, c_user_data) :
             pos = get_glyph_origin(self, get_font_data(c_font_data), glyph, user_data)
             if pos != None :
-                c_x[0] = HB.to_position_t(pos[0])
-                c_y[0] = HB.to_position_t(pos[1])
+                if self.autoscale :
+                    c_x[0] = HB.to_position_t(pos[0])
+                    c_y[0] = HB.to_position_t(pos[1])
+                else :
+                    c_x[0] = round(pos[0])
+                    c_y[0] = round(pos[1])
+                #end if
             #end if
             return \
                 pos != None
@@ -3842,8 +3989,14 @@ def def_fontfuncs_extra() :
 
         @HB.font_get_glyph_kerning_func_t
         def wrap_get_glyph_kerning(c_font, c_font_data, first_glyph, second_glyph, c_user_data) :
+            result = get_glyph_kerning(self, get_font_data(c_font_data), first_glyph, second_glyph, user_data)
+            if self.autoscale :
+                result = HB.to_position_t(result)
+            else :
+                result = round(result)
+            #end if
             return \
-                HB.to_position_t(get_glyph_kerning(self, get_font_data(c_font_data), first_glyph, second_glyph, user_data))
+                result
         #end wrap_get_glyph_kerning
 
     #begin def_wrap_get_glyph_kerning_func
@@ -3857,7 +4010,7 @@ def def_fontfuncs_extra() :
         def wrap_get_glyph_extents(c_font, c_font_data, glyph, c_extents, c_user_data) :
             extents = get_glyph_extents(self, get_font_data(c_font_data), glyph, user_data)
             if extents != None :
-                extents = extents.to_hb()
+                extents = extents.to_hb(self.autoscale)
                 c_extents[0].x_bearing = extents.x_bearing
                 c_extents[0].y_bearing = extents.y_bearing
                 c_extents[0].width = extents.width
@@ -3878,8 +4031,13 @@ def def_fontfuncs_extra() :
         def wrap_get_glyph_contour_point(c_font, c_font_data, glyph, point_index, c_x, c_y, c_user_data) :
             pos = get_glyph_contour_point(self, get_font_data(c_font_data), glyph, point_index, user_data)
             if pos != None :
-                c_x[0] = HB.to_position_t(pos[0])
-                c_y[0] = HB.to_position_t(pos[1])
+                if self.autoscale :
+                    c_x[0] = HB.to_position_t(pos[0])
+                    c_y[0] = HB.to_position_t(pos[1])
+                else :
+                    c_x[0] = round(pos[0])
+                    c_y[0] = round(pos[1])
+                #end if
             #end if
             return \
                 pos != None
@@ -4027,6 +4185,7 @@ def shape(font, buffer, features = None) :
         nr_features = 0
     #end if
     hb.hb_shape(font._hbobj, buffer._hbobj, c_features, nr_features)
+    buffer.autoscale = font.autoscale
 #end shape
 
 def shape_full(font, buffer, features = None, shaper_list = None) :
@@ -4041,8 +4200,10 @@ def shape_full(font, buffer, features = None, shaper_list = None) :
         nr_features = 0
     #end if
     nr_shapers, c_shaper_list, c_strs = shaper_list_to_hb(shaper_list)
+    result = hb.hb_shape_full(font._hbobj, buffer._hbobj, c_features, nr_features, c_shaper_list) != 0
+    buffer.autoscale = font.autoscale
     return \
-        hb.hb_shape_full(font._hbobj, buffer._hbobj, c_features, nr_features, c_shaper_list) != 0
+        result
 #end shape_full
 
 def shape_list_shapers() :
@@ -4169,6 +4330,7 @@ def ot_shape_glyphs_closure(font, buffer, features, glyphs = None) :
         nr_features = 0
     #end if
     hb.hb_ot_shape_glyphs_closure(font._hbobj, buffer._hbobj, c_features, nr_features, c_glyphs._hbobj)
+    buffer.autoscale = font.autoscale
     return \
         c_glyphs.from_hb()
 #end ot_shape_glyphs_closure
@@ -4251,8 +4413,10 @@ class ShapePlan :
             c_features = None
             nr_features = 0
         #end if
+        result = hb.hb_shape_plan_execute(self._hbobj, font._hbobj, buffer._hbobj, c_features, nr_features) != 0
+        buffer.autoscale = font.autoscale
         return \
-            hb.hb_shape_plan_execute(self._hbobj, font._hbobj, buffer._hbobj, c_features, nr_features) != 0
+            result
     #end execute
 
     @staticmethod
