@@ -2168,12 +2168,14 @@ class Buffer :
     def reset(self) :
         "resets the buffer state as though it were newly created."
         hb.hb_buffer_reset(self._hbobj)
+        self.autoscale = False # to begin with
     #end reset
 
     def clear_contents(self) :
         "similar to reset, but does not clear the Unicode functions" \
         " or the replacement code point."
         hb.hb_buffer_clear_contents(self._hbobj)
+        self.autoscale = False # to begin with
     #end clear_contents
 
     def pre_allocate(self, size) :
