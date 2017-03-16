@@ -12,7 +12,7 @@ import distutils.core
 distutils.core.setup \
   (
     name = "HarfPy",
-    version = "0.66",
+    version = "0.67",
     description = "language bindings for HarfBuzz, for Python 3.3 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
