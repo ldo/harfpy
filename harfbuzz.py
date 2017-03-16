@@ -3133,7 +3133,7 @@ class Font :
             "_hbobj",
             "__weakref__",
             "_font_data", # for the FontFuncs
-            "_arr", # from parent Blob, if any
+            "_face", # harfbuzz.Face or freetype2.Face, just to keep it from going away prematurely
             # need to keep references to ctypes-wrapped functions
             # so they don't disappear prematurely:
             "_wrap_destroy",
@@ -3149,7 +3149,7 @@ class Font :
             self.autoscale = autoscale
             self._hbobj = _hbobj
             self._font_data = None
-            self._arr = None # to begin with
+            self._face = None # to begin with
             celf._instances[_hbobj] = self
         else :
             assert autoscale == None or autoscale == self.autoscale, "inconsistent autoscale settings"
@@ -3174,14 +3174,14 @@ class Font :
             raise TypeError("face must be a Face")
         #end if
         result = Font(hb.hb_font_create(face._hbobj), face.autoscale)
-        result._arr = face._arr # in case any Blob goes away
+        result._face = face
         return \
             result
     #end create
 
     def create_sub_font(self) :
         result = Font(hb.hb_font_create_sub_font(self._hbobj), self.autoscale)
-        result._arr = self._arr # in case any Blob goes away
+        result._face = self._face
         return \
             result
     #end create_sub_font
@@ -3564,8 +3564,10 @@ class Font :
             if not isinstance(ft_face, freetype.Face) :
                 raise TypeError("ft_face must be a freetype.Face")
             #end if
+            result = Font(hb.hb_ft_font_create_referenced(ft_face._ftobj), True)
+            result._face = ft_face
             return \
-                Font(hb.hb_ft_font_create_referenced(ft_face._ftobj), True)
+                result
         #end ft_create
 
         @property
