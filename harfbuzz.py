@@ -1109,6 +1109,10 @@ hb.hb_face_reference_table.restype = ct.c_void_p
 hb.hb_face_reference_table.argtypes = (ct.c_void_p, HB.tag_t)
 hb.hb_face_reference_blob.restype = ct.c_void_p
 hb.hb_face_reference_blob.argtypes = (ct.c_void_p,)
+hb.hb_face_reference_table.restype = ct.c_void_p
+hb.hb_face_reference_table.argtypes = (ct.c_void_p, HB.tag_t)
+hb.hb_face_reference_blob.restype = ct.c_void_p
+hb.hb_face_reference_blob.argtypes = (ct.c_void_p,)
 hb.hb_face_set_index.restype = None
 hb.hb_face_set_index.argtypes = (ct.c_void_p, ct.c_uint)
 hb.hb_face_get_index.restype = ct.c_uint
@@ -2684,9 +2688,10 @@ class Face :
         "    def reference_table(face, tag, user_data)\n" \
         "\n" \
         "where face is the Face instance, tag is the integer tag identifying the" \
-        " table, and must return a Blob, which should remain valid for as long as the" \
-        " Face is referenced. The interpretation of user_data is up to you." \
-        " The destroy action may be None, but if not, it should be declared as\n" \
+        " table, and must return either None or a Blob, which should remain valid" \
+        " for as long as the Face is referenced. The interpretation of user_data" \
+        " is up to you. The destroy action may be None, but if not, it should be" \
+        " declared as\n" \
         "\n" \
         "     def destroy(user_data)\n" \
         "\n" \
@@ -2751,7 +2756,20 @@ class Face :
 
     # get/set glyph_count, index, upem defined below
 
-    # TODO: reference_blob? reference_table? user_data?
+    def reference_table(self, tag) :
+        "returns a Blob for the specified table, or the empty Blob if it cannot be found."
+        return \
+            Blob(hb.hb_face_reference_table(self._hbobj, tag))
+    #end reference_table
+
+    def reference_blob(self) :
+        "returns the Blob with which the Face was created, or the empty Blob if it" \
+        " doesn’t have one."
+        return \
+            Blob(hb.hb_face_reference_blob(self._hbobj))
+    #end reference_blob
+
+    # TODO: user_data?
 
     # from hb-ot-layout.h:
 
