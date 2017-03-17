@@ -1973,7 +1973,7 @@ class Blob :
         elif isinstance(arr, bytearray) :
             size = len(arr)
             baseadr = ct.addressof((ct.c_char * size).from_buffer(arr))
-        elif isinstance(arr, array.array) :
+        elif isinstance(arr, array.array) and arr.typecode == "B" :
             baseadr, size = arr.buffer_info()
         else :
             raise TypeError("data is not bytes, bytearray or array.array of bytes")
