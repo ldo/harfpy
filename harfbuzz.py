@@ -1965,10 +1965,20 @@ class Blob :
 
     @classmethod
     def create_for_array(celf, arr, mode) :
-        "creates a Blob that wraps the storage for the specified array.array object." \
-        " mode is one of the MEMORY_MODE_XXX values."
-        bufinfo = arr.buffer_info()
-        result = celf.create(bufinfo[0], bufinfo[1], mode, None, None)
+        "creates a Blob that wraps the storage for the specified bytes, bytearray or" \
+        " array.array object. mode is one of the MEMORY_MODE_XXX values."
+        if isinstance(arr, bytes) :
+            baseadr = ct.cast(arr, ct.c_void_p).value
+            size = len(arr)
+        elif isinstance(arr, bytearray) :
+            size = len(arr)
+            baseadr = ct.addressof((ct.c_char * size).from_buffer(arr))
+        elif isinstance(arr, array.array) :
+            baseadr, size = arr.buffer_info()
+        else :
+            raise TypeError("data is not bytes, bytearray or array.array of bytes")
+        #end if
+        result = celf.create(baseadr, size, mode, None, None)
         result._arr = arr # keep a reference to ensure it doesn’t disappear prematurely
         return \
             result
