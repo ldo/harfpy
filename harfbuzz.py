@@ -1413,6 +1413,21 @@ def direction_to_string(direction) :
         hb.hb_direction_to_string(direction).decode() # automatically stops at NUL?
 #end direction_to_string
 
+#+
+# Notes on object design:
+#
+# Python objects which wrap HarfBuzz objects store address of latter
+# in _hbobj attribute. Object constructors are reserved for internal
+# use.
+#
+# Round-trip object identity: when one HarfBuzz object is set as an
+# attribute of another (e.g. a Buffer.unicode_funcs is set to a
+# UnicodeFuncs) and then retrieved again, it is nice if the caller
+# gets back the same Python wrapper object. I do this by maintaining a
+# WeakValueDictionary in each of the relevant (base) classes, which is
+# updated by the constructors.
+#-
+
 class Language :
     "wraps the hb_language_t opaque type. Do not instantiate directly; use" \
     " the from_string() and default() methods."
