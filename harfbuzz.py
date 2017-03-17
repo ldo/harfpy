@@ -6,7 +6,7 @@
 #     Qahirah <https://github.com/ldo/qahirah> -- binding for Cairo
 #     PyBidi <https://github.com/ldo/pybidi> -- binding for FriBidi
 #
-# Python adaptation copyright © 2016 Lawrence D'Oliveiro,
+# Python adaptation copyright © 2016, 2017 Lawrence D'Oliveiro,
 # based on C original by Behdad Esfahbod and others.
 #
 # This library is free software; you can redistribute it and/or
