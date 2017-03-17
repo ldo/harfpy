@@ -2148,6 +2148,7 @@ class Buffer :
             "_hbobj",
             "__weakref__",
             "autoscale", # setting from last font passed to a shape operation
+            "_unicode_funcs", # last set UnicodeFuncs, just to keep it from going away prematurely
             # need to keep references to ctypes-wrapped functions
             # so they don't disappear prematurely:
             "_wrap_message_func",
@@ -2162,6 +2163,7 @@ class Buffer :
             self = super().__new__(celf)
             self._hbobj = _hbobj
             self.autoscale = False # to begin with
+            self._unicode_funcs = None
             self._wrap_message_func = None
             self._wrap_message_destroy = None
             celf._instances[_hbobj] = self
@@ -2399,6 +2401,7 @@ class Buffer :
         else :
             raise TypeError("funcs must be None or UnicodeFuncs")
         #end if
+        self._unicode_funcs = funcs
         hb.hb_buffer_set_unicode_funcs(self._hbobj, new_funcs)
     #end unicode_funcs
 
@@ -3175,6 +3178,7 @@ class Font :
             "autoscale",
             "_hbobj",
             "__weakref__",
+            "_font_funcs", # last set FontFuncs, just to keep it from going away prematurely
             "_font_data", # for the FontFuncs
             "_face", # harfbuzz.Face or freetype2.Face, just to keep it from going away prematurely
             # need to keep references to ctypes-wrapped functions
@@ -3191,6 +3195,7 @@ class Font :
             assert autoscale != None, "missing autoscale flag"
             self.autoscale = autoscale
             self._hbobj = _hbobj
+            self._font_funcs = None
             self._font_data = None
             self._face = None # to begin with
             celf._instances[_hbobj] = self
@@ -3552,6 +3557,7 @@ class Font :
         else :
             wrap_destroy = None
         #end if
+        self._font_funcs = funcs
         self._font_data = font_data
         self._wrap_destroy = wrap_destroy
         hb.hb_font_set_funcs \
