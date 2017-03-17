@@ -1639,7 +1639,7 @@ class UnicodeFuncs :
         "    unicode_script always returns HB.SCRIPT_UNKNOWN\n" \
         "    unicode_compose always returns None\n" \
         "    unicode_decompose always returns None\n" \
-        "    unicode_decompose_compatibility always an empty sequence."
+        "    unicode_decompose_compatibility always returns an empty sequence."
         return \
             UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_empty()))
     #end get_empty
