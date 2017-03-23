@@ -1428,6 +1428,17 @@ def direction_to_string(direction) :
 # updated by the constructors.
 #-
 
+class UserDataDict(dict) :
+    "a subclass of dict that allows weakrefs."
+
+    __slots__ = ("__weakref__",)
+
+    def __init__(self, *args, **kwargs) :
+        super().__init__(*args, **kwargs)
+    #end __init__
+
+#end UserDataDict
+
 class Language :
     "wraps the hb_language_t opaque type. Do not instantiate directly; use" \
     " the from_string() and default() methods."
@@ -1546,6 +1557,7 @@ class UnicodeFuncs :
     __slots__ = \
         ( # to forestall typos
             "_hbobj",
+            "_user_data",
             "__weakref__",
             # need to keep references to ctypes-wrapped functions
             # so they don't disappear prematurely:
@@ -1568,6 +1580,7 @@ class UnicodeFuncs :
         )
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def __new__(celf, _hbobj) :
         self = celf._instances.get(_hbobj)
@@ -1590,6 +1603,12 @@ class UnicodeFuncs :
             self._wrap_decompose_compatibility_func = None
             self._wrap_decompose_compatibility_destroy = None
             self._hbobj = _hbobj
+            user_data = celf._ud_refs.get(_hbobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_hbobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_hbobj] = self
         else :
             hb.hb_unicode_funcs_destroy(self._hbobj)
@@ -1646,7 +1665,14 @@ class UnicodeFuncs :
 
     # immutable defined below
 
-    # TODO: user_data?
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # HarfBuzz user_data calls not exposed to caller, probably not useful
 
     @property
     def parent(self) :
@@ -1913,6 +1939,7 @@ class Blob :
     __slots__ = \
         ( # to forestall typos
             "_hbobj",
+            "_user_data",
             "__weakref__",
             "_arr",
             # need to keep references to ctypes-wrapped functions
@@ -1921,6 +1948,7 @@ class Blob :
         )
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def __new__(celf, _hbobj) :
         self = celf._instances.get(_hbobj)
@@ -1929,6 +1957,12 @@ class Blob :
             self._hbobj = _hbobj
             self._arr = None
             self._wrap_destroy = None
+            user_data = celf._ud_refs.get(_hbobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_hbobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_hbobj] = self
         else :
             hb.hb_blob_destroy(self._hbobj)
@@ -2020,7 +2054,14 @@ class Blob :
 
     # immutable defined below
 
-    # TODO: user_data?
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # HarfBuzz user_data calls not exposed to caller, probably not useful
 
 #end Blob
 def_immutable \
@@ -2146,6 +2187,7 @@ class Buffer :
     __slots__ = \
         ( # to forestall typos
             "_hbobj",
+            "_user_data",
             "__weakref__",
             "autoscale", # setting from last font passed to a shape operation
             "_unicode_funcs", # last set UnicodeFuncs, just to keep it from going away prematurely
@@ -2156,6 +2198,7 @@ class Buffer :
         )
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def __new__(celf, _hbobj) :
         self = celf._instances.get(_hbobj)
@@ -2166,6 +2209,12 @@ class Buffer :
             self._unicode_funcs = None
             self._wrap_message_func = None
             self._wrap_message_destroy = None
+            user_data = celf._ud_refs.get(_hbobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_hbobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_hbobj] = self
         else :
             hb.hb_buffer_destroy(self._hbobj)
@@ -2405,7 +2454,14 @@ class Buffer :
         hb.hb_buffer_set_unicode_funcs(self._hbobj, new_funcs)
     #end unicode_funcs
 
-    # TODO: user_data?
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # HarfBuzz user_data calls not exposed to caller, probably not useful
 
     @property
     def glyph_infos(self) :
@@ -2659,6 +2715,7 @@ class Face :
         ( # to forestall typos
             "autoscale",
             "_hbobj",
+            "_user_data",
             "__weakref__",
             "_arr", # from parent Blob, if any
             # need to keep references to ctypes-wrapped functions
@@ -2668,6 +2725,7 @@ class Face :
         )
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def __new__(celf, _hbobj, autoscale) :
         self = celf._instances.get(_hbobj)
@@ -2679,6 +2737,12 @@ class Face :
             self._arr = None # to begin with
             self._wrap_reference_table = None
             self._wrap_destroy = None
+            user_data = celf._ud_refs.get(_hbobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_hbobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_hbobj] = self
         else :
             assert autoscale == None or autoscale == self.autoscale, "inconsistent autoscale settings"
@@ -2797,7 +2861,14 @@ class Face :
             Blob(hb.hb_face_reference_blob(self._hbobj))
     #end reference_blob
 
-    # TODO: user_data?
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # HarfBuzz user_data calls not exposed to caller, probably not useful
 
     # from hb-ot-layout.h:
 
@@ -3798,6 +3869,7 @@ class FontFuncs :
         ( # to forestall typos
             "autoscale",
             "_hbobj",
+            "_user_data",
             "__weakref__",
             # need to keep references to ctypes-wrapped functions
             # so they don't disappear prematurely:
@@ -3832,6 +3904,7 @@ class FontFuncs :
         )
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def __new__(celf, _hbobj, autoscale) :
         self = celf._instances.get(_hbobj)
@@ -3868,6 +3941,12 @@ class FontFuncs :
             self._wrap_glyph_name_destroy = None
             self._wrap_glyph_from_name_func = None
             self._wrap_glyph_from_name_destroy = None
+            user_data = celf._ud_refs.get(_hbobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_hbobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_hbobj] = self
         else :
             assert autoscale == None or self.autoscale == autoscale, "inconsistent autoscale settings"
@@ -3911,7 +3990,14 @@ class FontFuncs :
             FontFuncs(hb.hb_font_funcs_reference(hb.hb_font_funcs_get_empty()), False)
     #end get_empty
 
-    # TODO: user_data?
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # HarfBuzz user_data calls not exposed to caller, probably not useful
 
     # immutable
     # set_font_h_extents_func
@@ -4409,18 +4495,26 @@ class ShapePlan :
     __slots__ = \
         ( # to forestall typos
             "_hbobj",
+            "_user_data",
             "__weakref__",
         )
 
     # Not sure if I need the ability to map hb_shape_plan_t objects back to
     # Python objects, but, just in case...
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def __new__(celf, _hbobj) :
         self = celf._instances.get(_hbobj)
         if self == None :
             self = super().__new__(celf)
             self._hbobj = _hbobj
+            user_data = celf._ud_refs.get(_hbobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_hbobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_hbobj] = self
         else :
             hb.hb_shape_plan_destroy(self._hbobj)
@@ -4498,7 +4592,14 @@ class ShapePlan :
             result
     #end shaper
 
-    # TODO: user_data?
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # HarfBuzz user_data calls not exposed to caller, probably not useful
 
     # from hb-ot-shape.h:
 
