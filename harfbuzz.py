@@ -3258,6 +3258,7 @@ class Font :
         )
 
     _instances = WeakValueDictionary()
+    _ud_refs = WeakValueDictionary()
 
     def __new__(celf, _hbobj, autoscale) :
         self = celf._instances.get(_hbobj)
@@ -3269,6 +3270,12 @@ class Font :
             self._font_funcs = None
             self._font_data = None
             self._face = None # to begin with
+            user_data = celf._ud_refs.get(_hbobj)
+            if user_data == None :
+                user_data = UserDataDict()
+                celf._ud_refs[_hbobj] = user_data
+            #end if
+            self._user_data = user_data
             celf._instances[_hbobj] = self
         else :
             assert autoscale == None or autoscale == self.autoscale, "inconsistent autoscale settings"
@@ -3672,7 +3679,14 @@ class Font :
 
     # get/set ppem, scale defined below
 
-    # TODO: user data?
+    @property
+    def user_data(self) :
+        "a dict, initially empty, which may be used by caller for any purpose."
+        return \
+            self._user_data
+    #end user_data
+
+    # HarfBuzz user_data calls not exposed to caller, probably not useful
 
     if freetype != None :
 
