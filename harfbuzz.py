@@ -3248,6 +3248,7 @@ class Font :
         ( # to forestall typos
             "autoscale",
             "_hbobj",
+            "_user_data",
             "__weakref__",
             "_font_funcs", # last set FontFuncs, just to keep it from going away prematurely
             "_font_data", # for the FontFuncs
