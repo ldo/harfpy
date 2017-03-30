@@ -1426,6 +1426,11 @@ def direction_to_string(direction) :
 # gets back the same Python wrapper object. I do this by maintaining a
 # WeakValueDictionary in each of the relevant (base) classes, which is
 # updated by the constructors.
+#
+# Fixme: there is still a hole in the interaction of the above with
+# the handling of dependency references ("_arr" and "_face" attributes
+# to keep referenced objects from unexpectedly disappearing). Should I
+# worry about this?
 #-
 
 class UserDataDict(dict) :
