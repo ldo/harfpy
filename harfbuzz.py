@@ -1429,8 +1429,9 @@ def direction_to_string(direction) :
 #
 # Fixme: there is still a hole in the interaction of the above with
 # the handling of dependency references ("_arr" and "_face" attributes
-# to keep referenced objects from unexpectedly disappearing). Should I
-# worry about this?
+# to keep referenced objects from unexpectedly disappearing), namely that
+# such references will not be recovered when the Python object has to be
+# recreated. Should I worry about this?
 #-
 
 class UserDataDict(dict) :
