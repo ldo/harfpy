@@ -29,6 +29,7 @@ import ctypes as ct
 import array
 from weakref import \
     WeakValueDictionary
+import atexit
 try :
     import freetype2 as freetype
 except ImportError :
@@ -4632,5 +4633,14 @@ class ShapePlan :
     #end ot_collect_lookups
 
 #end ShapePlan
+
+def _atexit() :
+    # disable all __del__ methods at process termination to avoid segfaults
+    for cls in UnicodeFuncs, Blob, Buffer, Face, Font, FontFuncs, Set, ShapePlan :
+        delattr(cls, "__del__")
+    #end for
+#end _atexit
+atexit.register(_atexit)
+del _atexit
 
 del def_struct_class, def_callback_wrapper, def_immutable # my work is done
