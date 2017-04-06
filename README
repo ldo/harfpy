@@ -1,23 +1,26 @@
 HarfPy is a Python 3 binding for
-[HarfBuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/). It is
-meant to be used in conjunction with my Python wrappers for other
-major parts of the Linux typography stack:
+[HarfBuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz/). It is meant to be used in
+conjunction with my Python wrappers for other major parts of the Linux typography stack:
 
-* [Qahirah](https://github.com/ldo/qahirah) -- my binding for the
-  Cairo graphics library
-* [python_freetype](https://github.com/ldo/python_freetype) -- my
-  binding for FreeType
-* [PyBidi](https://github.com/ldo/pybidi) -- my binding for FriBidi
+* Qahirah ([GitLab](https://gitlab.com/ldo/qahirah),
+  [GitHub](https://github.com/ldo/qahirah)) -- my binding for the
+  [Cairo](https://www.cairographics.org/) graphics library
+* python_freetype ([GitLab](https://gitlab.com/ldo/python_freetype),
+  [GitHub](https://github.com/ldo/python_freetype)) -- my binding for
+  [FreeType](https://www.freetype.org/)
+* PyBidi ([GitLab](https://gitlab.com/ldo/pybidi),
+  [GitHub](https://github.com/ldo/pybidi)) -- my binding for
+  [FriBidi](https://fribidi.org/)
 
 The basic steps in doing a piece of high-quality text rendering on Linux are:
 
 * Make sure all text is encoded in Unicode. (This should go without saying...)
-* Use FriBidi to reorder a string of unicode-encoded text from logical
-  (reading) order to visual (rendering) order. (This step can be
-  skipped in cases where you do not mix text of different directions.)
+* Use FriBidi to reorder a string of unicode-encoded text from logical (reading) order to
+  visual (rendering) order. (This step can be skipped in cases where you do not mix text
+  of different directions.)
 * Use FreeType to load a suitable font.
-* Use HarfBuzz to choose and lay out suitable glyphs for the specified text,
-  controlled by appropriate features selected from the specified font.
+* Use HarfBuzz to choose and lay out suitable glyphs for the specified text, controlled by
+  appropriate features selected from the specified font.
 * Use Cairo to draw the actual glyphs, as laid out by HarfBuzz, with that font.
 
 
@@ -28,7 +31,7 @@ To install HarfPy on your system, type
 
     python3 setup.py install
 
-This will install the Python module named “harfbuzz”.
+This will install the Python module named “`harfbuzz`”.
 
 
 Basic Usage
@@ -38,9 +41,8 @@ All functionality comes from the one module:
 
     import harfbuzz
 
-You will typically also want more direct access to
-constants and other definitions within the `HARFBUZZ`
-class:
+You will typically also want more direct access to constants and other definitions within
+the `HARFBUZZ` class:
 
     from harfbuzz import \
         HARFBUZZ
@@ -51,8 +53,8 @@ Or you may want to abbreviate the names, for convenience:
     from harfbuzz import \
         HARFBUZZ as HB
 
-Names in the module omit the “`hb_`” and "`HB_`” prefixes. For example,
-whereas in C you might write
+Names in the module omit the “`hb_`” and "`HB_`” prefixes. For example, whereas in C you
+might write
 
     hb_shape(font, buffer);
 
@@ -60,12 +62,12 @@ in Python this becomes (with the above import abbreviations):
 
     hb.shape(font, buffer)
 
-And a constant like `HB_TAG_NONE` can be accessed (again with the
-above import abbreviations) as `HB.TAG_NONE`.
+And a constant like `HB_TAG_NONE` can be accessed (again with the above import
+abbreviations) as `HB.TAG_NONE`.
 
-Operations on specific HarfBuzz objects further lose the prefix parts
-of their names associated with those objects, because they become
-methods defined within those objects. Thus, instead of, in C,
+Operations on specific HarfBuzz objects further lose the prefix parts of their names
+associated with those objects, because they become methods defined within those objects.
+Thus, instead of, in C,
 
     buf = hb_buffer_create();
 
@@ -85,21 +87,21 @@ becomes
 Hello-HarfBuzz Example
 ======================
 
-The HarfBuzz docs include [this example](http://behdad.github.io/harfbuzz/hello-harfbuzz.html)
-on how to get started. Let’s recreate that using HarfPy.
+The HarfBuzz docs include [this
+example](http://behdad.github.io/harfbuzz/hello-harfbuzz.html) on how to get started.
+Let’s recreate that using HarfPy.
 
     import sys
     import qahirah as qah
     import harfbuzz as hb
 
-We will need to load a font with FreeType. To use FreeType, you have
-to create a `Library` instance. But Qahirah already has one, so it’s
-simpler to just use that:
+We will need to load a font with FreeType. To use FreeType, you have to create a `Library`
+instance. But Qahirah already has one, so it’s simpler to just use that:
 
     ft = qah.get_ft_lib()
 
-(This also lets you use the same font instances for drawing the text.)
-Let’s make up a simple line of right-to-left text:
+(This also lets you use the same font instances for drawing the text.) Let’s make up a
+simple line of right-to-left text:
 
     text_line = "\u0627\u0644\u0642\u0627\u0647\u0631\u0629" # “al-qahirah”
 
@@ -119,8 +121,8 @@ Load a suitable font:
 
     ft_face = ft.find_face("Scheherazade")
 
-We need to set a font size, otherwise we won’t get any sensible
-metrics. A size of 1 will do for measurement purposes:
+We need to set a font size, otherwise we won’t get any sensible metrics. A size of 1 will
+do for measurement purposes:
 
     ft_face.set_char_size(size = 1, resolution = qah.base_dpi)
 
@@ -145,13 +147,11 @@ And let’s see what we got:
 Rendering Bidirectional Text
 ============================
 
-How would you render a line containing a mixture of left-to-right and
-right-to-left text? First of all, note that HarfBuzz can only do
-shaping on one run at a time. So you have to break up your line into
-segments, put them through HarfBuzz shaping one at a time, and collect
-all the glyphs together. Here is an example to walk you through the
-necessary steps, using all the abovementioned Python modules. First,
-the necessary imports:
+How would you render a line containing a mixture of left-to-right and right-to-left text?
+First of all, note that HarfBuzz can only do shaping on one run at a time. So you have to
+break up your line into segments, put them through HarfBuzz shaping one at a time, and
+collect all the glyphs together. Here is an example to walk you through the necessary
+steps, using all the abovementioned Python modules. First, the necessary imports:
 
     import sys
     import os
@@ -222,10 +222,9 @@ Use FriBidi to reorder the line and define the embedding levels:
     vis_bidi_types = map.apply(bidi_types)
     vis_embedding_levels = map.apply(embedding_levels)
 
-Next, collect the glyphs for each segment/run into a list of Qahirah
-`Glyphs` objects. Note the use of the `each_embedding_run` convenience
-routine provided by PyBidi, and the `Buffer.get_glyphs` convenience
-method provided by HarfPy:
+Next, collect the glyphs for each segment/run into a list of Qahirah `Glyphs` objects.
+Note the use of the `each_embedding_run` convenience routine provided by PyBidi, and the
+`Buffer.get_glyphs` convenience method provided by HarfPy:
 
     glyphs = []
     glyph_pos = Vector(0, 0)
@@ -276,16 +275,16 @@ And finally, save the `ImageSurface` contents to a PNG file for viewing:
 
     pix.flush().write_to_png("%s.png" % os.path.basename(sys.argv[0]))
 
-For more complete example scripts, see my
-[harfpy_examples](https://github.com/ldo/harfpy_examples) repo.
+For more complete example scripts, see my harfpy_examples
+([GitLab](https://gitlab.com/ldo/harfpy_examples),
+[GitHub](https://github.com/ldo/harfpy_examples)) repo.
 
 
 More Info About HarfBuzz
 ========================
 
-The API documentation seems to be rather lacking. A good starting
-point for finding out more is the [HarfBuzz
-Wiki](https://github.com/behdad/harfbuzz/wiki).
+The API documentation seems to be rather lacking. A good starting point for finding out
+more is the [HarfBuzz Wiki](https://github.com/behdad/harfbuzz/wiki).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2016 September 22
+2017 April 7
