@@ -3682,7 +3682,8 @@ class Font :
     @property
     def face(self) :
         return \
-            Face(hb.hb_face_reference(hb.hb_font_get_face(self._hbobj)), None)
+            Face(hb.hb_face_reference(hb.hb_font_get_face(self._hbobj)), self.autoscale)
+              # note this will not necessarily be the same Face that was passed to Font.create
     #end face
 
     # get/set ppem, scale defined below
