@@ -1249,18 +1249,20 @@ hb.hb_font_funcs_set_glyph_name_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_
 hb.hb_font_funcs_set_glyph_from_name_func.restype = None
 hb.hb_font_funcs_set_glyph_from_name_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
-hb.hb_ft_face_create_referenced.restype = ct.c_void_p
-hb.hb_ft_face_create_referenced.argtypes = (ct.c_void_p,)
-hb.hb_ft_font_create_referenced.restype = ct.c_void_p
-hb.hb_ft_font_create_referenced.argtypes = (ct.c_void_p,)
-hb.hb_ft_font_get_face.restype = ct.c_void_p
-hb.hb_ft_font_get_face.argtypes = (ct.c_void_p,)
-hb.hb_ft_font_set_load_flags.restype = None
-hb.hb_ft_font_set_load_flags.argtypes = (ct.c_void_p, ct.c_int)
-hb.hb_ft_font_get_load_flags.restype = ct.c_int
-hb.hb_ft_font_get_load_flags.argtypes = (ct.c_void_p,)
-hb.hb_ft_font_set_funcs.restype = None
-hb.hb_ft_font_set_funcs.argtypes = (ct.c_void_p,)
+if freetype != None : # might as well skip these if I’m not using them
+    hb.hb_ft_face_create_referenced.restype = ct.c_void_p
+    hb.hb_ft_face_create_referenced.argtypes = (ct.c_void_p,)
+    hb.hb_ft_font_create_referenced.restype = ct.c_void_p
+    hb.hb_ft_font_create_referenced.argtypes = (ct.c_void_p,)
+    hb.hb_ft_font_get_face.restype = ct.c_void_p
+    hb.hb_ft_font_get_face.argtypes = (ct.c_void_p,)
+    hb.hb_ft_font_set_load_flags.restype = None
+    hb.hb_ft_font_set_load_flags.argtypes = (ct.c_void_p, ct.c_int)
+    hb.hb_ft_font_get_load_flags.restype = ct.c_int
+    hb.hb_ft_font_get_load_flags.argtypes = (ct.c_void_p,)
+    hb.hb_ft_font_set_funcs.restype = None
+    hb.hb_ft_font_set_funcs.argtypes = (ct.c_void_p,)
+#end if
 
 hb.hb_feature_from_string.restype = HB.bool_t
 hb.hb_feature_from_string.argtypes = (ct.c_void_p, ct.c_int, ct.c_void_p)
