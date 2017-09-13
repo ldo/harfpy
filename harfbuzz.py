@@ -819,6 +819,8 @@ def def_callback_wrapper(celf, method_name, docstring, callback_field_name, dest
 #end def_callback_wrapper
 
 def def_immutable(celf, hb_query, hb_set) :
+    # defines the “immutable” property on a class, given the names
+    # of the HarfBuzz getter/setter routines.
 
     def get_immutable(self) :
         return \
@@ -1689,15 +1691,87 @@ class UnicodeFuncs :
             UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_parent(self._hbobj)))
     #end parent
 
-    # set_combining_class_func
-    # set_eastasian_width_func
-    # set_general_category_func
-    # set_mirroring_func
-    # set_script_func
-    # set_compose_func
-    # set_decompose_func
-    # set_decompose_compatibility_func
-    # all defined below
+    # The following are defined below, comments repeated here for those looking
+    # at the source rather than using the help() function:
+
+    # set_combining_class_func(self, callback_func, user_data, destroy)
+    #     sets the combining_class_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should be
+    #     declared as follows:
+    #
+    #         def combining_class_func(self, unicode, user_data)
+    #
+    #     where self is the UnicodeFuncs instance, and return an integer
+    #     combining class code.
+
+    # set_eastasian_width_func(self, callback_func, user_data, destroy)
+    #     sets the eastasian_width_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def eastasian_width_func(self, unicode, user_data)
+    #
+    #     where self is the UnicodeFuncs instance, and return an integer.
+
+    # set_general_category_func(self, callback_func, user_data, destroy)
+    #     sets the general_category_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def general_category_func(self, unicode, user_data)
+    #
+    #     where self is the UnicodeFuncs instance, and return an integer
+    #     general category code.
+
+    # set_mirroring_func(self, callback_func, user_data, destroy)
+    #     sets the mirroring_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func
+    #     should be declared as follows:
+    #
+    #         def mirroring_func(self, unicode, user_data)
+    #
+    #     where self is the UnicodeFuncs instance, and return a unicode code point.
+
+    # set_script_func(self, callback_func, user_data, destroy)
+    #     sets the script_func callback, along with an optional destroy
+    #     callback for the user_data. The callback_func should be declared
+    #     as follows:
+    #
+    #         def script_func(self, unicode, user_data)
+    #
+    #     where self is the UnicodeFuncs instance, and return an integer script code.
+
+    # set_compose_func(self, callback_func, user_data, destroy)
+    #     sets the compose_func callback, along with an optional destroy
+    #     callback for the user_data. The callback_func should be declared
+    #     as follows:
+    #
+    #         def compose_func(self, a, b, user_data)
+    #
+    #     where self is the UnicodeFuncs instance, and return a unicode
+    #     code point or None.
+
+    # set_decompose_func(self, callback_func, user_data, destroy)
+    #     sets the decompose_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func
+    #     should be declared as follows:
+    #
+    #         def decompose_func(self, ab, user_data)
+    #
+    #     where self is the UnicodeFuncs instance, and return a 2-tuple
+    #     of Unicode code points or None.
+
+    # set_decompose_compatibility_func(self, callback_func, user_data, destroy)
+    #     sets the decompose_compatibility_func callback, along with an
+    #     optional destroy callback for the user_data. The callback_func
+    #     should be declared as follows:
+    #
+    #         def decompose_compatibility_func(self, u, user_data)
+    #
+    #     where self is the UnicodeFuncs instance, and return a tuple of
+    #     Unicode code points or None.
+
+    # The preceding are defined below
 
     def combining_class(self, unicode) :
         "invokes the combining_class_func."
@@ -4024,22 +4098,161 @@ class FontFuncs :
 
     # HarfBuzz user_data calls not exposed to caller, probably not useful
 
-    # immutable
-    # set_font_h_extents_func
-    # set_font_v_extents_func
-    # set_nominal_glyph_func
-    # set_variation_glyph_func
-    # set_glyph_h_advance_func
-    # set_glyph_v_advance_func
-    # set_glyph_h_origin_func
-    # set_glyph_v_origin_func
-    # set_glyph_h_kerning_func
-    # set_glyph_v_kerning_func
-    # set_glyph_extents_func
-    # set_glyph_contour_point_func
-    # set_glyph_name_func
-    # set_glyph_from_name_func
-    # all defined below
+    # immutable defined below
+
+    # The following are defined below, comments repeated here for those looking
+    # at the source rather than using the help() function:
+
+    # set_font_h_extents_func(self, callback_func, user_data, destroy)
+    #     sets the font_h_extents_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_font_h_extents(font, font_data, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a FontExtents
+    #     or None.
+
+    # set_font_v_extents_func(self, callback_func, user_data, destroy)
+    #     sets the font_v_extents_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_font_v_extents(font, font_data, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a FontExtents
+    #     or None.
+
+    # set_nominal_glyph_func(self, callback_func, user_data, destroy)
+    #     sets the nominal_glyph_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_nominal_glyph(font, font_data, unicode, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return an integer
+    #     glyph code or None.
+
+    # set_variation_glyph_func(self, callback_func, user_data, destroy)
+    #     sets the variation_glyph_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_variation_glyph(font, font_data, unicode, variation_selector, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return an integer
+    #     glyph code or None.
+
+    # set_glyph_h_advance_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_h_advance_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_glyph_h_advance(font, font_data, glyph, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a float.
+
+    # set_glyph_v_advance_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_v_advance_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_glyph_v_advance(font, font_data, glyph, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a float.
+
+    # set_glyph_h_origin_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_h_origin_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_glyph_h_origin(font, font_data, glyph, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a 2-tuple,
+    # qahirah.Vector or None.
+
+    # set_glyph_v_origin_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_v_origin_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_glyph_v_origin(font, font_data, glyph, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a 2-tuple,
+    # qahirah.Vector or None.
+
+    # set_glyph_h_kerning_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_h_kerning_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_glyph_h_kerning(font, font_data, first_glyph, second_glyph, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a float.
+
+    # set_glyph_v_kerning_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_v_kerning_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_glyph_v_kerning(font, font_data, first_glyph, second_glyph, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a float.
+
+    # set_glyph_extents_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_extents_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_glyph_extents(font, font_data, glyph, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a GlyphExtents
+    #     or None.
+
+    # set_glyph_contour_point_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_contour_point_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should be
+    #     declared as follows:
+    #
+    #         def get_glyph_contour_point(font, font_data, glyph, point_index, user_data)
+    #
+    #     where font is the Font instance and font_data was what was passed
+    #     to set_font_funcs for the Font, and return a 2-tuple, qahirah.Vector
+    #     or None.
+
+    # set_glyph_name_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_name_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func
+    #     should be declared as follows:
+    #
+    #         def get_glyph_name_func(font, font_data, glyph, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return a string or None.
+
+    # set_glyph_from_name_func(self, callback_func, user_data, destroy)
+    #     sets the glyph_from_name_func callback, along with an optional
+    #     destroy callback for the user_data. The callback_func should
+    #     be declared as follows:
+    #
+    #         def get_glyph_from_name(font, font_data, name, user_data)
+    #
+    #     where font is the Font instance and font_data was what was
+    #     passed to set_font_funcs for the Font, and return an integer
+    #     glyph code or None.
+
+    # The preceding are defined below
 
 #end FontFuncs
 def_immutable \
