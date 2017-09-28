@@ -325,6 +325,17 @@ class HARFBUZZ :
 
     destroy_func_t = ct.CFUNCTYPE(None, ct.c_void_p)
 
+    # from hb-common.h (since 1.4.2):
+
+    class variation_t(ct.Structure) :
+        pass
+    variation_t._fields_ = \
+        [
+            ("tag", tag_t),
+            ("value", ct.c_float),
+        ]
+    #end variation_t
+
     # from hb-unicode.h:
 
     unicode_general_category_t = ct.c_uint
@@ -772,6 +783,9 @@ class HARFBUZZ :
         ]
     #end ot_var_axis_t
 
+    OT_VAR_NO_AXIS_INDEX = 0xFFFFFFFF
+      # returned from hb_ot_var_find_axis if not found
+
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
 
@@ -1053,6 +1067,12 @@ hb.hb_script_to_iso15924_tag.restype = HB.tag_t
 hb.hb_script_to_iso15924_tag.argtypes = (HB.script_t,)
 hb.hb_script_get_horizontal_direction.restype = HB.direction_t
 hb.hb_script_get_horizontal_direction.argtypes = (HB.script_t,)
+
+# from hb-common.h (since 1.4.2):
+hb.hb_variation_from_string.restype = HB.bool_t
+hb.hb_variation_from_string.argtypes = (ct.c_char_p, ct.c_int, ct.POINTER(HB.variation_t))
+hb.hb_variation_to_string.restype = None
+hb.hb_variation_to_string.argtypes = (ct.POINTER(HB.variation_t), ct.c_char_p, ct.c_uint)
 
 hb.hb_unicode_funcs_get_default.restype = ct.c_void_p
 hb.hb_unicode_funcs_get_default.argtypes = ()
@@ -1718,6 +1738,20 @@ def script_get_horizontal_direction(script) :
     return \
         hb.hb_script_get_horizontal_direction(script)
 #end script_get_horizontal_direction
+
+Variation = def_struct_class \
+  (
+    name = "Variation",
+    ctname = "variation_t",
+    conv =
+        {
+            "tag" :
+                {
+                    "to" : HB.TAG,
+                    "from" : lambda t : HB.UNTAG(t, True),
+                },
+        }
+  )
 
 # from hb-unicode.h:
 
