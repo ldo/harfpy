@@ -4028,7 +4028,216 @@ class Font :
             self.OTLayout(self._hbobj)
     #end ot_layout
 
-    # TODO: hb-ot-math.h
+    # from hb-ot-math.h (since 1.3.3):
+
+    if hasattr(hb, "hb_ot_math_has_data") :
+
+        class OTMath :
+
+            __slots__ = \
+                ( # to forestall typos
+                    "autoscale",
+                    "_hbobj",
+                )
+
+            def __init__(self, parent) :
+                # note I’m not calling hb_font_reference,
+                # assuming parent Font doesn’t go away!
+                self.autoscale = parent.autoscale
+                self._hbobj = parent._hbobj
+            #end __init__
+
+            GlyphVariant = def_struct_class \
+              (
+                name = "GlyphVariant",
+                ctname = "ot_math_glyph_variant_t",
+                conv =
+                    {
+                        "advance" : {"from" : HB.from_position_t, "to" : HB.to_position_t},
+                    }
+              )
+
+            GlyphPart = def_struct_class \
+              (
+                name = "GlyphPart",
+                ctname = "ot_math_glyph_part_t",
+                conv =
+                    {
+                        "start_connector_length" :
+                            {"from" : HB.from_position_t, "to" : HB.to_position_t},
+                        "end_connector_length" :
+                            {"from" : HB.from_position_t, "to" : HB.to_position_t},
+                        "full_advance" :
+                            {"from" : HB.from_position_t, "to" : HB.to_position_t},
+                    }
+              )
+
+            @property
+            def has_data(self) :
+                return \
+                    hb.hb_ot_math_has_data.argtypes(self._hbobj) != 0
+            #end has_data
+
+            def get_constant(self, constant) :
+                return \
+                    HB.from_position_t(hb.hb_ot_math_get_constant(self._hbobj, constant))
+            #end get_constant
+
+            def get_glyph_italics_correction(self, glyph) :
+                return \
+                    hb.hb_ot_math_get_glyph_italics_correction(self._hbobj, glyph)
+            #end get_glyph_italics_correction
+
+            def get_glyph_top_accent_attachment(self, glyph) :
+                result = hb.hb_ot_math_get_glyph_top_accent_attachment(self._hbobj, glyph)
+                if self.autoscale :
+                    result = HB.from_position_t(result)
+                #end if
+                return \
+                     result
+            #end get_glyph_top_accent_attachment
+
+            def is_glyph_extended_shape(self, glyph) :
+                return \
+                    hb.hb_ot_math_is_glyph_extended_shape(self._hbobj, glyph) != 0
+            #end is_glyph_extended_shape
+
+            def get_glyph_kerning(self, glyph, kern, correction_height) :
+                "kern is an OT_MATH_KERN_xxx value."
+                return \
+                    HB.from_position_t \
+                      (
+                        hb.hb_ot_math_get_glyph_kerning
+                          (
+                            self._hbobj,
+                            glyph,
+                            kern,
+                            HB.to_position_t(correction_height)
+                          )
+                      )
+            #end get_glyph_kerning
+
+            def get_nr_glyph_variants(self, glyph, direction) :
+                "direction is a DIRECTION_XXX value."
+                return \
+                    hb.hb_ot_math_get_glyph_variants.argtypes \
+                      (
+                        self._hbobj,
+                        glyph,
+                        direction,
+                        0, # start_offset
+                        None, # variants_count
+                        None # variants
+                      )
+            #end get_nr_glyph_variants
+
+            def get_glyph_variants(self, glyph, direction) :
+                "direction is a DIRECTION_XXX value."
+                variants_count = ct.c_uint \
+                  (
+                    hb.hb_ot_math_get_glyph_variants.argtypes
+                      (
+                        self._hbobj,
+                        glyph,
+                        direction,
+                        0, # start_offset
+                        None, # variants_count
+                        None # variants
+                      )
+                  )
+                c_variants = (HB.ot_math_glyph_variant_t * variants_count.value)()
+                hb.hb_ot_math_get_glyph_variants.argtypes \
+                  (
+                    self._hbobj,
+                    glyph,
+                    direction,
+                    0, # start_offset
+                    ct.byref(variants_count),
+                    ct.byref(c_variants)
+                  )
+                return \
+                    list \
+                      (
+                        self.GlyphVariant.from_hb(v, self.autoscale)
+                        for v in c_variants
+                      )
+            #end get_glyph_variants
+
+            def get_min_connector_overlap(self, direction) :
+                "direction is a DIRECTION_XXX value."
+                result = hb.hb_ot_math_get_min_connector_overlap(self._hbobj, direction)
+                if self.autoscale :
+                    result = HB.from_position_t(result)
+                #end if
+                return \
+                     result
+            #end get_min_connector_overlap
+
+            def get_nr_glyph_assembly_parts(self, glyph, direction) :
+                "direction is a DIRECTION_XXX value."
+                return \
+                    hb.hb_ot_math_get_glyph_assembly \
+                      (
+                        self._hbobj,
+                        glyph,
+                        direction,
+                        0, # start_offset
+                        None, # parts_count
+                        None, # parts
+                        None # italics_correction
+                      )
+            #end get_nr_glyph_assembly_parts
+
+            def get_glyph_assembly(self, glyph, direction) :
+                "direction is a DIRECTION_XXX value."
+                parts_count = ct.c_uint \
+                  (
+                    hb.hb_ot_math_get_glyph_assembly
+                      (
+                        self._hbobj,
+                        glyph,
+                        direction,
+                        0, # start_offset
+                        None, # parts_count
+                        None, # parts
+                        None # italics_correction
+                      )
+                  )
+                c_parts = (HB.ot_math_glyph_part_t * parts_count.value)()
+                c_italics_correction = HB.position_t()
+                hb.hb_ot_math_get_glyph_assembly \
+                  (
+                    self._hbobj,
+                    glyph,
+                    direction,
+                    0, # start_offset
+                    ct.byref(parts_count),
+                    ct.byref(c_parts),
+                    ct.byref(c_italics_correction)
+                  )
+                parts = list(self.GlyphPart.from_hb(p, self.autoscale) for p in c_parts)
+                if self.autoscale :
+                    italics_correction = HB.from_position_t(c_italics_correction.value)
+                else :
+                    italics_correction = c_italics_correction.value
+                #end if
+                return \
+                    parts, italics_correction
+            #end get_glyph_assembly
+
+        #end OTMath
+
+        @property
+        def ot_math(self) :
+            "returns an object which can be used to invoke ot_math_xxx functions" \
+            " relevant to Font objects."
+            # Same issue as with ot_layout: should this be a property or an
+            # attribute set up directly in __init__? Property seems simpler.
+            return \
+                self.OTMath(self)
+        #end ot_math
+
+    #end if
 
 #end Font
 def_immutable \
