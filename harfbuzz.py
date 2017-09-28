@@ -312,6 +312,14 @@ class HARFBUZZ :
     SCRIPT_OLD_HUNGARIAN = TAG(b'Hung')
     SCRIPT_SIGNWRITING = TAG(b'Sgnw')
 
+    # 9.0
+    SCRIPT_ADLAM = TAG(b'Adlm')
+    SCRIPT_BHAIKSUKI = TAG(b'Bhks')
+    SCRIPT_MARCHEN = TAG(b'Marc')
+    SCRIPT_OSAGE = TAG(b'Osge')
+    SCRIPT_TANGUT = TAG(b'Tang')
+    SCRIPT_NEWA = TAG(b'Newa')
+
     # No script set.
     SCRIPT_INVALID = TAG_NONE
 
