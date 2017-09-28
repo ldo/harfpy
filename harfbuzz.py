@@ -1548,11 +1548,11 @@ if hasattr(hb, "hb_ot_var_get_axis_count") :
     hb.hb_ot_var_get_axis_count.restype = ct.c_uint
     hb.hb_ot_var_get_axis_count.argtypes = (ct.c_void_p,)
     hb.hb_ot_var_get_axes.restype = ct.c_uint
-    hb.hb_ot_var_get_axes.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p)
+    hb.hb_ot_var_get_axes.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.ot_var_axis_t))
     hb.hb_ot_var_find_axis.restype = HB.bool_t
-    hb.hb_ot_var_find_axis.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_void_p)
+    hb.hb_ot_var_find_axis.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(ct.c_uint), ct.POINTER(HB.ot_var_axis_t))
     hb.hb_ot_var_normalize_variations.restype = None
-    hb.hb_ot_var_normalize_variations.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_int), ct.c_uint)
+    hb.hb_ot_var_normalize_variations.argtypes = (ct.c_void_p, ct.POINTER(HB.variation_t), ct.c_uint, ct.POINTER(ct.c_int), ct.c_uint)
     hb.hb_ot_var_normalize_coords.restype = None
     hb.hb_ot_var_normalize_coords.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_float), ct.POINTER(ct.c_int))
 #end if
@@ -3472,7 +3472,140 @@ class Face :
             self.OTLayout(self._hbobj)
     #end ot_layout
 
-    # TODO: hb-ot-var.h stuff
+    # from hb-ot-var.h (since 1.4.2):
+
+    if hasattr(hb, "hb_ot_var_get_axis_count") :
+
+        class OTVar :
+
+            __slots__ = \
+                ( # to forestall typos
+                    "_hbobj",
+                )
+
+            Axis = def_struct_class \
+              (
+                name = "Axis",
+                ctname = "ot_var_axis_t",
+                conv =
+                    {
+                        "tag" :
+                            {
+                                "to" : HB.TAG,
+                                "from" : lambda t : HB.UNTAG(t, True),
+                            },
+                    }
+              )
+
+            def __init__(self, _hbobj) :
+                # note I’m not calling hb_face_reference,
+                # assuming parent Face doesn’t go away!
+                self._hbobj = _hbobj
+            #end __init__
+
+            @property
+            def nr_axes(self) :
+                return \
+                    hb.hb_ot_var_get_axis_count(self._hbobj)
+            #end nr_axes
+
+            @property
+            def axes(self) :
+                axis_count = ct.c_uint \
+                  (
+                    hb.hb_ot_var_get_axes
+                      (
+                        self._hbobj,
+                        0, # start_offset
+                        None, # axes_count
+                        None # axes_array
+                      )
+                  )
+                axes_array = (HB.ot_var_axis_t * axis_count.value)()
+                hb.hb_ot_var_get_axes \
+                  (
+                    self._hbobj,
+                    0, # start_offset
+                    ct.byref(axis_count),
+                    ct.byref(axes_array)
+                  )
+                return \
+                    list(self.Axis.from_hb(a) for a in axes_array)
+            #end axes
+
+            def find_axis(self, axis_tag) :
+                c_axis_index = ct.c_uint()
+                c_axis_info = HB.ot_var_axis_t()
+                found =  \
+                    (
+                        hb.hb_ot_var_find_axis
+                          (
+                            self._hbobj,
+                            HB.TAG(axis_tag),
+                            ct.byref(c_axis_index),
+                            ct.byref(c_axis_info)
+                          )
+                    !=
+                        0
+                    )
+                if found :
+                    axis_info = self.Axis.from_hb(c_axis_info)
+                else :
+                    axis_info = None
+                #end if
+                return \
+                    c_axis_index.value, axis_info
+            #end find_axis
+
+            def normalize_variations(self, variations) :
+                if (
+                        not isinstance(variations, (tuple, list))
+                    or
+                        not (isinstance(v, Variation) for v in variations)
+                ) :
+                    raise TypeError("variations must be sequence of Variation objects")
+                #end if
+                nr_variations = len(variations)
+                c_variations = seq_to_ct(variations, HB.variation_t, HB.variation_t.to_hb)
+                nr_coords = self.nr_axes # should I let caller specify this?
+                coords = (ct_c_int * nr_coords)()
+                hb.hb_ot_var_normalize_variations \
+                  (
+                    self._hbobj,
+                    ct.byref(c_variations),
+                    nr_variations,
+                    ct.byref(coords),
+                    nr_coords
+                  )
+                return \
+                    list(c.value for c in coords)
+            #end normalize_variations
+
+            def normalize_coords(self, design_coords) :
+                nr_design_coords = len(design_coords)
+                c_design_coords = seq_to_ct(design_coords, ct.c_float)
+                c_normalized_coords = (ct.c_int * nr_design_coords)()
+                hb.hb_ot_var_normalize_coords \
+                  (
+                    self._hbobj,
+                    nr_design_coords,
+                    ct.byref(c_design_coords),
+                    ct.byref(c_normalized_coords)
+                  )
+                return \
+                    list(c.value for c in c_normalized_coords)
+            #end normalize_coords
+
+        #end OTVar
+
+        def ot_var(self) :
+            "returns an object which can be used to invoke ot_var_xxx functions" \
+            " relevant to Face objects."
+            return \
+                self.OTVar(self._hbobj)
+        #end ot_var
+
+    #end if
 
 #end Face
 def_immutable \
