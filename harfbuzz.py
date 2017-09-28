@@ -656,6 +656,26 @@ class HARFBUZZ :
     OT_LAYOUT_NO_FEATURE_INDEX = 0xFFFF
     OT_LAYOUT_DEFAULT_LANGUAGE_INDEX = 0xFFFF
 
+    # from hb-ot-var.h (since 1.4.2):
+
+    OT_TAG_VAR_AXIS_ITALIC = TAG(b'ital')
+    OT_TAG_VAR_AXIS_OPTICAL_SIZE = TAG(b'opsz')
+    OT_TAG_VAR_AXIS_SLANT = TAG(b'slnt')
+    OT_TAG_VAR_AXIS_WIDTH = TAG(b'wdth')
+    OT_TAG_VAR_AXIS_WEIGHT = TAG(b'wght')
+
+    class ot_var_axis_t(ct.Structure) :
+        pass
+    ot_var_axis_t._fields_ = \
+        [
+            ("tag", tag_t),
+            ("name_id", ct.c_uint),
+            ("min_value", ct.c_float),
+            ("default_value", ct.c_float),
+            ("max_value", ct.c_float),
+        ]
+    #end ot_var_axis_t
+
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
 
@@ -1384,6 +1404,20 @@ hb.hb_shape_plan_get_shaper.restype = ct.c_char_p
 hb.hb_shape_plan_get_shaper.argtypes = (ct.c_void_p,)
 hb.hb_shape_plan_reference.restype = ct.c_void_p
 hb.hb_shape_plan_reference.argtypes = (ct.c_void_p,)
+
+# from hb-ot-var.h (since 1.4.2):
+if hasattr(hb, "hb_ot_var_get_axis_count") :
+    hb.hb_ot_var_get_axis_count.restype = ct.c_uint
+    hb.hb_ot_var_get_axis_count.argtypes = (ct.c_void_p,)
+    hb.hb_ot_var_get_axes.restype = ct.c_uint
+    hb.hb_ot_var_get_axes.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p)
+    hb.hb_ot_var_find_axis.restype = HB.bool_t
+    hb.hb_ot_var_find_axis.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_void_p)
+    hb.hb_ot_var_normalize_variations.restype = None
+    hb.hb_ot_var_normalize_variations.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_int), ct.c_uint)
+    hb.hb_ot_var_normalize_coords.restype = None
+    hb.hb_ot_var_normalize_coords.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_float), ct.POINTER(ct.c_int))
+#end if
 
 #+
 # Higher-level stuff begins here
@@ -3285,6 +3319,8 @@ class Face :
         return \
             self.OTLayout(self._hbobj)
     #end ot_layout
+
+    # TODO: hb-ot-var.h stuff
 
 #end Face
 def_immutable \
