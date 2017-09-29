@@ -3635,7 +3635,7 @@ class Face :
                     c_normalized_coords
                   )
                 return \
-                    list(c.value for c in c_normalized_coords)
+                    list(c_normalized_coords)
             #end normalize_coords
 
         #end OTVar
