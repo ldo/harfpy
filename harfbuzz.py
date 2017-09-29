@@ -3608,19 +3608,19 @@ class Face :
                     raise TypeError("variations must be sequence of Variation objects")
                 #end if
                 nr_variations = len(variations)
-                c_variations = seq_to_ct(variations, HB.variation_t, HB.variation_t.to_hb)
+                c_variations = seq_to_ct(variations, HB.variation_t, Variation.to_hb)
                 nr_coords = self.nr_axes # should I let caller specify this?
-                coords = (ct_c_int * nr_coords)()
+                coords = (ct.c_int * nr_coords)()
                 hb.hb_ot_var_normalize_variations \
                   (
                     self._hbobj,
-                    ct.byref(c_variations),
+                    c_variations,
                     nr_variations,
                     coords,
                     nr_coords
                   )
                 return \
-                    list(c.value for c in coords)
+                    list(coords)
             #end normalize_variations
 
             def normalize_coords(self, design_coords) :
