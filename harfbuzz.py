@@ -3527,7 +3527,7 @@ class Face :
                     self._hbobj,
                     0, # start_offset
                     ct.byref(axis_count),
-                    ct.byref(axes_array)
+                    axes_array
                   )
                 return \
                     list(self.Axis.from_hb(a) for a in axes_array)
@@ -3574,7 +3574,7 @@ class Face :
                     self._hbobj,
                     ct.byref(c_variations),
                     nr_variations,
-                    ct.byref(coords),
+                    coords,
                     nr_coords
                   )
                 return \
@@ -3589,8 +3589,8 @@ class Face :
                   (
                     self._hbobj,
                     nr_design_coords,
-                    ct.byref(c_design_coords),
-                    ct.byref(c_normalized_coords)
+                    c_design_coords,
+                    c_normalized_coords
                   )
                 return \
                     list(c.value for c in c_normalized_coords)
@@ -3598,6 +3598,7 @@ class Face :
 
         #end OTVar
 
+        @property
         def ot_var(self) :
             "returns an object which can be used to invoke ot_var_xxx functions" \
             " relevant to Face objects."
@@ -4320,7 +4321,7 @@ class Font :
                     direction,
                     0, # start_offset
                     ct.byref(variants_count),
-                    ct.byref(c_variants)
+                    c_variants
                   )
                 return \
                     list \
@@ -4379,7 +4380,7 @@ class Font :
                     direction,
                     0, # start_offset
                     ct.byref(parts_count),
-                    ct.byref(c_parts),
+                    c_parts,
                     ct.byref(c_italics_correction)
                   )
                 parts = list(self.GlyphPart.from_hb(p, self.autoscale) for p in c_parts)
