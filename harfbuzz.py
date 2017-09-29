@@ -4247,7 +4247,7 @@ class Font :
             #end has_data
 
             def get_constant(self, constant) :
-                result = HB.from_position_t(hb.hb_ot_math_get_constant(self._hbobj, constant))
+                result = hb.hb_ot_math_get_constant(self._hbobj, constant)
                 if self.autoscale :
                     result = HB.from_position_t(result)
                 #end if
