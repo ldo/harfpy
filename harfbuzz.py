@@ -4307,15 +4307,15 @@ class Font :
 
             def get_glyph_kerning(self, glyph, kern, correction_height) :
                 "kern is an OT_MATH_KERN_xxx value."
-                result = HB.from_position_t \
+                if self.autoscale :
+                    correction_height = HB.to_position_t(correction_height)
+                #end if
+                result = hb.hb_ot_math_get_glyph_kerning \
                   (
-                    hb.hb_ot_math_get_glyph_kerning
-                      (
-                        self._hbobj,
-                        glyph,
-                        kern,
-                        HB.to_position_t(correction_height)
-                      )
+                    self._hbobj,
+                    glyph,
+                    kern,
+                    correction_height
                   )
                 if self.autoscale :
                     result = HB.from_position_t(result)
