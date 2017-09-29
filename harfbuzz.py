@@ -3472,6 +3472,48 @@ class Face :
             self.OTLayout(self._hbobj)
     #end ot_layout
 
+    # from hb-ot-math.h (since 1.3.3):
+
+    if hasattr(hb, "hb_ot_math_has_data") :
+
+        class OTMath :
+
+            __slots__ = \
+                ( # to forestall typos
+                    "_hbobj",
+                )
+
+            def __init__(self, _hbobj) :
+                # note I’m not calling hb_face_reference,
+                # assuming parent Face doesn’t go away!
+                self._hbobj = _hbobj
+            #end __init__
+
+            @property
+            def has_data(self) :
+                return \
+                    hb.hb_ot_math_has_data(self._hbobj) != 0
+            #end has_data
+
+            def is_glyph_extended_shape(self, glyph) :
+                return \
+                    hb.hb_ot_math_is_glyph_extended_shape(self._hbobj, glyph) != 0
+            #end is_glyph_extended_shape
+
+        #end OTMath
+
+        @property
+        def ot_math(self) :
+            "returns an object which can be used to invoke ot_math_xxx functions" \
+            " relevant to Face objects."
+            # Same issue as with ot_layout: should this be a property or an
+            # attribute set up directly in __init__? Property seems simpler.
+            return \
+                self.OTMath(self._hbobj)
+        #end ot_math
+
+    #end if
+
     # from hb-ot-var.h (since 1.4.2):
 
     if hasattr(hb, "hb_ot_var_get_axis_count") :
@@ -4240,12 +4282,6 @@ class Font :
                     }
               )
 
-            @property
-            def has_data(self) :
-                return \
-                    hb.hb_ot_math_has_data(self._hbobj) != 0
-            #end has_data
-
             def get_constant(self, constant) :
                 result = hb.hb_ot_math_get_constant(self._hbobj, constant)
                 if self.autoscale :
@@ -4268,11 +4304,6 @@ class Font :
                 return \
                      result
             #end get_glyph_top_accent_attachment
-
-            def is_glyph_extended_shape(self, glyph) :
-                return \
-                    hb.hb_ot_math_is_glyph_extended_shape(self._hbobj, glyph) != 0
-            #end is_glyph_extended_shape
 
             def get_glyph_kerning(self, glyph, kern, correction_height) :
                 "kern is an OT_MATH_KERN_xxx value."
