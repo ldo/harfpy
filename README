@@ -213,7 +213,7 @@ Next, the text we are going to render:
         %
             {"author" : author, "title" : book_title}
         )
-    base_rtl = False
+    base_rtl = False # overall direction of line
 
 Initial font and buffer setup:
 
@@ -223,31 +223,22 @@ Initial font and buffer setup:
     ft_face.set_char_size(size = text_size, resolution = qah.base_dpi)
     hb_font = hb.Font.ft_create(ft_face)
 
-Use FriBidi to reorder the line and define the embedding levels:
+Use FriBidi to reorder the line and define the embedding levels, using the
+`ReorderLine` convenience wrapper class provided by PyBidi:
 
-    bidi_types = fb.get_bidi_types(text_line)
-    base_dir, embedding_levels = \
-        fb.get_par_embedding_levels(bidi_types, (FB.PAR_LTR, FB.PAR_RTL)[base_rtl])[1:]
-    vis_line, map = fb.reorder_line \
+    reordered = fribidi.ReorderLine \
       (
-        flags = FB.FLAGS_DEFAULT,
-        bidi_types = bidi_types,
-        line_offset = 0,
-        base_dir = base_dir,
-        embedding_levels = embedding_levels,
-        logical_str = text_line,
-        map = fb.Reordering.identity(text_line)
-      )[1:]
-    vis_bidi_types = map.apply(bidi_types)
-    vis_embedding_levels = map.apply(embedding_levels)
+        text_line = text_line,
+        base_dir = (FB.PAR_LTR, FB.PAR_RTL)[base_rtl],
+        flags = FRIBIDI.FLAGS_DEFAULT
+      )
 
 Next, collect the glyphs for each segment/run into a list of Qahirah `Glyphs` objects.
-Note the use of the `each_embedding_run` convenience routine provided by PyBidi, and the
-`Buffer.get_glyphs` convenience method provided by HarfPy:
+Note the `Buffer.get_glyphs` convenience method provided by HarfPy:
 
     glyphs = []
     glyph_pos = Vector(0, 0)
-    for substr, pos1, pos2, level in fb.each_embedding_run(vis_line, vis_embedding_levels) :
+    for substr, pos1, pos2, level in reordered.each_embedding_run() :
         buf.reset()
         buf.add_str(substr)
         if FB.LEVEL_IS_RTL(level) :
@@ -306,4 +297,4 @@ The API documentation seems to be rather lacking. A good starting point for find
 more is the [HarfBuzz Wiki](https://github.com/behdad/harfbuzz/wiki).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2017 June 18
+2017 October 18
