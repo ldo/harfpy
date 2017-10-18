@@ -238,14 +238,9 @@ Note the `Buffer.get_glyphs` convenience method provided by HarfPy:
 
     glyphs = []
     glyph_pos = Vector(0, 0)
-    for substr, pos1, pos2, level in reordered.each_embedding_run() :
+    for substr, pos1, pos2, level in reordered.each_embedding_run(vis_order = False) :
         buf.reset()
         buf.add_str(substr)
-        if FB.LEVEL_IS_RTL(level) :
-            # HarfBuzz always wants to start with logical order, not display order,
-            # so undo FriBidi reordering
-            buf.reverse()
-        #end if
         buf.guess_segment_properties()
         hb.shape(hb_font, buf)
         new_glyphs, end_glyph_pos = buf.get_glyphs(glyph_pos)
