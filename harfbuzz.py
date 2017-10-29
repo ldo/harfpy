@@ -1617,6 +1617,13 @@ def direction_to_string(direction) :
 # to keep referenced objects from unexpectedly disappearing), namely that
 # such references will not be recovered when the Python object has to be
 # recreated. Should I worry about this?
+#
+# Fixme: callbacks defined in various places refer to names defined in
+# parent function scopes which contain references to the objects
+# (“self”) they are attached to. This is a reference circularity which
+# means the objects to which those callbacks are attached can only be
+# disposed by garbage collection, not by their reference counts going
+# to zero. These places are marked by the phrase “reference circularity”.
 #-
 
 class UserDataDict(dict) :
@@ -2039,6 +2046,8 @@ def_immutable \
   )
 def def_unicodefuncs_extra() :
 
+    # fixme: reference circularity between callbacks and containing UnicodeFuncs objects
+
     def def_wrap_combining_class_func(self, combining_class_func, user_data) :
 
         @HB.unicode_combining_class_func_t
@@ -2458,7 +2467,7 @@ del SegmentPropertiesExtra
 class Buffer :
     "a HarfBuzz buffer. This is where the text shaping is actually done." \
     " Note that a Buffer can only manage a single run of text (language, script," \
-    " direction = “segment”) at once."
+    " direction = “segment”) at once." \
     " Do not instantiate directly; call the create or get_empty methods."
 
     __slots__ = \
@@ -2875,6 +2884,8 @@ class Buffer :
 
 #end Buffer
 def def_buffer_extra() :
+
+    # fixme: reference circularity between callback and containing Buffer object
 
     def def_wrap_message_func(self, message_func, user_data) :
 
@@ -4713,6 +4724,8 @@ def_immutable \
     hb_set = "hb_font_funcs_make_immutable",
   )
 def def_fontfuncs_extra() :
+
+    # fixme: reference circularity between callbacks and containing FontFuncs objects
 
     def get_font(c_font) :
         return \
