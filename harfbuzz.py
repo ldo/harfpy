@@ -28,6 +28,7 @@
 import ctypes as ct
 import array
 from weakref import \
+    ref as wref, \
     WeakValueDictionary
 import atexit
 try :
@@ -925,6 +926,13 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
         result_class
 #end def_struct_class
 
+def _wderef(wself) :
+    self = wself()
+    assert self != None, "parent object has gone"
+    return \
+        self
+#end _wderef
+
 def def_callback_wrapper(celf, method_name, docstring, callback_field_name, destroy_field_name, def_wrap_callback_func, hb_proc) :
     # Common routine for defining a set-callback method. These all have the same form,
     # where the caller specifies
@@ -936,7 +944,7 @@ def def_callback_wrapper(celf, method_name, docstring, callback_field_name, dest
 
     def set_callback(self, callback_func, user_data, destroy) :
         # This becomes the actual set-callback method.
-        wrap_callback_func = def_wrap_callback_func(self, callback_func, user_data)
+        wrap_callback_func = def_wrap_callback_func(wref(self), callback_func, user_data)
         if destroy != None :
             @HB.destroy_func_t
             def wrap_destroy(c_user_data) :
@@ -1617,13 +1625,6 @@ def direction_to_string(direction) :
 # to keep referenced objects from unexpectedly disappearing), namely that
 # such references will not be recovered when the Python object has to be
 # recreated. Should I worry about this?
-#
-# Fixme: callbacks defined in various places refer to names defined in
-# parent function scopes which contain references to the objects
-# (“self”) they are attached to. This is a reference circularity which
-# means the objects to which those callbacks are attached can only be
-# disposed by garbage collection, not by their reference counts going
-# to zero. These places are marked by the phrase “reference circularity”.
 #-
 
 class UserDataDict(dict) :
@@ -2046,14 +2047,12 @@ def_immutable \
   )
 def def_unicodefuncs_extra() :
 
-    # fixme: reference circularity between callbacks and containing UnicodeFuncs objects
-
-    def def_wrap_combining_class_func(self, combining_class_func, user_data) :
+    def def_wrap_combining_class_func(wself, combining_class_func, user_data) :
 
         @HB.unicode_combining_class_func_t
         def wrap_combining_class_func(c_funcs, unicode, c_user_data) :
             return \
-                combining_class_func(self, unicode, user_data)
+                combining_class_func(_wderef(wself), unicode, user_data)
         #end wrap_combining_class_func
 
     #begin def_wrap_combining_class_func
@@ -2061,12 +2060,12 @@ def def_unicodefuncs_extra() :
             wrap_combining_class_func
     #end def_wrap_combining_class_func
 
-    def def_wrap_eastasian_width_func(self, eastasian_width_func, user_data) :
+    def def_wrap_eastasian_width_func(wself, eastasian_width_func, user_data) :
 
         @HB.unicode_eastasian_width_func_t
         def wrap_eastasian_width_func(c_funcs, unicode, c_user_data) :
             return \
-                eastasian_width_func(self, unicode, user_data)
+                eastasian_width_func(_wderef(wself), unicode, user_data)
         #end wrap_eastasian_width_func
 
     #begin def_wrap_eastasian_width_func
@@ -2074,12 +2073,12 @@ def def_unicodefuncs_extra() :
             wrap_eastasian_width_func
     #end def_wrap_eastasian_width_func
 
-    def def_wrap_general_category_func(self, general_category_func, user_data) :
+    def def_wrap_general_category_func(wself, general_category_func, user_data) :
 
         @HB.unicode_general_category_func_t
         def wrap_general_category_func(c_funcs, unicode, c_user_data) :
             return \
-                general_category_func(self, unicode, user_data)
+                general_category_func(_wderef(wself), unicode, user_data)
         #end wrap_general_category_func
 
     #begin def_wrap_general_category_func
@@ -2087,12 +2086,12 @@ def def_unicodefuncs_extra() :
             wrap_general_category_func
     #end def_wrap_general_category_func
 
-    def def_wrap_mirroring_func(self, mirroring_func, user_data) :
+    def def_wrap_mirroring_func(wself, mirroring_func, user_data) :
 
         @HB.unicode_mirroring_func_t
         def wrap_mirroring_func(c_funcs, unicode, c_user_data) :
             return \
-                mirroring_func(self, unicode, user_data)
+                mirroring_func(_wderef(wself), unicode, user_data)
         #end wrap_mirroring_func
 
     #begin def_wrap_mirroring_func
@@ -2100,12 +2099,12 @@ def def_unicodefuncs_extra() :
             wrap_mirroring_func
     #end def_wrap_mirroring_func
 
-    def def_wrap_script_func(self, script_func, user_data) :
+    def def_wrap_script_func(wself, script_func, user_data) :
 
         @HB.unicode_script_func_t
         def wrap_script_func(c_funcs, unicode, c_user_data) :
             return \
-                script_func(self, unicode, user_data)
+                script_func(_wderef(wself), unicode, user_data)
         #end wrap_script_func
 
     #begin def_wrap_script_func
@@ -2113,11 +2112,11 @@ def def_unicodefuncs_extra() :
             wrap_script_func
     #end def_wrap_script_func
 
-    def def_wrap_compose_func(self, compose_func, user_data) :
+    def def_wrap_compose_func(wself, compose_func, user_data) :
 
         @HB.unicode_compose_func_t
         def wrap_compose_func(c_funcs, a, b, c_ab, c_user_data) :
-            result = compose_func(self, a, b, user_data)
+            result = compose_func(_wderef(wself), a, b, user_data)
             if result != None :
                 c_ab[0] = result
             else :
@@ -2132,11 +2131,11 @@ def def_unicodefuncs_extra() :
             wrap_compose_func
     #end def_wrap_compose_func
 
-    def def_wrap_decompose_func(self, decompose_func, user_data) :
+    def def_wrap_decompose_func(wself, decompose_func, user_data) :
 
         @HB.unicode_decompose_func_t
         def wrap_decompose_func(c_funcs, ab, c_a, c_b, c_user_data) :
-            result = decompose_func(self, ab, user_data)
+            result = decompose_func(_wderef(wself), ab, user_data)
             if result != None :
                 c_a[0], c_b[0] = result
             else :
@@ -2151,11 +2150,11 @@ def def_unicodefuncs_extra() :
             wrap_decompose_func
     #end def_wrap_decompose_func
 
-    def def_wrap_decompose_compatibility_func(self, decompose_compatibility_func, user_data) :
+    def def_wrap_decompose_compatibility_func(wself, decompose_compatibility_func, user_data) :
 
         @HB.unicode_decompose_compatibility_func_t
         def wrap_decompose_compatibility_func(c_funcs, u, c_decomposed, c_user_data) :
-            result = decompose_compatibility_func(self, u, user_data)
+            result = decompose_compatibility_func(_wderef(wself), u, user_data)
             if result == None :
                 result = ()
             #end if
@@ -2885,16 +2884,14 @@ class Buffer :
 #end Buffer
 def def_buffer_extra() :
 
-    # fixme: reference circularity between callback and containing Buffer object
-
-    def def_wrap_message_func(self, message_func, user_data) :
+    def def_wrap_message_func(wself, message_func, user_data) :
 
         @HB.buffer_message_func_t
         def wrap_message_func(c_buffer, c_font, message, c_user_data) :
             return \
                 message_func \
                   (
-                    self,
+                    _wderef(wself),
                     Font(hb.hb_font_reference(c_font), None),
                     message.decode(),
                     user_data
@@ -4725,21 +4722,19 @@ def_immutable \
   )
 def def_fontfuncs_extra() :
 
-    # fixme: reference circularity between callbacks and containing FontFuncs objects
-
     def get_font(c_font) :
         return \
             Font(hb.hb_font_reference(c_font), None)
     #end get_font
 
-    def def_wrap_get_font_extents_func(self, get_font_extents, user_data) :
+    def def_wrap_get_font_extents_func(wself, get_font_extents, user_data) :
 
         @HB.font_get_font_extents_func_t
         def wrap_get_font_extents(c_font, c_font_data, c_metrics, c_user_data) :
             font = get_font(c_font)
             metrics = get_font_extents(font, font._font_data, user_data)
             if metrics != None :
-                metrics = metrics.to_hb(self.autoscale)
+                metrics = metrics.to_hb(_wderef(wself).autoscale)
                 c_metrics[0] = metrics
             #end if
             return \
@@ -4751,7 +4746,7 @@ def def_fontfuncs_extra() :
             wrap_get_font_extents
     #end def_wrap_get_font_extents_func
 
-    def def_wrap_get_nominal_glyph_func(self, get_nominal_glyph, user_data) :
+    def def_wrap_get_nominal_glyph_func(wself, get_nominal_glyph, user_data) :
 
         @HB.font_get_nominal_glyph_func_t
         def wrap_get_nominal_glyph(c_font, c_font_data, unicode, c_glyph, c_user_data) :
@@ -4769,7 +4764,7 @@ def def_fontfuncs_extra() :
             wrap_get_nominal_glyph
     #end def_wrap_get_nominal_glyph_func
 
-    def def_wrap_get_variation_glyph_func(self, get_variation_glyph, user_data) :
+    def def_wrap_get_variation_glyph_func(wself, get_variation_glyph, user_data) :
 
         @HB.font_get_variation_glyph_func_t
         def wrap_get_variation_glyph(c_font, c_font_data, unicode, variation_selector, c_glyph, c_user_data) :
@@ -4787,13 +4782,13 @@ def def_fontfuncs_extra() :
             wrap_get_variation_glyph
     #end def_wrap_get_variation_glyph_func
 
-    def def_wrap_get_glyph_advance_func(self, get_glyph_advance, user_data) :
+    def def_wrap_get_glyph_advance_func(wself, get_glyph_advance, user_data) :
 
         @HB.font_get_glyph_advance_func_t
         def wrap_get_glyph_advance(c_font, c_font_data, glyph, c_user_data) :
             font = get_font(c_font)
             result = get_glyph_advance(font, font._font_data, glyph, user_data)
-            if self.autoscale :
+            if _wderef(wself).autoscale :
                 result = HB.to_position_t(result)
             else :
                 result = round(result)
@@ -4807,14 +4802,14 @@ def def_fontfuncs_extra() :
             wrap_get_glyph_advance
     #end def_wrap_get_glyph_advance_func
 
-    def def_wrap_get_glyph_origin_func(self, get_glyph_origin, user_data) :
+    def def_wrap_get_glyph_origin_func(wself, get_glyph_origin, user_data) :
 
         @HB.font_get_glyph_origin_func_t
         def wrap_get_glyph_origin(c_font, c_font_data, glyph, c_x, c_y, c_user_data) :
             font = get_font(c_font)
             pos = get_glyph_origin(font, font._font_data, glyph, user_data)
             if pos != None :
-                if self.autoscale :
+                if _wderef(wself).autoscale :
                     c_x[0] = HB.to_position_t(pos[0])
                     c_y[0] = HB.to_position_t(pos[1])
                 else :
@@ -4831,13 +4826,13 @@ def def_fontfuncs_extra() :
             wrap_get_glyph_origin
     #end def_wrap_get_glyph_origin_func
 
-    def def_wrap_get_glyph_kerning_func(self, get_glyph_kerning, user_data) :
+    def def_wrap_get_glyph_kerning_func(wself, get_glyph_kerning, user_data) :
 
         @HB.font_get_glyph_kerning_func_t
         def wrap_get_glyph_kerning(c_font, c_font_data, first_glyph, second_glyph, c_user_data) :
             font = get_font(c_font)
             result = get_glyph_kerning(font, font._font_data, first_glyph, second_glyph, user_data)
-            if self.autoscale :
+            if _wderef(wself).autoscale :
                 result = HB.to_position_t(result)
             else :
                 result = round(result)
@@ -4851,14 +4846,14 @@ def def_fontfuncs_extra() :
             wrap_get_glyph_kerning
     #end def_wrap_get_glyph_kerning_func
 
-    def def_wrap_get_glyph_extents_func(self, get_glyph_extents, user_data) :
+    def def_wrap_get_glyph_extents_func(wself, get_glyph_extents, user_data) :
 
         @HB.font_get_glyph_extents_func_t
         def wrap_get_glyph_extents(c_font, c_font_data, glyph, c_extents, c_user_data) :
             font = get_font(c_font)
             extents = get_glyph_extents(font, font._font_data, glyph, user_data)
             if extents != None :
-                extents = extents.to_hb(self.autoscale)
+                extents = extents.to_hb(_wderef(wself).autoscale)
                 c_extents[0].x_bearing = extents.x_bearing
                 c_extents[0].y_bearing = extents.y_bearing
                 c_extents[0].width = extents.width
@@ -4873,14 +4868,14 @@ def def_fontfuncs_extra() :
             wrap_get_glyph_extents
     #end def_wrap_get_glyph_extents_func
 
-    def def_wrap_get_glyph_contour_point_func(self, get_glyph_contour_point, user_data) :
+    def def_wrap_get_glyph_contour_point_func(wself, get_glyph_contour_point, user_data) :
 
         @HB.font_get_glyph_contour_point_func_t
         def wrap_get_glyph_contour_point(c_font, c_font_data, glyph, point_index, c_x, c_y, c_user_data) :
             font = get_font(c_font)
             pos = get_glyph_contour_point(font, font._font_data, glyph, point_index, user_data)
             if pos != None :
-                if self.autoscale :
+                if _wderef(wself).autoscale :
                     c_x[0] = HB.to_position_t(pos[0])
                     c_y[0] = HB.to_position_t(pos[1])
                 else :
@@ -4897,7 +4892,7 @@ def def_fontfuncs_extra() :
             wrap_get_glyph_contour_point
     #end def_wrap_get_glyph_contour_point_func
 
-    def def_wrap_get_glyph_name_func(self, get_glyph_name, user_data) :
+    def def_wrap_get_glyph_name_func(wself, get_glyph_name, user_data) :
 
         @HB.font_get_glyph_name_func_t
         def wrap_get_glyph_name_func(c_font, c_font_data, glyph, c_name, size, c_user_data) :
@@ -4922,7 +4917,7 @@ def def_fontfuncs_extra() :
             wrap_get_glyph_name_func
     #end def_wrap_get_glyph_name_func
 
-    def def_wrap_get_glyph_from_name_func(self, get_glyph_from_name, user_data) :
+    def def_wrap_get_glyph_from_name_func(wself, get_glyph_from_name, user_data) :
 
         @HB.font_get_glyph_from_name_func_t
         def wrap_get_glyph_from_name(c_font, c_font_data, c_name, c_len, c_glyph, c_user_data) :
