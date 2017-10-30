@@ -944,6 +944,8 @@ def def_callback_wrapper(celf, method_name, docstring, callback_field_name, dest
 
     def set_callback(self, callback_func, user_data, destroy) :
         # This becomes the actual set-callback method.
+        # Note the passing of a weak ref to the containing object, to
+        # avoid reference circularity.
         wrap_callback_func = def_wrap_callback_func(wref(self), callback_func, user_data)
         if destroy != None :
             @HB.destroy_func_t
