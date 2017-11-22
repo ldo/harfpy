@@ -40,9 +40,15 @@ try :
     import qahirah
 except ImportError :
     qahirah = None
+import sys
 #end try
 
-hb = ct.cdll.LoadLibrary("libharfbuzz.so.0")
+if sys.platform == 'win32':
+    hb = ct.cdll.LoadLibrary('libharfbuzz-0.dll')
+elif sys.platform == 'darwin':
+    hb = ct.cdll.LoadLibrary('libharfbuzz.0.dylib')
+else:
+    hb = ct.cdll.LoadLibrary("libharfbuzz.so.0")
 
 class HARFBUZZ :
     "useful definitions adapted from harfbuzz/*.h. You will need to use the constants" \
