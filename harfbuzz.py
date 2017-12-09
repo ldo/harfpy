@@ -2790,12 +2790,13 @@ class Buffer :
             else :
                 pos = qahirah.Vector(0, 0)
             #end if
+            flip = qahirah.Vector(1, -1)
             for i in range(len(glyph_infos)) :
                 result.append \
                   (
-                    qahirah.Glyph(glyph_infos[i].codepoint, pos + qahirah.Vector(1, -1) * glyph_positions[i].offset)
+                    qahirah.Glyph(glyph_infos[i].codepoint, pos + flip * glyph_positions[i].offset)
                   )
-                pos += qahirah.Vector(1, -1) * glyph_positions[i].advance
+                pos += flip * glyph_positions[i].advance
             #end for
             return \
                 (result, pos)
