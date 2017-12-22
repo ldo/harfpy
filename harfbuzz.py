@@ -999,14 +999,11 @@ def def_immutable(celf, hb_query, hb_set) :
 # Useful stuff
 #-
 
-def seq_to_ct(seq, ct_type, conv = None, zeroterm = False) :
+def seq_to_ct(seq, ct_type, conv = lambda x : x, zeroterm = False) :
     "extracts the elements of a Python sequence value into a ctypes array" \
     " of type ct_type, optionally applying the conv function to each value."
-    if conv == None :
-        conv = lambda x : x
-    #end if
-    nr_elts = len(seq) + int(zeroterm)
-    result = (nr_elts * ct_type)()
+    nr_elts = len(seq)
+    result = ((nr_elts + int(zeroterm)) * ct_type)()
     for i in range(nr_elts) :
         result[i] = conv(seq[i])
     #end for
