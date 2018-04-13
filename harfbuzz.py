@@ -6,7 +6,7 @@
 #     Qahirah <https://github.com/ldo/qahirah> -- binding for Cairo
 #     PyBidi <https://github.com/ldo/pybidi> -- binding for FriBidi
 #
-# Python adaptation copyright © 2016, 2017 Lawrence D'Oliveiro,
+# Python adaptation copyright © 2016-2018 Lawrence D'Oliveiro,
 # based on C original by Behdad Esfahbod and others.
 #
 # This library is free software; you can redistribute it and/or
@@ -794,7 +794,7 @@ HB = HARFBUZZ # if you prefer
 # Internal class-construction helpers
 #-
 
-def def_struct_class(name, ctname, conv = None, extra = None) :
+def def_struct_class(name, ctname, conv = None, extra = None, init_defaults = None) :
     # defines a class with attributes that are a straightforward mapping
     # of a ctypes struct. Optionally includes extra members from extra
     # if specified.
@@ -806,6 +806,13 @@ def def_struct_class(name, ctname, conv = None, extra = None) :
         __slots__ = tuple(field[0] for field in ctstruct._fields_) # to forestall typos
 
         def __init__(self, *args, **kwargs) :
+            if init_defaults != None :
+                for field in init_defaults :
+                    if kwargs.get(field, None) == None :
+                        kwargs[field] = init_defaults[field]
+                    #end if
+                #end if
+            #end if
             for field in self.__slots__ :
                 if field in kwargs :
                     setattr(self, field, kwargs[field])
@@ -5015,7 +5022,12 @@ Feature = def_struct_class \
   (
     name = "Feature",
     ctname = "feature_t",
-    extra = FeatureExtra
+    extra = FeatureExtra,
+    init_defaults = dict
+      (
+        start = 0,
+        end = 0xFFFFFFFF,
+      )
   )
 del FeatureExtra
 
