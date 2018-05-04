@@ -80,11 +80,22 @@ class HARFBUZZ :
     tag_t = ct.c_uint
 
     def TAG(*args) :
-        "creates a tag_t from four byte values or a bytes value of length 4."
+        "creates a tag_t from four byte values or a bytes or str value of length 4."
         if len(args) == 4 :
             c1, c2, c3, c4 = args
         elif len(args) == 1 :
-            c1, c2, c3, c4 = tuple(args[0])
+            arg = args[0]
+            if isinstance(arg, (bytes, bytearray)) :
+                c1, c2, c3, c4 = tuple(arg)
+            elif isinstance(arg, str) :
+                args = tuple(ord(c) for c in arg)
+                if len(args) != 4 or not all(i < 128 for i in args) :
+                    raise TypeError("TAG string must be 4 ASCII chars in [0 .. 255]")
+                #end if
+                c1, c2, c3, c4 = args
+            else :
+                raise TypeError("TAG arg must be bytes or string")
+            #end if
         else :
             raise TypeError("wrong nr of TAG args")
         #end if
