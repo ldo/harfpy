@@ -160,7 +160,7 @@ method call:
 where «features» is a sequence of `Feature` settings to be applied. For example, to turn
 on old-style ligatures over the entire line of text in the buffer:
 
-    hb.shape(hb_font, buf, [hb.Feature(HB.TAG(b'hlig'), value = 1, start = 0, end = 0xFFFFFFFF)])
+    hb.shape(hb_font, buf, [hb.Feature(HB.TAG(b'hlig'), value = 1)])
 
 
 Rendering Bidirectional Text
@@ -292,4 +292,4 @@ The API documentation seems to be rather lacking. A good starting point for find
 more is the [HarfBuzz Wiki](https://github.com/behdad/harfbuzz/wiki).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2017 October 18
+2018 May 4
