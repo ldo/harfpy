@@ -33,7 +33,7 @@ class my_build(std_build) :
 distutils.core.setup \
   (
     name = "HarfPy",
-    version = "0.8",
+    version = "0.82",
     description = "language bindings for HarfBuzz",
     long_description =
         "language bindings for the HarfBuzz shaper library, for Python 3.3 or later",
