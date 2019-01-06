@@ -3564,7 +3564,7 @@ class Face :
             if (
                     not isinstance(variations, (tuple, list))
                 or
-                    not (isinstance(v, Variation) for v in variations)
+                    not all(isinstance(v, Variation) for v in variations)
             ) :
                 raise TypeError("variations must be sequence of Variation objects")
             #end if
