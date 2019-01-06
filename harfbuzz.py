@@ -324,6 +324,7 @@ class HARFBUZZ :
     SCRIPT_OLD_HUNGARIAN = TAG(b'Hung')
     SCRIPT_SIGNWRITING = TAG(b'Sgnw')
 
+    # since 1.3.0
     # 9.0
     SCRIPT_ADLAM = TAG(b'Adlm')
     SCRIPT_BHAIKSUKI = TAG(b'Bhks')
@@ -337,8 +338,20 @@ class HARFBUZZ :
 
     destroy_func_t = ct.CFUNCTYPE(None, ct.c_void_p)
 
-    # from hb-common.h (since 1.4.2):
+    # from hb-common.h
 
+    class feature_t(ct.Structure) :
+        pass
+    feature_t._fields_ = \
+        [
+            ("tag", tag_t),
+            ("value", ct.c_uint),
+            ("start", ct.c_uint),
+            ("end", ct.c_uint),
+        ]
+    #end feature_t
+
+    # since 1.4.2:
     class variation_t(ct.Structure) :
         pass
     variation_t._fields_ = \
@@ -464,6 +477,7 @@ class HARFBUZZ :
 
     UNICODE_COMBINING_CLASS_INVALID = 255
 
+    # Since: 0.9.2
     unicode_combining_class_func_t = \
         ct.CFUNCTYPE(unicode_combining_class_t, ct.c_void_p, codepoint_t, ct.c_void_p)
     unicode_eastasian_width_func_t = \
@@ -638,19 +652,6 @@ class HARFBUZZ :
     font_get_glyph_contour_point_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.c_uint, ct.POINTER(position_t), ct.POINTER(position_t), ct.c_void_p)
     font_get_glyph_name_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.POINTER(ct.c_char), ct.c_uint, ct.c_void_p)
     font_get_glyph_from_name_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.POINTER(ct.c_char), ct.c_int, ct.POINTER(codepoint_t), ct.c_void_p)
-
-    # from hb-shape.h:
-
-    class feature_t(ct.Structure) :
-        pass
-    feature_t._fields_ = \
-        [
-            ("tag", tag_t),
-            ("value", ct.c_uint),
-            ("start", ct.c_uint),
-            ("end", ct.c_uint),
-        ]
-    #end feature_t
 
     # from hb-set.h:
 
@@ -1109,6 +1110,10 @@ hb.hb_unicode_funcs_reference.restype = ct.c_void_p
 hb.hb_unicode_funcs_reference.argtypes = (ct.c_void_p,)
 hb.hb_unicode_funcs_destroy.restype = None
 hb.hb_unicode_funcs_destroy.argtypes = (ct.c_void_p,)
+hb.hb_unicode_funcs_set_user_data.restype = HB.bool_t
+hb.hb_unicode_funcs_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, HB.bool_t)
+hb.hb_unicode_funcs_get_user_data.restype = ct.c_void_p
+hb.hb_unicode_funcs_get_user_data.restype.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_unicode_funcs_make_immutable.restype = None
 hb.hb_unicode_funcs_make_immutable.argtypes = (ct.c_void_p,)
 hb.hb_unicode_funcs_is_immutable.restype = HB.bool_t
@@ -1156,8 +1161,14 @@ hb.hb_blob_create_sub_blob.restype = ct.c_void_p
 hb.hb_blob_create_sub_blob.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint)
 hb.hb_blob_get_empty.restype = ct.c_void_p
 hb.hb_blob_get_empty.argtypes = ()
+hb.hb_blob_reference.restype = ct.c_void_p
+hb.hb_blob_reference.argtypes = (ct.c_void_p,)
 hb.hb_blob_destroy.restype = None
 hb.hb_blob_destroy.argtypes = (ct.c_void_p,)
+hb.hb_blob_set_user_data.restype = HB.bool_t
+hb.hb_blob_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, HB.bool_t)
+hb.hb_blob_get_user_data.restype = ct.c_void_p
+hb.hb_blob_get_user_data.restype.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_blob_make_immutable.restype = None
 hb.hb_blob_make_immutable.argtypes = (ct.c_void_p,)
 hb.hb_blob_is_immutable.restype = HB.bool_t
@@ -1168,8 +1179,6 @@ hb.hb_blob_get_data.restype = ct.c_void_p
 hb.hb_blob_get_data.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
 hb.hb_blob_get_data_writable.restype = ct.c_void_p
 hb.hb_blob_get_data_writable.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
-hb.hb_blob_reference.restype = ct.c_void_p
-hb.hb_blob_reference.argtypes = (ct.c_void_p,)
 
 hb.hb_buffer_destroy.restype = None
 hb.hb_buffer_destroy.argtypes = (ct.c_void_p,)
@@ -1273,6 +1282,10 @@ hb.hb_face_reference.restype = ct.c_void_p
 hb.hb_face_reference.argtypes = (ct.c_void_p,)
 hb.hb_face_get_empty.restype = ct.c_void_p
 hb.hb_face_get_empty.argtypes = ()
+hb.hb_face_set_user_data.restype = HB.bool_t
+hb.hb_face_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, HB.bool_t)
+hb.hb_face_get_user_data.restype = ct.c_void_p
+hb.hb_face_get_user_data.restype.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_face_is_immutable.restype = HB.bool_t
 hb.hb_face_is_immutable.argtypes = (ct.c_void_p,)
 hb.hb_face_make_immutable.restype = None
@@ -1304,8 +1317,14 @@ hb.hb_font_create_sub_font.restype = ct.c_void_p
 hb.hb_font_create_sub_font.argtypes = (ct.c_void_p,)
 hb.hb_font_destroy.restype = None
 hb.hb_font_destroy.argtypes = (ct.c_void_p,)
+hb.hb_font_get_empty.restype = ct.c_void_p
+hb.hb_font_get_empty.argtypes = ()
 hb.hb_font_reference.restype = ct.c_void_p
 hb.hb_font_reference.argtypes = (ct.c_void_p,)
+hb.hb_font_set_user_data.restype = HB.bool_t
+hb.hb_font_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, HB.bool_t)
+hb.hb_font_get_user_data.restype = ct.c_void_p
+hb.hb_font_get_user_data.restype.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_font_is_immutable.restype = HB.bool_t
 hb.hb_font_is_immutable.argtypes = (ct.c_void_p,)
 hb.hb_font_make_immutable.restype = None
@@ -1383,8 +1402,14 @@ hb.hb_font_funcs_create.restype = ct.c_void_p
 hb.hb_font_funcs_create.argtypes = ()
 hb.hb_font_funcs_get_empty.restype = ct.c_void_p
 hb.hb_font_funcs_get_empty.argtypes = ()
+hb.hb_font_funcs_reference.restype = ct.c_void_p
+hb.hb_font_funcs_reference.argtypes = (ct.c_void_p,)
 hb.hb_font_funcs_destroy.restype = None
 hb.hb_font_funcs_destroy.argtypes = (ct.c_void_p,)
+hb.hb_font_funcs_set_user_data.restype = HB.bool_t
+hb.hb_font_funcs_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, HB.bool_t)
+hb.hb_font_funcs_get_user_data.restype = ct.c_void_p
+hb.hb_font_funcs_get_user_data.restype.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_font_funcs_make_immutable.restype = None
 hb.hb_font_funcs_make_immutable.argtypes = (ct.c_void_p,)
 hb.hb_font_funcs_is_immutable.restype = HB.bool_t
@@ -1448,20 +1473,60 @@ hb.hb_shape_list_shapers.argtypes = ()
 
 hb.hb_set_create.restype = ct.c_void_p
 hb.hb_set_create.argtypes = ()
+hb.hb_set_reference.restype = ct.c_void_p
+hb.hb_set_reference.argtypes = (ct.c_void_p,)
 hb.hb_set_destroy.restype = None
 hb.hb_set_destroy.argtypes = (ct.c_void_p,)
 hb.hb_set_get_empty.restype = ct.c_void_p
 hb.hb_set_get_empty.argtypes = ()
+hb.hb_set_set_user_data.restype = HB.bool_t
+hb.hb_set_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, HB.bool_t)
+hb.hb_set_get_user_data.restype = ct.c_void_p
+hb.hb_set_get_user_data.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_allocation_successful.restype = HB.bool_t
+hb.hb_set_allocation_successful.argtypes = (ct.c_void_p,)
+hb.hb_set_clear.restype = None
+hb.hb_set_clear.argtypes = (ct.c_void_p,)
+hb.hb_set_is_empty.restype = HB.bool_t
+hb.hb_set_is_empty.argtypes = (ct.c_void_p,)
+hb.hb_set_has.restype = HB.bool_t
+hb.hb_set_has.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_set_add.restype = None
 hb.hb_set_add.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_set_add_range.restype = None
 hb.hb_set_add_range.argtypes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t)
-hb.hb_set_allocation_successful.restype = HB.bool_t
-hb.hb_set_allocation_successful.argtypes = (ct.c_void_p,)
+hb.hb_set_del.restype = None
+hb.hb_set_del.argtypes = (ct.c_void_p, HB.codepoint_t)
+hb.hb_set_del_range.restype = None
+hb.hb_set_del_range.argtypes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t)
+hb.hb_set_is_equal.restype = HB.bool_t
+hb.hb_set_is_equal.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_is_subset.restype = HB.bool_t
+hb.hb_set_is_subset.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_set.restype = None
+hb.hb_set_set.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_union.restype = None
+hb.hb_set_union.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_intersect.restype = None
+hb.hb_set_intersect.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_subtract.restype = None
+hb.hb_set_subtract.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_symmetric_difference.restype = None
+hb.hb_set_symmetric_difference.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_get_population.restype = ct.c_uint
+hb.hb_set_get_population.argtypes = (ct.c_void_p,)
+hb.hb_set_get_min.restype = HB.codepoint_t # HB.SET_VALUE_INVALID if set empty
+hb.hb_set_get_min.argtypes = (ct.c_void_p,)
+hb.hb_set_get_max.restype = HB.codepoint_t # HB.SET_VALUE_INVALID if set empty
+hb.hb_set_get_max.argtypes = (ct.c_void_p,)
 hb.hb_set_next.restype = HB.bool_t
-hb.hb_set_next.argtypes = (ct.c_void_p, ct.c_void_p)
+hb.hb_set_next.argtypes = (ct.c_void_p, ct.POINTER(HB.codepoint_t)) # pass HB.SET_VALUE_INVALID to start
+hb.hb_set_previous.restype = HB.bool_t
+hb.hb_set_previous.argtypes = (ct.c_void_p, ct.POINTER(HB.codepoint_t)) # pass HB.SET_VALUE_INVALID to start
 hb.hb_set_next_range.restype = HB.bool_t
-hb.hb_set_next_range.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_set_next_range.argtypes = (ct.c_void_p, ct.POINTER(HB.codepoint_t), ct.POINTER(HB.codepoint_t)) # pass HB.SET_VALUE_INVALID for both to start
+hb.hb_set_previous_range.restype = HB.bool_t
+hb.hb_set_previous_range.argtypes = (ct.c_void_p, ct.POINTER(HB.codepoint_t), ct.POINTER(HB.codepoint_t)) # pass HB.SET_VALUE_INVALID for both to start
 
 hb.hb_ot_layout_has_glyph_classes.restype = HB.bool_t
 hb.hb_ot_layout_has_glyph_classes.argtypes = (ct.c_void_p,)
@@ -3745,6 +3810,12 @@ class Font :
         return \
             result
     #end create_sub_font
+
+    @staticmethod
+    def get_empty(autoscale) :
+        return \
+            Font(hb.hb_font_get_empty(), autoscale)
+    #end get_empty
 
     # immutable defined below
 
