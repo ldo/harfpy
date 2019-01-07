@@ -3658,6 +3658,25 @@ class Face :
             Face(hb.hb_face_reference(hb.hb_face_get_empty()), False)
     #end get_empty
 
+    if hasattr(hb, "hb_face_builder_create") :
+
+        @staticmethod
+        def builder_create(autoscale) :
+            return \
+                Face(hb.hb_face_builder_create(), autoscale)
+        #end builder_create
+
+        def builder_add_table(self, tag, blob) :
+            if not isinstance(blob, Blob) :
+                raise TypeError("blob must be a Blob")
+            #end if
+            if hb.hb_face_builder_add_table(self._hbobj, tag, blob._hbobj) == 0 :
+                raise TypeError("not a builder Face")
+            #end if
+        #end builder_add_table
+
+    #end if
+
     if freetype != None :
 
         # from hb-ft.h:
@@ -3726,8 +3745,6 @@ class Face :
         #end collect_variation_unicodes
 
     #end if
-
-    # TODO builder calls
 
     # from hb-ot-layout.h:
 
@@ -3862,7 +3879,13 @@ class Face :
             (success, language_index.value)
     #end ot_layout_script_find_language
 
-    # TODO: ot_layout_script_select_language
+    def ot_layout_script_select_language(self, table_tag, script_index, language_tags) :
+        c_language_tags = seq_to_ct(language_tags, HB.tag_t)
+        language_index = ct.c_uint()
+        success = hb.hb_ot_layout_script_select_language(self._hbobj, table_tag, len(language_tags), c_language_tags, language_index) != 0
+        return \
+            (success, language_index.value)
+    #end ot_layout_script_select_language
 
     # don’t bother implementing language_get_required_feature_index,
     # use language_get_required_feature instead
@@ -3938,7 +3961,27 @@ class Face :
             hb.hb_ot_layout_table_get_lookup_count(self._hbobj, table_tag)
     #end ot_layout_table_get_lookup_count
 
-    # TODO: ot_layout_collect_features
+    def ot_layout_collect_features(self, table_tag, scripts = None, languges = None, features = None) :
+        if scripts != None :
+            c_scripts = seq_to_ct(scripts, HB.tag_t, zeroterm = True)
+        else :
+            c_scripts = None
+        #end if
+        if languages != None :
+            c_languages = seq_to_ct(languages, HB.tag_t, zeroterm = True)
+        else :
+            c_languages = None
+        #end if
+        if features != None :
+            c_features = seq_to_ct(features, HB.tag_t, zeroterm = True)
+        else :
+            c_features = None
+        #end if
+        feature_indexes = Set.to_hb()
+        hb.hb_ot_layout_collect_features(self._hbobj, table_tag, c_scripts, c_languages, c_features, feature_indexes._hbobj)
+        return \
+            feature_indexes.from_hb()
+    #end ot_layout_collect_features
 
     def ot_layout_collect_lookups(self, table_tag, scripts, languages, features) :
         if scripts != None :
@@ -3972,7 +4015,32 @@ class Face :
             (glyphs_before.from_hb(), glyphs_input.from_hb(), glyphs_after.from_hb(), glyphs_output.from_hb())
     #end ot_layout_lookup_collect_glyphs
 
-    # TODO: ot_layout_table_find_feature_variations, ot_layout_feature_with_variations_get_lookups
+    if hasattr(hb, "hb_ot_layout_table_find_feature_variations") :
+
+        def ot_layout_table_find_feature_variations(self, table_tag, coords) :
+            c_coords = seq_to_ct(coords, ct.c_int)
+            variations_index = ct.c_uint()
+            success = hb.hb_ot_layout_table_find_feature_variations(self._hbobj, table_tag, c_coords, len(coords), variations_index) != 0
+            return \
+                (success, variations_index.value)
+        #end ot_layout_table_find_feature_variations
+
+        def ot_layout_feature_with_variations_get_lookups(self, table_tag, feature_index, variations_index) :
+            lookup_count = None
+            lookup_indexes = None
+            while True :
+                array_len = hb.hb_ot_layout_feature_with_variations_get_lookups(self._hbobj, table_tag, feature_index, variations_index, 0, lookup_count, lookup_indexes)
+                if lookup_indexes != None :
+                    break
+                # allocate space, now I know how much I need
+                lookup_count = ct.c_uint(array_len)
+                lookup_indexes = (array_len * ct.c_uint)()
+            #end while
+            return \
+                lookup_indexes[:lookup_count]
+        #end ot_layout_feature_with_variations_get_lookups
+
+    #end if
 
     # GSUB
 
@@ -4069,7 +4137,15 @@ class Face :
 
     # from hb-ot-var.h:
 
-    # TODO: ot_var_has_data
+    if hasattr(hb, "hb_ot_var_has_data") :
+
+        @property
+        def ot_var_has_data(self) :
+            return \
+                hb.hb_ot_var_has_data(self._hbobj) != 0
+        #end ot_var_has_data
+
+    #end if
 
     # from hb-ot-var.h (since 1.4.2):
 
@@ -5817,7 +5893,46 @@ class Set :
 
 # from hb-ot-layout.h:
 
-# TODO: ot_tags_from_script_and_language, ot_tags_to_script_and_language
+def ot_tags_from_script_and_language(script, language) :
+    if language != None and not isinstance(language, Language) :
+        raise TypeError("language must be a Language")
+    #end if
+    if language != None :
+        c_language = Language._hbobj
+    else :
+        c_language = Language.INVALID
+    #end if
+    script_count = ct.c_uint()
+    language_count = ct.c_uint()
+    try_script_count = 4
+    try_language_count = 4
+    while True :
+        script_tags = (try_script_count * HB.tag_t)()
+        language_tags = (try_language_count * HB.tag_t)()
+        script_count.value = try_script_count
+        language_count.value = try_language_count
+        hb.hb_ot_tags_from_script_and_language(script, c_language, script_count, script_tags, language_count, language_tags)
+        if script_count.value < try_script_count and language_count.value < try_language_count :
+            # OK, I’m sure I’ve got them all
+            break
+        if script_count.value == try_script_count :
+            try_script_count *= 2
+        #end if
+        if language_count.value == try_language_count :
+            try_language_count *= 2
+        #end if
+    #end while
+    return \
+        (script_tags[:script_count.value], language_tags[:language_count.value])
+#end ot_tags_from_script_and_language
+
+def ot_tags_to_script_and_language(script_tag, language_tag) :
+    c_script = HB.script_t()
+    c_language = ct.c_void_p()
+    hb.hb_ot_tags_to_script_and_language(script_tag, language_tag, c_script, c_language)
+    return \
+        (c_script.value, Language(c_language.value))
+#end ot_tags_to_script_and_language
 
 def ot_tags_from_script(script) :
     "deprecated since 2.0.0."
