@@ -4285,8 +4285,39 @@ class Face :
 
         #end if
 
-        # TODO: ot_var_get_named_instance_count, ot_var_named_instance_get_subfamily_name_id,
-        # ot_var_named_instance_get_postscript_name_id, ot_var_named_instance_get_design_coords
+        if hasattr(hb, "hb_ot_var_get_named_instance_count") :
+            @property
+            def ot_var_named_instance_count(self) :
+                return \
+                    hb.hb_ot_var_get_named_instance_count(self._hbobj)
+            #end ot_var_named_instance_count
+
+            def ot_var_named_instance_get_subfamily_name_id(self, instance_index) :
+                return \
+                    hb.hb_ot_var_named_instance_get_subfamily_name_id(self._hbobj, instance_index)
+            #end ot_var_named_instance_get_subfamily_name_id
+
+            def ot_var_named_instance_get_postscript_name_id(self, instance_index) :
+                return \
+                    hb.hb_ot_var_named_instance_get_postscript_name_id(self._hbobj, instance_index)
+            #end ot_var_named_instance_get_postscript_name_id
+
+            def ot_var_named_instance_get_design_coords(self, instance_index) :
+                coords_length = None
+                coords = None
+                while True :
+                    array_len = hb.hb_ot_var_named_instance_get_design_coords(self._hbobj, instance_index, coords_length, coords)
+                    if coords != None :
+                        break
+                    # allocate space, now I know how much I need
+                    coords = (array_len * ct.c_float)()
+                    coords_length = ct.c_uint(array_len)
+                #end while
+                return \
+                    coords[:coords_length.value]
+            #end ot_var_named_instance_get_design_coords
+
+        #end if
 
         def ot_var_normalize_variations(self, variations) :
             if (
@@ -4329,7 +4360,124 @@ class Face :
 
     #end if
 
-    # TODO: hb_ot_color stuff
+    if hasattr(hb, "hb_ot_color_has_palettes") :
+
+        @property
+        def ot_colour_has_palettes(self) :
+            return \
+                hb.hb_ot_color_has_palettes(self._hbobj) != 0
+        #end ot_colour_has_palettes
+        ot_color_has_palettes = ot_colour_has_palettes
+
+        @property
+        def ot_colour_palette_count(self) :
+            return \
+                hb.hb_ot_color_palette_get_count(self._hbobj)
+        #end ot_colour_palette_count
+        ot_color_palette_count = ot_colour_palette_count
+
+        def ot_colour_palette_get_name_id(self, palette_index) :
+            return \
+                hb.hb_ot_color_palette_get_name_id(self._hbobj, palette_index)
+        #end ot_colour_palette_get_name_id
+        ot_color_palette_get_name_id = ot_colour_palette_get_name_id
+
+        def ot_colour_palette_colour_get_name_id(self, colour_index) :
+            return \
+                hb.hb_ot_color_palette_color_get_name_id(self._hbobj, colour_index)
+        #end def ot_colour_palette_colour_get_name_id
+
+        def ot_color_palette_color_get_name_id(self, color_index) :
+            return \
+                hb.hb_ot_color_palette_color_get_name_id(self._hbobj, color_index)
+        #end def ot_color_palette_color_get_name_id
+
+        def ot_colour_palette_get_flags(self, palette_index) :
+            return \
+                hb.hb_ot_color_palette_get_flags(self._hbobj, palette_index)
+        #end ot_colour_palette_get_flags
+        ot_color_palette_get_flags = ot_colour_palette_get_flags
+
+        def ot_colour_palette_get_colours(self, palette_index) :
+            colour_count = None
+            colours = None
+            while True :
+                array_len = hb.hb_ot_color_palette_get_colors(self._hbobj, palette_index, 0, colour_count, colours)
+                if colours != None :
+                    break
+                # allocate space, now I know how much I need
+                colours = (array_len * HB.colour_t)()
+                colour_count = ct.c_uint(array_len)
+            #end while
+            return \
+                colours[:colour_count.value]
+        #end ot_colour_palette_get_colours
+        ot_color_palette_get_colors = ot_colour_palette_get_colours
+
+        @property
+        def ot_colour_has_layers(self) :
+            return \
+                hb.hb_ot_color_has_layers(self._hbobj) != 0
+        #end ot_colour_has_layers
+        ot_color_has_layers = ot_colour_has_layers
+
+        def ot_colour_glyph_get_layers(self, glyph) :
+            count = None
+            layers = None
+            while True :
+                array_len = hb.hb_ot_color_glyph_get_layers(self._hbobj, glyph, 0, count, layers)
+                if layers != None :
+                    break
+                # allocate space, now I know how much I need
+                layers = (array_len * HB.ot_colour_layer_t)()
+                count = ct.c_uint(array_len)
+            #end while
+            return \
+                layers[:count.value]
+        #end ot_colour_glyph_get_layers
+
+        def ot_color_glyph_get_layers(self, glyph) :
+            count = None
+            layers = None
+            while True :
+                array_len = hb.hb_ot_color_glyph_get_layers(self._hbobj, glyph, 0, count, layers)
+                if layers != None :
+                    break
+                # allocate space, now I know how much I need
+                layers = (array_len * HB.ot_color_layer_t)()
+                count = ct.c_uint(array_len)
+            #end while
+            return \
+                layers[:count.value]
+        #end ot_color_glyph_get_layers
+
+        @property
+        def ot_colour_has_svg(self) :
+            return \
+                hb.hb_ot_color_has_svg(self._hbobj) != 0
+        #end ot_colour_has_svg
+        ot_color_has_svg = ot_colour_has_svg
+
+        def ot_colour_glyph_reference_svg(self, glyph) :
+            return \
+                Blob(hb.hb_ot_color_glyph_reference_svg(self._hbobj, glyph))
+        #end ot_colour_glyph_reference_svg
+        ot_color_glyph_reference_svg = ot_colour_glyph_reference_svg
+
+        @property
+        def ot_colour_has_png(self) :
+            return \
+                hb.hb_ot_color_has_png(self._hbobj) != 0
+        #end ot_colour_has_png
+        ot_color_has_png = ot_colour_has_png
+
+        def ot_colour_glyph_reference_png(self, glyph) :
+            return \
+                Blob(hb.hb_ot_color_glyph_reference_png(self._hbobj, glyph))
+        #end ot_colour_glyph_reference_png
+        ot_color_glyph_reference_png = ot_colour_glyph_reference_png
+
+    #end if
 
 #end Face
 def_immutable \
