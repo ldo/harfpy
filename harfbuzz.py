@@ -4068,7 +4068,23 @@ class Face :
             glyphs.from_hb()
     #end ot_layout_lookup_substitute_closure
 
-    # TODO: ot_layout_lookups_substitute_closure
+    if hasattr(hb, "hb_ot_layout_lookups_substitute_closure") :
+
+        def ot_layout_lookups_substitute_closure(self, lookups = None) :
+            if lookups != None :
+                c_lookups = Set.to_hb(lookups)
+                c_lookups_set = c_lookups._hbobj
+            else :
+                c_lookups = None
+                c_lookups_set = None
+            #end if
+            glyphs = Set.to_hb()
+            hb.hb_ot_layout_lookups_substitute_closure(self._hbobj, c_lookups_set, glyphs)
+            return \
+                glyphs.from_hb()
+        #end ot_layout_lookups_substitute_closure
+
+    #end if
 
     # GPOS
 
@@ -4116,7 +4132,42 @@ class Face :
             result
     #end ot_layout_size_params
 
-    # TODO: ot_layout_feature_get_name_ids, ot_layout_feature_get_characters
+    if hasattr(hb, "hb_ot_layout_feature_get_name_ids") :
+
+        def ot_layout_feature_get_name_ids(self, table_tag, feature_index) :
+            label_id = HB.ot_name_id_t()
+            # note that remainder will be returned as HB.OT_NAME_ID_INVALID
+            # and 0 named parameters for ssXX features
+            tooltip_id = HB.ot_name_id_t()
+            sample_id = HB.ot_name_id_t()
+            nr_named_parameters = ct.c_uint()
+            first_param_id = HB.ot_name_id_t()
+            success = hb.hb_ot_layout_feature_get_name_ids(self._hbobj, table_tag, feature_index, label_id, tooltip_id, sample_id, nr_named_parameters, first_param_id) != 0
+            if success :
+                result = (label_id.value, tooltip_id.value, sample_id.value, nr_named_parameters.value, first_param_id.value)
+            else :
+                result = None
+            #end if
+            return \
+                result
+        #end ot_layout_feature_get_name_ids
+
+        def ot_layout_feature_get_characters(self, table_tag, feature_index) :
+            char_count = None
+            characters = None
+            while True :
+                array_len = hb.hb_ot_layout_feature_get_characters(self._hbobj, table_tag, feature_index, 0, char_count, characters)
+                if characters != None :
+                    break
+                # allocate space, now I know how much I need
+                characters = (array_len * HB.codepoint_t)()
+                char_count = ct.c_uint(array_len)
+            #end while
+            return \
+                characters[:char_count.value]
+        #end ot_layout_feature_get_characters
+
+    #end if
 
     # from hb-ot-math.h (since 1.3.3):
 
@@ -4207,7 +4258,32 @@ class Face :
                 c_axis_index.value, axis_info
         #end ot_var_find_axis
 
-        # TODO: ot_var_get_axis_infos, ot_var_find_axis_info
+        if hasattr(hb, "hb_ot_var_get_axis_infos") :
+
+            @property
+            def ot_var_axis_infos(self) :
+                axes_count = None
+                axes_array = None
+                while True :
+                    array_len = hb.hb_ot_var_get_axis_infos(self._hbobj, 0, axes_count, axes_array)
+                    if axes_array != None :
+                        break
+                    # allocate space, now I know how much I need
+                    axes_array = (array_len * HB.ot_var_axis_info_t)()
+                    axes_count = ct.c_uint(array_len)
+                #end while
+                return \
+                    axes_array[:axes_count.value]
+            #end ot_var_get_axis_infos
+
+            def ot_var_find_axis_info(self, axis_tag) :
+                axis_info = HB.ot_var_axis_info_t()
+                success = hb.hb_ot_var_find_axis_info(self._hbobj, axis_tag, axis_info) != 0
+                return \
+                    (None, axis_info)[success]
+            #end ot_var_find_axis_info
+
+        #end if
 
         # TODO: ot_var_get_named_instance_count, ot_var_named_instance_get_subfamily_name_id,
         # ot_var_named_instance_get_postscript_name_id, ot_var_named_instance_get_design_coords
@@ -4797,7 +4873,13 @@ class Font :
               # note this will not necessarily be the same Face that was passed to Font.create
     #end face
 
-    # TODO: face.setter?
+    @face.setter
+    def face(self, new_face) :
+        if not isinstance(new_face, Face) :
+            raise TypeError("new_face must be a Face")
+        #end if
+        hb.hb_font_set_face(self._hbobj, new_face._hbobj)
+    #end face
 
     # get/set ppem, scale defined below
 
@@ -6058,7 +6140,44 @@ class ShapePlan :
               )
     #end create
 
-    # TODO: hb_shape_plan_create2, hb_shape_plan_create_cached2?
+    if hasattr(hb, "hb_shape_plan_create2") :
+
+        @staticmethod
+        def create2(face, props, user_features, coords, shaper_list, cached) :
+            if not isinstance(face, Face) :
+                raise TypeError("face must be a Face")
+            #end if
+            if not isinstance(props, SegmentProperties) :
+                raise TypeError("props must be a SegmentProperties")
+            #end if
+            c_props = props.to_hb()
+            if user_features != None :
+                c_user_features = seq_to_ct(user_features, HB.feature_t, lambda f : f.to_hb())
+                nr_user_features = len(user_features)
+            else :
+                nr_user_features = 0
+                c_user_features = None
+            #end if
+            if coords != None :
+                c_coords = seq_to_ct(coords, ct.c_int)
+                nr_coords = len(coords)
+            else :
+                c_coords = None
+                nr_coords = 0
+            #end if
+            nr_shapers, c_shaper_list, c_strs = shaper_list_to_hb(shaper_list)
+            return \
+                ShapePlan \
+                  (
+                    (
+                        hb.hb_shape_plan_create2,
+                        hb.hb_shape_plan_create_cached2,
+                    )[cached]
+                    (face._hbobj, c_props, c_user_features, nr_user_features, c_coords, nr_coords, c_shaper_list)
+                  )
+        #end create2
+
+    #end if
 
     def execute(self, font, buffer, features) :
         if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
