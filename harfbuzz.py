@@ -4037,7 +4037,7 @@ class Face :
                 lookup_indexes = (array_len * ct.c_uint)()
             #end while
             return \
-                lookup_indexes[:lookup_count]
+                lookup_indexes[:lookup_count.value]
         #end ot_layout_feature_with_variations_get_lookups
 
     #end if
