@@ -4063,7 +4063,7 @@ class Face :
 
     def ot_layout_lookup_substitute_closure(self, lookup_index) :
         glyphs = Set.to_hb()
-        hb.hb_ot_layout_lookup_substitute_closure(self._hbobj, lookup_index. glyphs._hbobj)
+        hb.hb_ot_layout_lookup_substitute_closure(self._hbobj, lookup_index, glyphs._hbobj)
         return \
             glyphs.from_hb()
     #end ot_layout_lookup_substitute_closure
