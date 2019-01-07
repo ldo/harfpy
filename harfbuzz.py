@@ -55,6 +55,15 @@ class HARFBUZZ :
     # can get prematurely disposed. Always store the object reference into a local
     # variable, and pass the value of the variable instead.
 
+    # from hb-version.h:
+    VERSION_MAJOR = 2
+    VERSION_MINOR = 2
+    VERSION_MICRO = 0
+
+    VERSION_STRING = "2.2.0"
+
+    # VERSION_ATLEAST defined below
+
     # from hb-common.h:
 
     bool_t = ct.c_int
@@ -333,8 +342,27 @@ class HARFBUZZ :
     SCRIPT_TANGUT = TAG(b'Tang')
     SCRIPT_NEWA = TAG(b'Newa')
 
+    # since 1.6.0
+    # 10.0
+    SCRIPT_MASARAM_GONDI = TAG(b'Gonm')
+    SCRIPT_NUSHU = TAG(b'Nshu')
+    SCRIPT_SOYOMBO = TAG(b'Soyo')
+    ZANABAZAR_SQUARE = TAG(b'Zanb')
+
+    # since 1.8.0
+    # 11.0
+    SCRIPT_DOGRA = TAG(b'Dogr')
+    SCRIPT_GUNJALA_GONDI = TAG(b'Gong')
+    SCRIPT_HANIFI_ROHINGYA = TAG(b'Rohg')
+    SCRIPT_MAKASAR = TAG(b'Maka')
+    SCRIPT_MEDEFAIDRIN = TAG(b'Medf')
+    SCRIPT_OLD_SOGDIAN = TAG(b'Sogo')
+    SCRIPT_SOGDIAN = TAG(b'Sogd')
+
     # No script set.
     SCRIPT_INVALID = TAG_NONE
+
+    # NYI _HB_SCRIPT_MAX_VALUE, _HB_SCRIPT_MAX_VALUE_SIGNED?
 
     destroy_func_t = ct.CFUNCTYPE(None, ct.c_void_p)
 
@@ -361,7 +389,30 @@ class HARFBUZZ :
         ]
     #end variation_t
 
+    # since 2.0.0:
+    FEATURE_GLOBAL_START = 0
+    FEATURE_GLOBAL_END = 0xFFFFFFFF
+
+    # since 2.1.0:
+    colour_t = ct.c_uint
+    color_t = colour_t
+    COLOUR = TAG
+    COLOR = COLOUR
+    UNCOLOUR = UNTAG
+    UNCOLOR = UNCOLOUR
+    colour_get_alpha = lambda c : c & 0xFF
+    colour_get_red = lambda c : c >> 8 & 0xFF
+    colour_get_green = lambda c : c >> 16 & 0xFF
+    colour_get_blue = lambda c : c >> 24 & 0xFF
+    color_get_alpha = colour_get_alpha
+    color_get_red = colour_get_red
+    color_get_green = colour_get_green
+    color_get_blue = colour_get_blue
+
     # from hb-unicode.h:
+
+    # since: 1.9.0
+    UNICODE_MAX = 0x10FFFF
 
     unicode_general_category_t = ct.c_uint
     UNICODE_GENERAL_CATEGORY_CONTROL = 0 #  Cc
@@ -480,8 +531,6 @@ class HARFBUZZ :
     # Since: 0.9.2
     unicode_combining_class_func_t = \
         ct.CFUNCTYPE(unicode_combining_class_t, ct.c_void_p, codepoint_t, ct.c_void_p)
-    unicode_eastasian_width_func_t = \
-        ct.CFUNCTYPE(ct.c_uint, ct.c_void_p, codepoint_t, ct.c_void_p)
     unicode_general_category_func_t = \
         ct.CFUNCTYPE(unicode_general_category_t, ct.c_void_p, codepoint_t, ct.c_void_p)
     unicode_mirroring_func_t = \
@@ -492,10 +541,9 @@ class HARFBUZZ :
         ct.CFUNCTYPE(bool_t, ct.c_void_p, codepoint_t, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
     unicode_decompose_func_t = \
         ct.CFUNCTYPE(bool_t, ct.c_void_p, codepoint_t, ct.POINTER(codepoint_t), ct.POINTER(codepoint_t), ct.c_void_p)
-    unicode_decompose_compatibility_func_t = \
-        ct.CFUNCTYPE(ct.c_uint, ct.c_void_p, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
 
     UNICODE_MAX_DECOMPOSITION_LEN = 18 + 1 # codepoints
+      # deprecated since 2.0.0
 
     # from hb-blob.h:
 
@@ -513,23 +561,33 @@ class HARFBUZZ :
 
     # from hb-buffer.h:
 
+    # since: 1.5.0
+    GLYPH_FLAG_UNSAFE_TO_BREAK = 0x00000001
+    GLYPH_FLAG_DEFINED = 0x00000001 # mask of all defined flags
+    glyph_flags_t = ct.c_uint
+    glyph_info_get_glyph_flags = lambda info : info.mask & GLYPH_FLAG_DEFINED
+
     buffer_content_type_t = ct.c_uint
     BUFFER_CONTENT_TYPE_INVALID = 0
     BUFFER_CONTENT_TYPE_UNICODE = 1
     BUFFER_CONTENT_TYPE_GLYPHS = 2
 
+    # since: 0.9.20
     buffer_flags_t = ct.c_uint
     BUFFER_FLAG_DEFAULT = 0x00000000
     BUFFER_FLAG_BOT = 0x00000001 # Beginning-of-text
     BUFFER_FLAG_EOT = 0x00000002 # End-of-text
     BUFFER_FLAG_PRESERVE_DEFAULT_IGNORABLES = 0x00000004
+    BUFFER_FLAG_REMOVE_DEFAULT_IGNORABLES = 0x00000008 # since: 1.8.0
 
+    # since: 0.9.42
     buffer_cluster_level_t = ct.c_uint
     BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES = 0
     BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS = 1
     BUFFER_CLUSTER_LEVEL_CHARACTERS = 2
     BUFFER_CLUSTER_LEVEL_DEFAULT = BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES
 
+    # since: 0.9.31
     # The default code point for replacing invalid characters in a given encoding
     BUFFER_REPLACEMENT_CODEPOINT_DEFAULT = 0xFFFD
 
@@ -584,15 +642,35 @@ class HARFBUZZ :
 
     buffer_message_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, ct.c_char_p, ct.c_void_p)
 
+    # since: 0.9.20
+    buffer_serialize_flags_t = ct.c_uint
     BUFFER_SERIALIZE_FLAG_DEFAULT = 0x00000000
     BUFFER_SERIALIZE_FLAG_NO_CLUSTERS = 0x00000001
     BUFFER_SERIALIZE_FLAG_NO_POSITIONS = 0x00000002
     BUFFER_SERIALIZE_FLAG_NO_GLYPH_NAMES = 0x00000004
     BUFFER_SERIALIZE_FLAG_GLYPH_EXTENTS = 0x00000008
+    BUFFER_SERIALIZE_FLAG_GLYPH_FLAGS = 0x00000010 # since: 1.5.0
+    BUFFER_SERIALIZE_FLAG_NO_ADVANCES = 0x00000020 # since: 1.8.0
 
+    # since: 0.9.2
+    buffer_serialize_format_t = ct.c_uint
     BUFFER_SERIALIZE_FORMAT_TEXT = TAG(b'TEXT')
     BUFFER_SERIALIZE_FORMAT_JSON = TAG(b'JSON')
     BUFFER_SERIALIZE_FORMAT_INVALID = TAG_NONE
+
+    buffer_diff_flags_t = ct.c_uint
+    BUFFER_DIFF_FLAG_EQUAL = 0x0000
+    BUFFER_DIFF_FLAG_CONTENT_TYPE_MISMATCH = 0x0001
+      # cannot be meaningfully compared in any further detail
+    BUFFER_DIFF_FLAG_LENGTH_MISMATCH = 0x0002
+      # but dotted circle and .notdef still checked for
+    BUFFER_DIFF_FLAG_NOTDEF_PRESENT = 0x0004
+    BUFFER_DIFF_FLAG_DOTTED_CIRCLE_PRESENT = 0x0008
+      # further things checked for when lengths are the same
+    BUFFER_DIFF_FLAG_CODEPOINT_MISMATCH = 0x0010
+    BUFFER_DIFF_FLAG_CLUSTER_MISMATCH = 0x0020
+    BUFFER_DIFF_FLAG_GLYPH_FLAGS_MISMATCH = 0x0040
+    BUFFER_DIFF_FLAG_POSITION_MISMATCH = 0x0080
 
     # from hb-face.h:
 
@@ -639,12 +717,17 @@ class HARFBUZZ :
     font_get_font_v_extents_func_t = font_get_font_extents_func_t
     font_get_nominal_glyph_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
     font_get_variation_glyph_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
+    font_get_nominal_glyphs_func_t = ct.CFUNCTYPE(ct.c_uint, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.POINTER(codepoint_t), ct.c_uint, ct.POINTER(codepoint_t), ct.c_uint, ct.c_void_p)
     font_get_glyph_advance_func_t = ct.CFUNCTYPE(position_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.c_void_p)
     font_get_glyph_h_advance_func_t = font_get_glyph_advance_func_t
     font_get_glyph_v_advance_func_t = font_get_glyph_advance_func_t
+    font_get_glyph_advances_func_t = ct.CFUNCTYPE(None, ct.c_void_p, ct.c_void_p, ct.c_uint, ct.POINTER(codepoint_t), ct.c_uint, ct.POINTER(codepoint_t), ct.c_uint, ct.c_void_p)
+    font_get_glyph_h_advances_func_t = font_get_glyph_advances_func_t
+    font_get_glyph_v_advances_func_t = font_get_glyph_advances_func_t
     font_get_glyph_origin_func_t = ct.CFUNCTYPE(bool_t, ct.c_void_p, ct.c_void_p, codepoint_t, ct.POINTER(position_t), ct.POINTER(position_t), ct.c_void_p)
     font_get_glyph_h_origin_func_t = font_get_glyph_origin_func_t
     font_get_glyph_v_origin_func_t = font_get_glyph_origin_func_t
+    # font_get_glyph_kerning_func_t, font_get_glyph_{h,v}_kerning_func_t deprecated since 2.0.0
     font_get_glyph_kerning_func_t = ct.CFUNCTYPE(position_t, ct.c_void_p, ct.c_void_p, codepoint_t, codepoint_t, ct.c_void_p)
     font_get_glyph_h_kerning_func_t = font_get_glyph_kerning_func_t
     font_get_glyph_v_kerning_func_t = font_get_glyph_kerning_func_t
@@ -657,17 +740,64 @@ class HARFBUZZ :
 
     SET_VALUE_INVALID = 0xffffffff
 
-    # from hb-ot-tag.h:
+    # NYI: hb-map.h
+    # probably not important, since it seems to be just a utility class
+    # providing functions that Python already has built-in.
 
-    OT_TAG_DEFAULT_SCRIPT = TAG(b'DFLT')
-    OT_TAG_DEFAULT_LANGUAGE = TAG(b'dflt')
+    # from hb-ot-name.h:
+    # Since: 2.0.0
+    ot_name_id_t = ct.c_uint # representing an OpenType 'name' table identifier
+    OT_NAME_ID_COPYRIGHT = 0
+    OT_NAME_ID_FONT_FAMILY = 1
+    OT_NAME_ID_FONT_SUBFAMILY = 2
+    OT_NAME_ID_UNIQUE_ID = 3
+    OT_NAME_ID_FULL_NAME = 4
+    OT_NAME_ID_VERSION_STRING = 5
+    OT_NAME_ID_POSTSCRIPT_NAME = 6
+    OT_NAME_ID_TRADEMARK = 7
+    OT_NAME_ID_MANUFACTURER = 8
+    OT_NAME_ID_DESIGNER = 9
+    OT_NAME_ID_DESCRIPTION = 10
+    OT_NAME_ID_VENDOR_URL = 11
+    OT_NAME_ID_DESIGNER_URL = 12
+    OT_NAME_ID_LICENSE = 13
+    OT_NAME_ID_LICENSE_URL = 14
+    # OT_NAME_ID_RESERVED = 15
+    OT_NAME_ID_TYPOGRAPHIC_FAMILY = 16
+    OT_NAME_ID_TYPOGRAPHIC_SUBFAMILY = 17
+    OT_NAME_ID_MAC_FULL_NAME = 18
+    OT_NAME_ID_SAMPLE_TEXT = 19
+    OT_NAME_ID_CID_FINDFONT_NAME = 20
+    OT_NAME_ID_WWS_FAMILY = 21
+    OT_NAME_ID_WWS_SUBFAMILY = 22
+    OT_NAME_ID_LIGHT_BACKGROUND = 23
+    OT_NAME_ID_DARK_BACKGROUND = 24
+    OT_NAME_ID_VARIATIONS_PS_PREFIX = 25
+
+    OT_NAME_ID_INVALID = 0xFFFF # for nonexistent name ID
+
+    class ot_name_entry_t(ct.Structure) :
+        pass
+    ot_name_entry_t._fields_ = \
+        [
+            ("name_id", ot_name_id_t),
+            # private
+            ("var", var_int_t),
+            # public
+            ("language", ct.c_void_p), # language_t
+        ]
+    #end ot_name_entry_t
 
     # from hb-ot-layout.h:
 
+    OT_TAG_BASE = TAG(b'BASE')
     OT_TAG_GDEF = TAG(b'GDEF')
     OT_TAG_GSUB = TAG(b'GSUB')
     OT_TAG_GPOS = TAG(b'GPOS')
     OT_TAG_JSTF = TAG(b'JSTF')
+
+    OT_TAG_DEFAULT_SCRIPT = TAG(b'DFLT')
+    OT_TAG_DEFAULT_LANGUAGE = TAG(b'dflt')
 
     ot_layout_glyph_class_t = ct.c_uint
     OT_LAYOUT_GLYPH_CLASS_UNCLASSIFIED = 0
@@ -679,6 +809,7 @@ class HARFBUZZ :
     OT_LAYOUT_NO_SCRIPT_INDEX = 0xFFFF
     OT_LAYOUT_NO_FEATURE_INDEX = 0xFFFF
     OT_LAYOUT_DEFAULT_LANGUAGE_INDEX = 0xFFFF
+    OT_LAYOUT_NO_VARIATIONS_INDEX = 0xFFFFFFFF
 
     # from hb-ot-math.h (since 1.3.3):
 
@@ -776,15 +907,39 @@ class HARFBUZZ :
         ]
     #end ot_math_glyph_part_t
 
-    # from hb-ot-var.h (since 1.4.2):
+    # from hb-ot-var.h:
 
+    # Since: 1.4.2
     OT_TAG_VAR_AXIS_ITALIC = TAG(b'ital')
     OT_TAG_VAR_AXIS_OPTICAL_SIZE = TAG(b'opsz')
     OT_TAG_VAR_AXIS_SLANT = TAG(b'slnt')
     OT_TAG_VAR_AXIS_WIDTH = TAG(b'wdth')
     OT_TAG_VAR_AXIS_WEIGHT = TAG(b'wght')
 
+    # Since: 2.2.0
+    ot_var_axis_flags_t = ct.c_uint
+    OT_VAR_AXIS_FLAG_HIDDEN = 0x00000001
+    OT_VAR_AXIS_FLAG_MAX_VALUE = 0x7FFFFFFF
+
+    # Since: 2.2.0
+    class ot_var_axis_info_t(ct.Structure) :
+        pass
+    ot_var_axis_info_t._fields_ = \
+        [
+            ("axis_index", ct.c_uint),
+            ("tag", tag_t),
+            ("name_id", ot_name_id_t),
+            ("flags", ot_var_axis_flags_t),
+            ("min_value", ct.c_float),
+            ("default_value", ct.c_float),
+            ("max_value", ct.c_float),
+            # private
+            ("reserved", ct.c_uint),
+        ]
+    #end ot_var_axis_info_t
+
     class ot_var_axis_t(ct.Structure) :
+        # deprecated since 2.2.0.
         pass
     ot_var_axis_t._fields_ = \
         [
@@ -798,9 +953,65 @@ class HARFBUZZ :
 
     OT_VAR_NO_AXIS_INDEX = 0xFFFFFFFF
       # returned from hb_ot_var_find_axis if not found
+      # Deprecated since 2.2.0.
+
+    # from hb-deprecated.h:
+
+    # Since: 0.9.2
+    # Deprecated: 2.0.0
+    unicode_eastasian_width_func_t = \
+        ct.CFUNCTYPE(ct.c_uint, ct.c_void_p, codepoint_t, ct.c_void_p)
+
+    # Deprecated: 2.0.0
+    unicode_decompose_compatibility_func_t = \
+        ct.CFUNCTYPE(ct.c_uint, ct.c_void_p, codepoint_t, ct.POINTER(codepoint_t), ct.c_void_p)
+
+    # NYI skip for now:
+    # hb-icu.h, hb-glib.h, hb-gobject-enums.h, hb-gobject.h, hb-gobject-structs.h,
+    # hb-graphite2.h
+    # Skip (platform-specific): hb-aat.h, hb-aat-layout.h
+
+    # from hb-ot-color.h
+    # Since: 2.1.0
+    ot_colour_palette_flags_t = ct.c_uint
+    ot_color_palette_flags_t = ot_colour_palette_flags_t
+    OT_COLOUR_PALETTE_FLAG_DEFAULT = 0x00000000
+    OT_COLOR_PALETTE_FLAG_DEFAULT = OT_COLOUR_PALETTE_FLAG_DEFAULT
+      # nothing special to note about a colour palette
+    OT_COLOUR_PALETTE_FLAG_USABLE_WITH_LIGHT_BACKGROUND = 0x00000001
+    OT_COLOR_PALETTE_FLAG_USABLE_WITH_LIGHT_BACKGROUND = OT_COLOUR_PALETTE_FLAG_USABLE_WITH_LIGHT_BACKGROUND
+      # palette is appropriate to use against a light (e.g. white) background
+    OT_COLOUR_PALETTE_FLAG_USABLE_WITH_DARK_BACKGROUND = 0x00000002
+    OT_COLOR_PALETTE_FLAG_USABLE_WITH_DARK_BACKGROUND = OT_COLOUR_PALETTE_FLAG_USABLE_WITH_DARK_BACKGROUND
+      # palette is appropriate to use against a dark (e.g. black) background
+
+    # Since: 2.1.0
+    class ot_colour_layer_t(ct.Structure) :
+        pass
+    ot_colour_layer_t._fields_ = \
+        [
+            ("glyph", codepoint_t),
+            ("colour_index", ct.c_uint),
+        ]
+    #end ot_colour_layer_t
+    class ot_color_layer_t(ct.Structure) :
+        pass
+    ot_color_layer_t._fields_ = \
+        [
+            ("glyph", codepoint_t),
+            ("color_index", ct.c_uint),
+        ]
+    #end ot_color_layer_t
 
 #end HARFBUZZ
 HB = HARFBUZZ # if you prefer
+
+HB.VERSION_ATLEAST = \
+    (lambda major, minor, micro :
+            major * 10000 + minor * 100 + micro
+        <=
+            HB.VERSION_MAJOR * 10000 + HB.VERSION_MINOR * 100 + HB.VERSION_MICRO
+    )
 
 #+
 # Internal class-construction helpers
@@ -1124,6 +1335,7 @@ hb.hb_unicode_funcs_set_combining_class_func.restype = None
 hb.hb_unicode_funcs_set_combining_class_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_unicode_funcs_set_combining_class_func.restype = None
 hb.hb_unicode_funcs_set_combining_class_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+# hb_unicode_funcs_set_eastasian_width_func deprecated since 2.0.0
 hb.hb_unicode_funcs_set_eastasian_width_func.restype = None
 hb.hb_unicode_funcs_set_eastasian_width_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_unicode_funcs_set_general_category_func.restype = None
@@ -1136,10 +1348,12 @@ hb.hb_unicode_funcs_set_compose_func.restype = None
 hb.hb_unicode_funcs_set_compose_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_unicode_funcs_set_decompose_func.restype = None
 hb.hb_unicode_funcs_set_decompose_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+# hb_unicode_funcs_set_decompose_compatibility_func deprecated since 2.0.0
 hb.hb_unicode_funcs_set_decompose_compatibility_func.restype = None
 hb.hb_unicode_funcs_set_decompose_compatibility_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_unicode_combining_class.restype = HB.unicode_combining_class_t
 hb.hb_unicode_combining_class.argtypes = (ct.c_void_p, HB.codepoint_t)
+# hb_unicode_eastasian_width deprecated since 2.0.0
 hb.hb_unicode_eastasian_width.restype = ct.c_uint
 hb.hb_unicode_eastasian_width.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_unicode_general_category.restype = HB.unicode_general_category_t
@@ -1152,6 +1366,7 @@ hb.hb_unicode_compose.restype = HB.bool_t
 hb.hb_unicode_compose.argtypes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t, ct.POINTER(HB.codepoint_t))
 hb.hb_unicode_decompose.restype = HB.bool_t
 hb.hb_unicode_decompose.argtypes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.codepoint_t), ct.POINTER(HB.codepoint_t))
+# hb_unicode_decompose_compatibility deprecated since 2.0.0
 hb.hb_unicode_decompose_compatibility.restype = ct.c_uint
 hb.hb_unicode_decompose_compatibility.argtypes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.codepoint_t))
 
@@ -1159,6 +1374,10 @@ hb.hb_blob_create.restype = ct.c_void_p
 hb.hb_blob_create.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_void_p)
 hb.hb_blob_create_sub_blob.restype = ct.c_void_p
 hb.hb_blob_create_sub_blob.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint)
+if hasattr(hb, "hb_blob_copy_writable_or_fail") :
+    hb.hb_blob_copy_writable_or_fail.restype = ct.c_void_p
+    hb.hb_blob_copy_writable_or_fail.argtypes = (ct.c_void_p,)
+#end if
 hb.hb_blob_get_empty.restype = ct.c_void_p
 hb.hb_blob_get_empty.argtypes = ()
 hb.hb_blob_reference.restype = ct.c_void_p
@@ -1179,7 +1398,15 @@ hb.hb_blob_get_data.restype = ct.c_void_p
 hb.hb_blob_get_data.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
 hb.hb_blob_get_data_writable.restype = ct.c_void_p
 hb.hb_blob_get_data_writable.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+if hasattr(hb, "hb_blob_create_from_file") :
+    hb.hb_blob_create_from_file.restype = ct.c_void_p
+    hb.hb_blob_create_from_file.argtypes = (ct.c_char_p,)
+#end if
 
+if hasattr(hb, "hb_glyph_info_get_glyph_flags") : # since: 1.5.0
+    hb.hb_glyph_info_get_glyph_flags.restype = HB.glyph_flags_t
+    hb.hb_glyph_info_get_glyph_flags.argtypes = (ct.POINTER(HB.glyph_info_t),)
+#end if
 hb.hb_buffer_destroy.restype = None
 hb.hb_buffer_destroy.argtypes = (ct.c_void_p,)
 hb.hb_buffer_create.restype = ct.c_void_p
@@ -1188,6 +1415,10 @@ hb.hb_buffer_reference.restype = ct.c_void_p
 hb.hb_buffer_reference.argtypes = (ct.c_void_p,)
 hb.hb_buffer_get_empty.restype = ct.c_void_p
 hb.hb_buffer_get_empty.argtypes = ()
+hb.hb_buffer_set_user_data.restype = HB.bool_t
+hb.hb_buffer_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, HB.bool_t)
+hb.hb_buffer_get_user_data.restype = ct.c_void_p
+hb.hb_buffer_get_user_data.restype.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_buffer_reset.restype = None
 hb.hb_buffer_reset.argtypes = (ct.c_void_p,)
 hb.hb_buffer_clear_contents.restype = None
@@ -1198,8 +1429,18 @@ hb.hb_buffer_allocation_successful.restype = HB.bool_t
 hb.hb_buffer_allocation_successful.argtypes = (ct.c_void_p,)
 hb.hb_buffer_add.restype = None
 hb.hb_buffer_add.argtypes = (ct.c_void_p, HB.codepoint_t, ct.c_uint)
+hb.hb_buffer_add_utf8.restype = None
+hb.hb_buffer_add_utf8.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_uint, ct.c_int)
+hb.hb_buffer_add_utf16.restype = None
+hb.hb_buffer_add_utf16.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_uint, ct.c_int)
+hb.hb_buffer_add_utf32.restype = None
+hb.hb_buffer_add_utf32.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_uint, ct.c_int)
+hb.hb_buffer_add_latin1.restype = None
+hb.hb_buffer_add_latin1.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_uint, ct.c_int)
 hb.hb_buffer_add_codepoints.restype = None
 hb.hb_buffer_add_codepoints.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_uint, ct.c_int)
+hb.hb_buffer_append.restype = None
+hb.hb_buffer_append.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_uint, ct.c_uint)
 hb.hb_buffer_set_content_type.restype = None
 hb.hb_buffer_set_content_type.argtypes = (ct.c_void_p, HB.buffer_content_type_t)
 hb.hb_buffer_get_content_type.restype = HB.buffer_content_type_t
@@ -1254,6 +1495,12 @@ hb.hb_buffer_set_replacement_codepoint.restype = None
 hb.hb_buffer_set_replacement_codepoint.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_buffer_get_replacement_codepoint.restype = HB.codepoint_t
 hb.hb_buffer_get_replacement_codepoint.argtypes = (ct.c_void_p,)
+if hasattr(hb, "hb_buffer_set_invisible_glyph") :
+    hb.hb_buffer_set_invisible_glyph.restype = None
+    hb.hb_buffer_set_invisible_glyph.argtypes = (ct.c_void_p, HB.codepoint_t)
+    hb.hb_buffer_get_invisible_glyph.restype = HB.codepoint_t
+    hb.hb_buffer_get_invisible_glyph.argtypes = (ct.c_void_p,)
+#end if
 hb.hb_buffer_set_message_func.restype = None
 hb.hb_buffer_set_message_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_buffer_serialize_format_from_string.restype = HB.tag_t
@@ -1266,12 +1513,18 @@ hb.hb_buffer_serialize_glyphs.restype = ct.c_uint
 hb.hb_buffer_serialize_glyphs.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_uint), ct.c_void_p, HB.tag_t, ct.c_uint)
 hb.hb_buffer_deserialize_glyphs.restype = HB.bool_t
 hb.hb_buffer_deserialize_glyphs.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_int, ct.c_void_p, ct.c_void_p, HB.tag_t)
+if hasattr(hb, "hb_buffer_diff") :
+    hb.hb_buffer_diff.restype = HB.buffer_diff_flags_t
+    hb.hb_buffer_diff.argtypes = (ct.c_void_p, ct.c_void_p, HB.codepoint_t, ct.c_uint)
+#end if
 
 hb.hb_segment_properties_equal.restype = HB.bool_t
 hb.hb_segment_properties_equal.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_segment_properties_hash.restype = ct.c_uint
 hb.hb_segment_properties_hash.argtypes = (ct.c_void_p,)
 
+hb.hb_face_count.restype = ct.c_uint
+hb.hb_face_count.argtypes = (ct.c_void_p,)
 hb.hb_face_create.restype = ct.c_void_p
 hb.hb_face_create.argtypes = (ct.c_void_p, ct.c_uint)
 hb.hb_face_create_for_tables.restype = ct.c_void_p
@@ -1310,6 +1563,22 @@ hb.hb_face_set_glyph_count.restype = None
 hb.hb_face_set_glyph_count.argtypes = (ct.c_void_p, ct.c_uint)
 hb.hb_face_get_glyph_count.restype = ct.c_uint
 hb.hb_face_get_glyph_count.argtypes = (ct.c_void_p,)
+hb.hb_face_get_table_tags.restype = ct.c_uint
+hb.hb_face_get_table_tags.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+if hasattr(hb, "hb_face_collect_unicodes") :
+    hb.hb_face_collect_unicodes.restype = None
+    hb.hb_face_collect_unicodes.argtypes = (ct.c_void_p, ct.c_void_p)
+    hb.hb_face_collect_variation_selectors.restype = None
+    hb.hb_face_collect_variation_selectors.argtypes = (ct.c_void_p, ct.c_void_p)
+    hb.hb_face_collect_variation_unicodes.restype = None
+    hb.hb_face_collect_variation_unicodes.argtypes = (ct.c_void_p, HB.codepoint_t, ct.c_void_p)
+#end if
+if hasattr(hb, "hb_face_builder_create") :
+    hb.hb_face_builder_create.restype = ct.c_void_p
+    hb.hb_face_builder_create.argtypes = ()
+    hb.hb_face_builder_add_table.restype = HB.bool_t
+    hb.hb_face_builder_add_table.argtypes = (ct.c_void_p, HB.tag_t, ct.c_void_p)
+#end if
 
 hb.hb_font_create.restype = ct.c_void_p
 hb.hb_font_create.argtypes = (ct.c_void_p,)
@@ -1329,14 +1598,16 @@ hb.hb_font_is_immutable.restype = HB.bool_t
 hb.hb_font_is_immutable.argtypes = (ct.c_void_p,)
 hb.hb_font_make_immutable.restype = None
 hb.hb_font_make_immutable.argtypes = (ct.c_void_p,)
-hb.hb_font_set_funcs.restype = None
-hb.hb_font_set_funcs.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
-hb.hb_font_set_funcs_data.restype = None
-hb.hb_font_set_funcs_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_font_set_parent.restype = None
 hb.hb_font_set_parent.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_font_get_parent.restype = ct.c_void_p
 hb.hb_font_get_parent.argtypes = (ct.c_void_p,)
+hb.hb_font_set_funcs.restype = None
+hb.hb_font_set_funcs.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_set_funcs_data.restype = None
+hb.hb_font_set_funcs_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+hb.hb_font_set_face.restype = None
+hb.hb_font_set_face.argtypes = (ct.c_void_p, ct.c_void_p)
 hb.hb_font_get_face.restype = ct.c_void_p
 hb.hb_font_get_face.argtypes = (ct.c_void_p,)
 hb.hb_font_set_scale.restype = None
@@ -1347,6 +1618,23 @@ hb.hb_font_set_ppem.restype = None
 hb.hb_font_set_ppem.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint)
 hb.hb_font_get_ppem.restype = None
 hb.hb_font_get_ppem.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
+if hasattr(hb, "hb_font_set_ptem") :
+    hb.hb_font_set_ptem.restype = None
+    hb.hb_font_set_ptem.argtypes = (ct.c_void_p, ct.c_float)
+    hb.hb_font_get_ptem.restype = ct.c_float
+    hb.hb_font_get_ptem.argtypes = (ct.c_void_p,)
+#end if
+if hasattr(hb, "hb_font_set_variations") :
+    hb.hb_font_set_variations.restype = None
+    hb.hb_font_set_variations.argtypes = (ct.c_void_p, ct.POINTER(HB.variation_t), ct.c_uint)
+    hb.hb_font_set_var_coords_design.restype = None
+    hb.hb_font_set_var_coords_design.restype = None
+    hb.hb_font_set_var_coords_design.argtypes = (ct.c_void_p, ct.POINTER(ct.c_float), ct.c_uint)
+    hb.hb_font_set_var_coords_normalized.restype = None
+    hb.hb_font_set_var_coords_normalized.argtypes = (ct.c_void_p, ct.POINTER(ct.c_int), ct.c_uint)
+    hb.hb_font_get_var_coords_normalized.restype = ct.POINTER(ct.c_int)
+    hb.hb_font_get_var_coords_normalized.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+#end if
 hb.hb_font_get_h_extents.restype = HB.bool_t
 hb.hb_font_get_h_extents.argtypes = (ct.c_void_p, ct.POINTER(HB.font_extents_t))
 hb.hb_font_get_v_extents.restype = HB.bool_t
@@ -1359,10 +1647,17 @@ hb.hb_font_get_glyph_h_advance.restype = HB.position_t
 hb.hb_font_get_glyph_h_advance.argtypes = (ct.c_void_p, HB.codepoint_t)
 hb.hb_font_get_glyph_v_advance.restype = HB.position_t
 hb.hb_font_get_glyph_v_advance.argtypes = (ct.c_void_p, HB.codepoint_t)
+if hasattr(hb, "hb_font_get_glyph_h_advances") :
+    hb.hb_font_get_glyph_h_advances.restype = None
+    hb.hb_font_get_glyph_h_advances.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(HB.codepoint_t), ct.c_uint, ct.POINTER(HB.position_t), ct.c_uint)
+    hb.hb_font_get_glyph_v_advances.restype = None
+    hb.hb_font_get_glyph_v_advances.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(HB.codepoint_t), ct.c_uint, ct.POINTER(HB.position_t), ct.c_uint)
+#end if
 hb.hb_font_get_glyph_h_origin.restype = HB.bool_t
 hb.hb_font_get_glyph_h_origin.argtypes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.position_t), ct.POINTER(HB.position_t))
 hb.hb_font_get_glyph_v_origin.restype = HB.bool_t
 hb.hb_font_get_glyph_v_origin.argtypes = (ct.c_void_p, HB.codepoint_t, ct.POINTER(HB.position_t), ct.POINTER(HB.position_t))
+# hb_font_get_glyph_{h,v}_kerning deprecated since 2.0.0
 hb.hb_font_get_glyph_h_kerning.restype = HB.position_t
 hb.hb_font_get_glyph_h_kerning.argtypes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t)
 hb.hb_font_get_glyph_v_kerning.restype = HB.position_t
@@ -1381,12 +1676,17 @@ hb.hb_font_get_extents_for_direction.restype = None
 hb.hb_font_get_extents_for_direction.argtypes = (ct.c_void_p, HB.direction_t, ct.POINTER(HB.font_extents_t))
 hb.hb_font_get_glyph_advance_for_direction.restype = None
 hb.hb_font_get_glyph_advance_for_direction.argtypes = (ct.c_void_p, HB.codepoint_t, HB.direction_t, ct.POINTER(HB.position_t), ct.POINTER(HB.position_t))
+if hasattr(hb, "hb_font_get_glyph_advances_for_direction") :
+    hb.hb_font_get_glyph_advances_for_direction.restype = None
+    hb.hb_font_get_glyph_advances_for_direction.argtypes = (ct.c_void_p, HB.direction_t, ct.c_uint, ct.POINTER(HB.codepoint_t), ct.c_uint, ct.POINTER(HB.position_t), ct.c_uint)
+#end if
 hb.hb_font_get_glyph_origin_for_direction.restype = None
 hb.hb_font_get_glyph_origin_for_direction.argtypes = (ct.c_void_p, HB.codepoint_t, HB.direction_t, ct.POINTER(HB.position_t), ct.POINTER(HB.position_t))
 hb.hb_font_add_glyph_origin_for_direction.restype = None
 hb.hb_font_add_glyph_origin_for_direction.argtypes = (ct.c_void_p, HB.codepoint_t, HB.direction_t, ct.POINTER(HB.position_t), ct.POINTER(HB.position_t))
 hb.hb_font_subtract_glyph_origin_for_direction.restype = None
 hb.hb_font_subtract_glyph_origin_for_direction.argtypes = (ct.c_void_p, HB.codepoint_t, HB.direction_t, ct.POINTER(HB.position_t), ct.POINTER(HB.position_t))
+# hb_font_get_glyph_kerning_for_direction deprecated since 2.0.0
 hb.hb_font_get_glyph_kerning_for_direction.restype = None
 hb.hb_font_get_glyph_kerning_for_direction.argtypes = (ct.c_void_p, HB.codepoint_t, HB.codepoint_t, HB.direction_t, ct.POINTER(HB.position_t), ct.POINTER(HB.position_t))
 hb.hb_font_get_glyph_extents_for_origin.restype = HB.bool_t
@@ -1422,6 +1722,10 @@ hb.hb_font_funcs_set_font_v_extents_func.restype = None
 hb.hb_font_funcs_set_font_v_extents_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_font_funcs_set_nominal_glyph_func.restype = None
 hb.hb_font_funcs_set_nominal_glyph_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+if hasattr(hb, "hb_font_funcs_set_nominal_glyphs_func") : # since 2.0.0
+    hb.hb_font_funcs_set_nominal_glyphs_func.restype = None
+    hb.hb_font_funcs_set_nominal_glyphs_func.argtypes = (ct.c_void_p, HB.font_get_nominal_glyphs_func_t, ct.c_void_p, HB.destroy_func_t)
+#end if
 hb.hb_font_funcs_set_variation_glyph_func.restype = None
 hb.hb_font_funcs_set_variation_glyph_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_font_funcs_set_glyph_h_advance_func.restype = None
@@ -1430,8 +1734,15 @@ hb.hb_font_funcs_set_glyph_v_advance_func.restype = None
 hb.hb_font_funcs_set_glyph_v_advance_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_font_funcs_set_glyph_h_origin_func.restype = None
 hb.hb_font_funcs_set_glyph_h_origin_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+if hasattr(hb, "hb_font_funcs_set_glyph_h_advances_func") : # since 1.8.6
+    hb.hb_font_funcs_set_glyph_h_advances_func.restype = None
+    hb.hb_font_funcs_set_glyph_h_advances_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+    hb.hb_font_funcs_set_glyph_v_advances_func.restype = None
+    hb.hb_font_funcs_set_glyph_v_advances_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+#end if
 hb.hb_font_funcs_set_glyph_v_origin_func.restype = None
 hb.hb_font_funcs_set_glyph_v_origin_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+# hb_font_funcs_set_glyph_{h,v}_kerning_func deprecated since 2.0.0
 hb.hb_font_funcs_set_glyph_h_kerning_func.restype = None
 hb.hb_font_funcs_set_glyph_h_kerning_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 hb.hb_font_funcs_set_glyph_v_kerning_func.restype = None
@@ -1446,8 +1757,15 @@ hb.hb_font_funcs_set_glyph_from_name_func.restype = None
 hb.hb_font_funcs_set_glyph_from_name_func.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
 
 if freetype != None : # might as well skip these if I’m not using them
+    hb.hb_ft_face_create.restype = ct.c_void_p
+    hb.hb_ft_face_create.argtypes = (ct.c_void_p, HB.destroy_func_t)
+    hb.hb_ft_face_create_cached.restype = ct.c_void_p
+    hb.hb_ft_face_create_cached.argtypes = (ct.c_void_p,)
     hb.hb_ft_face_create_referenced.restype = ct.c_void_p
     hb.hb_ft_face_create_referenced.argtypes = (ct.c_void_p,)
+
+    hb.hb_ft_font_create.restype = ct.c_void_p
+    hb.hb_ft_font_create.argtypes = (ct.c_void_p, HB.destroy_func_t)
     hb.hb_ft_font_create_referenced.restype = ct.c_void_p
     hb.hb_ft_font_create_referenced.argtypes = (ct.c_void_p,)
     hb.hb_ft_font_get_face.restype = ct.c_void_p
@@ -1456,6 +1774,8 @@ if freetype != None : # might as well skip these if I’m not using them
     hb.hb_ft_font_set_load_flags.argtypes = (ct.c_void_p, ct.c_int)
     hb.hb_ft_font_get_load_flags.restype = ct.c_int
     hb.hb_ft_font_get_load_flags.argtypes = (ct.c_void_p,)
+    hb.hb_ft_font_changed.restype = None
+    hb.hb_ft_font_changed.argtypes = (ct.c_void_p,)
     hb.hb_ft_font_set_funcs.restype = None
     hb.hb_ft_font_set_funcs.argtypes = (ct.c_void_p,)
 #end if
@@ -1464,6 +1784,7 @@ hb.hb_feature_from_string.restype = HB.bool_t
 hb.hb_feature_from_string.argtypes = (ct.c_void_p, ct.c_int, ct.c_void_p)
 hb.hb_feature_to_string.restype = None
 hb.hb_feature_to_string.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_uint)
+
 hb.hb_shape.restype = None
 hb.hb_shape.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_uint)
 hb.hb_shape_full.restype = HB.bool_t
@@ -1542,12 +1863,22 @@ hb.hb_ot_layout_table_get_script_tags.restype = ct.c_uint
 hb.hb_ot_layout_table_get_script_tags.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
 hb.hb_ot_layout_table_find_script.restype = HB.bool_t
 hb.hb_ot_layout_table_find_script.argtypes = (ct.c_void_p, HB.tag_t, HB.tag_t, ct.POINTER(ct.c_uint))
+if hasattr(hb, "hb_ot_layout_table_select_script") :
+    hb.hb_ot_layout_table_select_script.restype = HB.bool_t
+    hb.hb_ot_layout_table_select_script.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.POINTER(HB.tag_t), ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+#end if
+# hb_ot_layout_table_choose_script deprecated since 2.0.0
 hb.hb_ot_layout_table_choose_script.restype = HB.bool_t
 hb.hb_ot_layout_table_choose_script.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(HB.tag_t), ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
 hb.hb_ot_layout_table_get_feature_tags.restype = ct.c_uint
 hb.hb_ot_layout_table_get_feature_tags.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
 hb.hb_ot_layout_script_get_language_tags.restype = ct.c_uint
 hb.hb_ot_layout_script_get_language_tags.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+if hasattr(hb, "hb_ot_layout_script_select_language") :
+    hb.hb_ot_layout_script_select_language.restype = HB.bool_t
+    hb.hb_ot_layout_script_select_language.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.POINTER(HB.tag_t), ct.POINTER(ct.c_uint))
+#end if
+# hb_ot_layout_script_find_language deprecated since 2.0.0
 hb.hb_ot_layout_script_find_language.restype = HB.bool_t
 hb.hb_ot_layout_script_find_language.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, HB.tag_t, ct.POINTER(ct.c_uint))
 hb.hb_ot_layout_language_get_required_feature_index.restype = HB.bool_t
@@ -1564,25 +1895,53 @@ hb.hb_ot_layout_feature_get_lookups.restype = ct.c_uint
 hb.hb_ot_layout_feature_get_lookups.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
 hb.hb_ot_layout_table_get_lookup_count.restype = ct.c_uint
 hb.hb_ot_layout_table_get_lookup_count.argtypes = (ct.c_void_p, HB.tag_t)
+if hasattr(hb, "hb_ot_layout_collect_features") :
+    hb.hb_ot_layout_collect_features.restype = None
+    hb.hb_ot_layout_collect_features.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t), ct.c_void_p)
+#end if
 hb.hb_ot_layout_collect_lookups.restype = None
 hb.hb_ot_layout_collect_lookups.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t), ct.c_void_p)
 hb.hb_ot_layout_lookup_collect_glyphs.restype = None
 hb.hb_ot_layout_lookup_collect_glyphs.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p)
+if hasattr(hb, "hb_ot_layout_table_find_feature_variations") :
+    hb.hb_ot_layout_table_find_feature_variations.restype = HB.bool_t
+    hb.hb_ot_layout_table_find_feature_variations.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(ct.c_int), ct.c_uint, ct.POINTER(ct.c_uint))
+    hb.hb_ot_layout_feature_with_variations_get_lookups.restype = ct.c_uint
+    hb.hb_ot_layout_feature_with_variations_get_lookups.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
+#end if
 hb.hb_ot_layout_has_substitution.restype = HB.bool_t
 hb.hb_ot_layout_has_substitution.argtypes = (ct.c_void_p,)
 hb.hb_ot_layout_lookup_would_substitute.restype = HB.bool_t
 hb.hb_ot_layout_lookup_would_substitute.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(HB.codepoint_t), ct.c_uint, HB.bool_t)
 hb.hb_ot_layout_lookup_substitute_closure.restype = None
 hb.hb_ot_layout_lookup_substitute_closure.argtypes = (ct.c_void_p, ct.c_uint, ct.c_void_p)
+if hasattr(hb, "hb_ot_layout_lookups_substitute_closure") :
+    hb.hb_ot_layout_lookups_substitute_closure.restype = None
+    hb.hb_ot_layout_lookups_substitute_closure.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p)
+#end if
 hb.hb_ot_layout_has_positioning.restype = HB.bool_t
 hb.hb_ot_layout_has_positioning.argtypes = (ct.c_void_p,)
 hb.hb_ot_layout_get_size_params.restype = HB.bool_t
 hb.hb_ot_layout_get_size_params.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint), ct.POINTER(ct.c_uint))
+if hasattr(hb, "hb_ot_layout_feature_get_name_ids") :
+    hb.hb_ot_layout_feature_get_name_ids.restype = HB.bool_t
+    hb.hb_ot_layout_feature_get_name_ids.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.POINTER(HB.ot_name_id_t), ct.POINTER(HB.ot_name_id_t), ct.POINTER(HB.ot_name_id_t), ct.POINTER(ct.c_uint), ct.POINTER(HB.ot_name_id_t))
+    hb.hb_ot_layout_feature_get_characters.restype = ct.c_uint
+    hb.hb_ot_layout_feature_get_characters.argtypes = (ct.c_void_p, HB.tag_t, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.codepoint_t))
+#end if
 
+if hasattr(hb, "hb_ot_tags_from_script_and_language") : # since: 2.0.0
+    hb.hb_ot_tags_from_script_and_language.restype = None
+    hb.hb_ot_tags_from_script_and_language.argtypes = (HB.script_t, ct.c_void_p, ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t), ct.POINTER(ct.c_uint), ct.POINTER(HB.tag_t))
+    hb.hb_ot_tags_to_script_and_language.restype = None
+    hb.hb_ot_tags_to_script_and_language.argtypes = (HB.tag_t, HB.tag_t, ct.POINTER(HB.script_t), ct.c_void_p)
+#end if
+# hb_ot_tags_from_script deprecated since 2.0.0
 hb.hb_ot_tags_from_script.restype = None
 hb.hb_ot_tags_from_script.argtypes = (HB.script_t, ct.POINTER(HB.tag_t), ct.POINTER(HB.tag_t))
 hb.hb_ot_tag_to_script.restype = HB.script_t
 hb.hb_ot_tag_to_script.argtypes = (HB.tag_t,)
+# hb_ot_tag_from_language deprecated since 2.0.0
 hb.hb_ot_tag_from_language.restype = HB.tag_t
 hb.hb_ot_tag_from_language.argtypes = (ct.c_void_p,)
 hb.hb_ot_tag_to_language.restype = ct.c_void_p
@@ -1600,6 +1959,12 @@ hb.hb_shape_plan_create.restype = ct.c_void_p
 hb.hb_shape_plan_create.argtypes = (ct.c_void_p, ct.POINTER(HB.segment_properties_t), ct.c_void_p, ct.c_uint, ct.c_void_p)
 hb.hb_shape_plan_create_cached.restype = ct.c_void_p
 hb.hb_shape_plan_create_cached.argtypes = (ct.c_void_p, ct.POINTER(HB.segment_properties_t), ct.c_void_p, ct.c_uint, ct.c_void_p)
+if hasattr(hb, "hb_shape_plan_create2") :
+    hb.hb_shape_plan_create2.restype = ct.c_void_p
+    hb.hb_shape_plan_create2.argtypes = (ct.c_void_p, ct.POINTER(HB.segment_properties_t), ct.POINTER(HB.feature_t), ct.c_uint, ct.POINTER(ct.c_int), ct.c_uint, ct.c_void_p)
+    hb.hb_shape_plan_create_cached2.restype = ct.c_void_p
+    hb.hb_shape_plan_create_cached2.argtypes = (ct.c_void_p, ct.POINTER(HB.segment_properties_t), ct.POINTER(HB.feature_t), ct.c_uint, ct.POINTER(ct.c_int), ct.c_uint, ct.c_void_p)
+#end if
 hb.hb_shape_plan_destroy.restype = None
 hb.hb_shape_plan_destroy.argtypes = (ct.c_void_p,)
 hb.hb_shape_plan_execute.restype = HB.bool_t
@@ -1610,6 +1975,10 @@ hb.hb_shape_plan_get_shaper.restype = ct.c_char_p
 hb.hb_shape_plan_get_shaper.argtypes = (ct.c_void_p,)
 hb.hb_shape_plan_reference.restype = ct.c_void_p
 hb.hb_shape_plan_reference.argtypes = (ct.c_void_p,)
+hb.hb_shape_plan_set_user_data.restype = HB.bool_t
+hb.hb_shape_plan_set_user_data.argtypes = (ct.c_void_p, ct.c_void_p, ct.c_void_p, ct.c_void_p, HB.bool_t)
+hb.hb_shape_plan_get_user_data.restype = ct.c_void_p
+hb.hb_shape_plan_get_user_data.argtypes = (ct.c_void_p, ct.c_void_p)
 
 # from hb-ot-math.h (since 1.3.3):
 if hasattr(hb, "hb_ot_math_has_data") :
@@ -1633,18 +2002,83 @@ if hasattr(hb, "hb_ot_math_has_data") :
     hb.hb_ot_math_get_glyph_assembly.argtypes = (ct.c_void_p, HB.codepoint_t, HB.direction_t, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.ot_math_glyph_part_t), ct.POINTER(HB.position_t))
 #end if
 
+# from hb-ot-var.h:
+if hasattr(hb, "hb_ot_var_has_data") :
+    hb.hb_ot_var_has_data.restype = HB.bool_t
+    hb.hb_ot_var_has_data.argtypes = (ct.c_void_p,)
+#end if
 # from hb-ot-var.h (since 1.4.2):
 if hasattr(hb, "hb_ot_var_get_axis_count") :
     hb.hb_ot_var_get_axis_count.restype = ct.c_uint
     hb.hb_ot_var_get_axis_count.argtypes = (ct.c_void_p,)
+    if hasattr(hb, "hb_ot_var_get_axis_infos") :
+        hb.hb_ot_var_get_axis_infos.restype = ct.c_uint
+        hb.hb_ot_var_get_axis_infos.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.ot_var_axis_info_t))
+        hb.hb_ot_var_find_axis_info.restype = HB.bool_t
+        hb.hb_ot_var_find_axis_info.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(HB.ot_var_axis_info_t))
+    #end if
+    # hb_ot_var_get_axes deprecated since 2.2.0
     hb.hb_ot_var_get_axes.restype = ct.c_uint
     hb.hb_ot_var_get_axes.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.ot_var_axis_t))
+    # hb_ot_var_find_axis deprecated since 2.2.0
     hb.hb_ot_var_find_axis.restype = HB.bool_t
     hb.hb_ot_var_find_axis.argtypes = (ct.c_void_p, HB.tag_t, ct.POINTER(ct.c_uint), ct.POINTER(HB.ot_var_axis_t))
+    if hasattr(hb, "hb_ot_var_get_named_instance_count") :
+        hb.hb_ot_var_get_named_instance_count.restype = ct.c_uint
+        hb.hb_ot_var_get_named_instance_count.argtypes = (ct.c_void_p,)
+        hb.hb_ot_var_named_instance_get_subfamily_name_id.restype = HB.ot_name_id_t
+        hb.hb_ot_var_named_instance_get_subfamily_name_id.argtypes = (ct.c_void_p, ct.c_uint)
+        hb.hb_ot_var_named_instance_get_postscript_name_id.restype = HB.ot_name_id_t
+        hb.hb_ot_var_named_instance_get_postscript_name_id.argtypes = (ct.c_void_p, ct.c_uint)
+        hb.hb_ot_var_named_instance_get_design_coords.restype = ct.c_uint
+        hb.hb_ot_var_named_instance_get_design_coords.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(ct.c_float))
+    #end if
     hb.hb_ot_var_normalize_variations.restype = None
     hb.hb_ot_var_normalize_variations.argtypes = (ct.c_void_p, ct.POINTER(HB.variation_t), ct.c_uint, ct.POINTER(ct.c_int), ct.c_uint)
     hb.hb_ot_var_normalize_coords.restype = None
     hb.hb_ot_var_normalize_coords.argtypes = (ct.c_void_p, ct.c_uint, ct.POINTER(ct.c_float), ct.POINTER(ct.c_int))
+#end if
+
+# from hb-ot-color.h:
+if hasattr(hb, "hb_ot_color_has_palettes") :
+    hb.hb_ot_color_has_palettes.restype = HB.bool_t
+    hb.hb_ot_color_has_palettes.argtypes = (ct.c_void_p,)
+    hb.hb_ot_color_palette_get_count.restype = ct.c_uint
+    hb.hb_ot_color_palette_get_count.argtypes = (ct.c_void_p,)
+    hb.hb_ot_color_palette_get_name_id.restype = HB.ot_name_id_t
+    hb.hb_ot_color_palette_get_name_id.argtypes = (ct.c_void_p, ct.c_uint)
+    hb.hb_ot_color_palette_color_get_name_id.restype = HB.ot_name_id_t
+    hb.hb_ot_color_palette_color_get_name_id.argtypes = (ct.c_void_p, ct.c_uint)
+    hb.hb_ot_color_palette_get_flags.restype = HB.ot_colour_palette_flags_t
+    hb.hb_ot_color_palette_get_flags.argtypes = (ct.c_void_p, ct.c_uint)
+    hb.hb_ot_color_palette_get_colors.restype = ct.c_uint
+    hb.hb_ot_color_palette_get_colors.argtypes = (ct.c_void_p, ct.c_uint, ct.c_uint, ct.POINTER(ct.c_uint), ct.POINTER(HB.colour_t))
+
+    hb.hb_ot_color_has_layers.restype = HB.bool_t
+    hb.hb_ot_color_has_layers.argtypes = (ct.c_void_p,)
+    hb.hb_ot_color_glyph_get_layers.restype = ct.c_uint
+    hb.hb_ot_color_glyph_get_layers.argtypes = (ct.c_void_p, HB.codepoint_t, ct.c_uint, ct.POINTER(ct.c_uint), ct.c_void_p)
+
+    hb.hb_ot_color_has_svg.restype = HB.bool_t
+    hb.hb_ot_color_has_svg.argtypes = (ct.c_void_p,)
+    hb.hb_ot_color_glyph_reference_svg.restype = ct.c_void_p
+    hb.hb_ot_color_glyph_reference_svg.argtypes = (ct.c_void_p, HB.codepoint_t)
+
+    hb.hb_ot_color_has_png.restype = HB.bool_t
+    hb.hb_ot_color_has_png.argtypes = (ct.c_void_p,)
+    hb.hb_ot_color_glyph_reference_png.restype = ct.c_void_p
+    hb.hb_ot_color_glyph_reference_png.argtypes = (ct.c_void_p, HB.codepoint_t)
+#end if
+
+if hasattr(hb, "hb_ot_name_list_names") :
+    hb.hb_ot_name_list_names.restype = ct.c_void_p
+    hb.hb_ot_name_list_names.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
+    hb.hb_ot_name_get_utf8.restype = ct.c_uint
+    hb.hb_ot_name_get_utf8.argtypes = (ct.c_void_p, HB.ot_name_id_t, ct.c_void_p, ct.POINTER(ct.c_uint), ct.c_void_p)
+    hb.hb_ot_name_get_utf16.restype = ct.c_uint
+    hb.hb_ot_name_get_utf16.argtypes = (ct.c_void_p, HB.ot_name_id_t, ct.c_void_p, ct.POINTER(ct.c_uint), ct.c_void_p)
+    hb.hb_ot_name_get_utf32.restype = ct.c_uint
+    hb.hb_ot_name_get_utf32.argtypes = (ct.c_void_p, HB.ot_name_id_t, ct.c_void_p, ct.POINTER(ct.c_uint), ct.c_void_p)
 #end if
 
 #+
@@ -1996,6 +2430,7 @@ class UnicodeFuncs :
     #         def eastasian_width_func(self, unicode, user_data)
     #
     #     where self is the UnicodeFuncs instance, and return an integer.
+    #     Deprecated since 2.0.0
 
     # set_general_category_func(self, callback_func, user_data, destroy)
     #     sets the general_category_func callback, along with an optional
@@ -2054,6 +2489,7 @@ class UnicodeFuncs :
     #
     #     where self is the UnicodeFuncs instance, and return a tuple of
     #     Unicode code points or None.
+    #     Deprecated since 2.0.0
 
     # The preceding are defined below
 
@@ -2064,7 +2500,7 @@ class UnicodeFuncs :
     #end combining_class
 
     def eastasian_width(self, unicode) :
-        "invokes the eastasian_width_func."
+        "invokes the eastasian_width_func. Deprecated since 2.0.0."
         return \
             hb.hb_unicode_eastasian_width(self._hbobj, unicode)
     #end eastasian_width
@@ -2113,7 +2549,7 @@ class UnicodeFuncs :
     #end decompose
 
     def decompose_compatibility(self, u) :
-        "invokes the decompose_compatibility_func."
+        "invokes the decompose_compatibility_func. Deprecated since 2.0.0."
         decomposed = (HB.codepoint_t * HB.UNICODE_MAX_DECOMPOSITION_LEN)()
         decomposed_len = hb.hb_unicode_decompose_compatibility(self._hbobj, u, decomposed)
         return \
@@ -2261,16 +2697,16 @@ def def_unicodefuncs_extra() :
     #end def_wrap_decompose_compatibility_func
 
 #begin def_unicodefuncs_extra
-    for basename, def_func, protostr, resultstr in \
+    for basename, def_func, protostr, resultstr, deprecated_ver in \
         (
-            ("combining_class", def_wrap_combining_class_func, "combining_class_func(self, unicode, user_data)", "n integer combining class code"),
-            ("eastasian_width", def_wrap_eastasian_width_func, "eastasian_width_func(self, unicode, user_data)", "n integer"),
-            ("general_category", def_wrap_general_category_func, "general_category_func(self, unicode, user_data)", "n integer general category code"),
-            ("mirroring", def_wrap_mirroring_func, "mirroring_func(self, unicode, user_data)", " unicode code point"),
-            ("script", def_wrap_script_func, "script_func(self, unicode, user_data)", "n integer script code"),
-            ("compose", def_wrap_compose_func, "compose_func(self, a, b, user_data)", " unicode code point or None"),
-            ("decompose", def_wrap_decompose_func, "decompose_func(self, ab, user_data)", " 2-tuple of Unicode code points or None"),
-            ("decompose_compatibility", def_wrap_decompose_compatibility_func, "decompose_compatibility_func(self, u, user_data)", " tuple of Unicode code points or None"),
+            ("combining_class", def_wrap_combining_class_func, "combining_class_func(self, unicode, user_data)", "n integer combining class code", None),
+            ("eastasian_width", def_wrap_eastasian_width_func, "eastasian_width_func(self, unicode, user_data)", "n integer", "2.0.0"),
+            ("general_category", def_wrap_general_category_func, "general_category_func(self, unicode, user_data)", "n integer general category code", None),
+            ("mirroring", def_wrap_mirroring_func, "mirroring_func(self, unicode, user_data)", " unicode code point", None),
+            ("script", def_wrap_script_func, "script_func(self, unicode, user_data)", "n integer script code", None),
+            ("compose", def_wrap_compose_func, "compose_func(self, a, b, user_data)", " unicode code point or None", None),
+            ("decompose", def_wrap_decompose_func, "decompose_func(self, ab, user_data)", " 2-tuple of Unicode code points or None", None),
+            ("decompose_compatibility", def_wrap_decompose_compatibility_func, "decompose_compatibility_func(self, u, user_data)", " tuple of Unicode code points or None", "2.0.0"),
         ) \
     :
         def_callback_wrapper \
@@ -2284,9 +2720,19 @@ def def_unicodefuncs_extra() :
                     "\n"
                     "    def %(proto)s\n"
                     "\n"
-                    " where self is the UnicodeFuncs instance, and return a%(result)s."
+                    "where self is the UnicodeFuncs instance, and return a%(result)s."
+                    "%(deprecated)s"
                 %
-                    {"name" : basename, "proto" : protostr, "result" : resultstr},
+                    {
+                        "name" : basename,
+                        "proto" : protostr,
+                        "result" : resultstr,
+                        "deprecated" :
+                            (
+                                lambda : "",
+                                lambda : "\nDeprecated since %s." % deprecated_ver,
+                            )[deprecated_ver != None](),
+                    },
             callback_field_name = "_wrap_%s_func" % basename,
             destroy_field_name = "_wrap_%s_destroy" % basename,
             def_wrap_callback_func = def_func,
@@ -3254,6 +3700,35 @@ class Face :
 
     # HarfBuzz user_data calls not exposed to caller, probably not useful
 
+    if hasattr(hb, "hb_face_collect_unicodes") :
+
+        @property
+        def unicodes(self) :
+            result = Set.to_hb()
+            hb.hb_face_collect_unicodes(self._hbobj, result._hbobj)
+            return \
+                result.from_hb()
+        #end unicodes
+
+        @property
+        def variation_selectors(self) :
+            result = Set.to_hb()
+            hb.hb_face_collect_variation_selectors(self._hbobj, result._hbobj)
+            return \
+                result.from_hb()
+        #end variation_selectors
+
+        def collect_variation_unicodes(self, variation_selector) :
+            result = Set.to_hb()
+            hb.hb_face_collect_variation_unicodes(self._hbobj, variation_selector, result._hbobj)
+            return \
+                result.from_hb()
+        #end collect_variation_unicodes
+
+    #end if
+
+    # TODO builder calls
+
     # from hb-ot-layout.h:
 
     @property
@@ -3322,7 +3797,7 @@ class Face :
     #end ot_layout_find_script
 
     def ot_layout_choose_script(self, table_tag, script_tags) :
-        "Like find_script, but takes sequence of scripts to test."
+        "Like find_script, but takes sequence of scripts to test. Deprecated since 2.0.0."
         c_script_tags = seq_to_ct(script_tags, HB.tag_t, zeroterm = True)
         script_index = ct.c_uint()
         chosen_script = HB.tag_t()
@@ -3330,6 +3805,20 @@ class Face :
         return \
             (success, script_index.value, chosen_script.value)
     #end ot_layout_choose_script
+
+    if hasattr(hb, "hb_ot_layout_table_select_script") :
+
+        def ot_layout_select_script(self, table_tag, script_tags) :
+            "Like find_script, but takes sequence of scripts to test."
+            c_script_tags = seq_to_ct(script_tags, HB.tag_t)
+            script_index = ct.c_uint()
+            chosen_script = HB.tag_t()
+            success = hb.hb_ot_layout_table_select_script(self._hbobj, table_tag, len(script_tags), c_script_tags, script_index, chosen_script) != 0
+            return \
+                (success, script_index.value, chosen_script.value)
+        #end ot_layout_select_script
+
+    #end if
 
     def ot_layout_table_get_feature_tags(self, table_tag) :
         feature_count = None
@@ -3366,11 +3855,14 @@ class Face :
     #end ot_layout_script_get_language_tags
 
     def ot_layout_script_find_language(self, table_tag, script_index, language_tag) :
+        "deprecated since 2.0.0."
         language_index = ct.c_uint()
         success = hb.hb_ot_layout_script_find_language(self._hbobj, table_tag, script_index, language_tag, language_index) != 0
         return \
             (success, language_index.value)
     #end ot_layout_script_find_language
+
+    # TODO: ot_layout_script_select_language
 
     # don’t bother implementing language_get_required_feature_index,
     # use language_get_required_feature instead
@@ -3446,6 +3938,8 @@ class Face :
             hb.hb_ot_layout_table_get_lookup_count(self._hbobj, table_tag)
     #end ot_layout_table_get_lookup_count
 
+    # TODO: ot_layout_collect_features
+
     def ot_layout_collect_lookups(self, table_tag, scripts, languages, features) :
         if scripts != None :
             c_scripts = seq_to_ct(scripts, HB.tag_t, zeroterm = True)
@@ -3478,6 +3972,8 @@ class Face :
             (glyphs_before.from_hb(), glyphs_input.from_hb(), glyphs_after.from_hb(), glyphs_output.from_hb())
     #end ot_layout_lookup_collect_glyphs
 
+    # TODO: ot_layout_table_find_feature_variations, ot_layout_feature_with_variations_get_lookups
+
     # GSUB
 
     @property
@@ -3503,6 +3999,8 @@ class Face :
         return \
             glyphs.from_hb()
     #end ot_layout_lookup_substitute_closure
+
+    # TODO: ot_layout_lookups_substitute_closure
 
     # GPOS
 
@@ -3550,6 +4048,8 @@ class Face :
             result
     #end ot_layout_size_params
 
+    # TODO: ot_layout_feature_get_name_ids, ot_layout_feature_get_characters
+
     # from hb-ot-math.h (since 1.3.3):
 
     if hasattr(hb, "hb_ot_math_has_data") :
@@ -3567,6 +4067,10 @@ class Face :
 
     #end if
 
+    # from hb-ot-var.h:
+
+    # TODO: ot_var_has_data
+
     # from hb-ot-var.h (since 1.4.2):
 
     if hasattr(hb, "hb_ot_var_get_axis_count") :
@@ -3579,6 +4083,7 @@ class Face :
 
         @property
         def ot_var_axes(self) :
+            "deprecated since 2.2.0."
             axis_count = ct.c_uint \
               (
                 hb.hb_ot_var_get_axes
@@ -3602,6 +4107,7 @@ class Face :
         #end ot_var_axes
 
         def ot_var_find_axis(self, axis_tag) :
+            "deprecated since 2.2.0."
             c_axis_index = ct.c_uint()
             c_axis_info = HB.ot_var_axis_t()
             found =  \
@@ -3624,6 +4130,11 @@ class Face :
             return \
                 c_axis_index.value, axis_info
         #end ot_var_find_axis
+
+        # TODO: ot_var_get_axis_infos, ot_var_find_axis_info
+
+        # TODO: ot_var_get_named_instance_count, ot_var_named_instance_get_subfamily_name_id,
+        # ot_var_named_instance_get_postscript_name_id, ot_var_named_instance_get_design_coords
 
         def ot_var_normalize_variations(self, variations) :
             if (
@@ -3665,6 +4176,8 @@ class Face :
         #end ot_var_normalize_coords
 
     #end if
+
+    # TODO: hb_ot_color stuff
 
 #end Face
 def_immutable \
@@ -3914,6 +4427,7 @@ class Font :
     #end get_glyph_v_origin
 
     def get_glyph_h_kerning(self, left_glyph, right_glyph) :
+        "deprecated since 2.0.0."
         result = hb.hb_font_get_glyph_h_kerning(self._hbobj, left_glyph, right_glyph)
         if self.autoscale :
             result = HB.from_position_t(result)
@@ -3923,6 +4437,7 @@ class Font :
     #end get_glyph_h_kerning
 
     def get_glyph_v_kerning(self, top_glyph, bottom_glyph) :
+        "deprecated since 2.0.0."
         result = hb.hb_font_get_glyph_v_kerning(self._hbobj, top_glyph, bottom_glyph)
         if self.autoscale :
             result = HB.from_position_t(result)
@@ -4014,6 +4529,28 @@ class Font :
             result
     #end get_glyph_advance_for_direction
 
+    if hasattr(hb, "hb_font_get_glyph_advances_for_direction") :
+
+        def get_glyph_advances_for_direction(self, direction, glyphs) :
+            nr_glyphs = len(glyphs)
+            c_glyphs = seq_to_ct(glyphs, HB.codepoint_t)
+            c_advances = (nr_glyphs * HB.position_t)()
+            hb.hb_font_get_glyph_advances_for_direction \
+              (
+                self._hbobj,
+                direction,
+                nr_glyphs,
+                c_glyphs,
+                1,
+                c_advances,
+                1
+              )
+            return \
+                list(c_advances)
+        #end get_glyph_advances_for_direction
+
+    #end if
+
     def get_glyph_origin_for_direction(self, glyph, direction) :
         x = HB.position_t()
         y = HB.position_t()
@@ -4066,6 +4603,7 @@ class Font :
     #end subtract_glyph_origin_for_direction
 
     def get_glyph_kerning_for_direction(self, first_glyph, second_glyph, direction) :
+        "deprecated since 2.0.0."
         x = HB.position_t()
         y = HB.position_t()
         hb.hb_font_get_glyph_kerning_for_direction(self._hbobj, first_glyph, second_glyph, direction, ct.byref(x), ct.byref(y))
@@ -4183,7 +4721,42 @@ class Font :
               # note this will not necessarily be the same Face that was passed to Font.create
     #end face
 
+    # TODO: face.setter?
+
     # get/set ppem, scale defined below
+
+    if hasattr(hb, "hb_font_set_variations") :
+
+        def set_variations(self, variations) :
+            c_variations = seq_to_ct(variations, HB.variation_t, Variation.to_hb)
+            hb.hb_font_set_variations(self._hbobj, c_variations, len(variations))
+        #end set_variations
+
+        def set_var_coords_design(self, coords) :
+            c_coords = seq_to_ct(coords, ct.c_float)
+            hb.hb_font_set_var_coords_design(self._hbobj, c_coords, len(coords))
+        #end set_var_coords_design
+
+        def set_var_coords_normalized(self, coords) :
+            c_coords = seq_to_ct(coords, ct.c_int)
+            hb.hb_font_set_var_coords_normalized(self._hbobj, c_coords, len(coords))
+        #end set_var_coords_normalized
+
+        @property
+        def var_coords_normalized(self) :
+            c_length = ct.c_uint()
+            c_coords = hb.hb_font_get_var_coords_normalized(self._hbobj, ct.bytef(c_length))
+              # pointer will remain valid as long as variation coords of font are not modified
+            return \
+                c_coords[:c_length.value]
+        #end var_coords_normalized
+
+        @var_coords_normalized.setter
+        def var_coords_normalized(self, coords) :
+            self.set_var_coords_normalized(coords)
+        #end var_coords_normalized
+
+    #end if
 
     @property
     def user_data(self) :
@@ -4226,6 +4799,10 @@ class Font :
             return \
                 freetype.Face(None, hb.hb_ft_font_get_face(self._hbobj), None)
         #end ft_face
+
+        def changed(self) :
+            hb.hb_ft_font_changed(self._hbobj)
+        #end changed
 
         def ft_set_funcs(self) :
             hb.hb_ft_font_set_funcs(self._hbobj)
@@ -4746,6 +5323,7 @@ class FontFuncs :
     #
     #     where font is the Font instance and font_data was what was
     #     passed to set_font_funcs for the Font, and return a float.
+    #     Deprecated since 2.0.0.
 
     # set_glyph_v_kerning_func(self, callback_func, user_data, destroy)
     #     sets the glyph_v_kerning_func callback, along with an optional
@@ -4756,6 +5334,7 @@ class FontFuncs :
     #
     #     where font is the Font instance and font_data was what was
     #     passed to set_font_funcs for the Font, and return a float.
+    #     Deprecated since 2.0.0.
 
     # set_glyph_extents_func(self, callback_func, user_data, destroy)
     #     sets the glyph_extents_func callback, along with an optional
@@ -5030,22 +5609,22 @@ def def_fontfuncs_extra() :
     #end def_wrap_get_glyph_from_name_func
 
 #begin def_fontfuncs_extra
-    for basename, def_func, protostr, resultstr in \
+    for basename, def_func, protostr, resultstr, deprecated_ver in \
         (
-            ("font_h_extents", def_wrap_get_font_extents_func, "get_font_h_extents(font, font_data, user_data)", " FontExtents or None"),
-            ("font_v_extents", def_wrap_get_font_extents_func, "get_font_v_extents(font, font_data, user_data)", " FontExtents or None"),
-            ("nominal_glyph", def_wrap_get_nominal_glyph_func, "get_nominal_glyph(font, font_data, unicode, user_data)", "n integer glyph code or None"),
-            ("variation_glyph", def_wrap_get_variation_glyph_func, "get_variation_glyph(font, font_data, unicode, variation_selector, user_data)", "n integer glyph code or None"),
-            ("glyph_h_advance", def_wrap_get_glyph_advance_func, "get_glyph_h_advance(font, font_data, glyph, user_data)", " float"),
-            ("glyph_v_advance", def_wrap_get_glyph_advance_func, "get_glyph_v_advance(font, font_data, glyph, user_data)", " float"),
-            ("glyph_h_origin", def_wrap_get_glyph_origin_func, "get_glyph_h_origin(font, font_data, glyph, user_data)", " 2-tuple, qahirah.Vector or None"),
-            ("glyph_v_origin", def_wrap_get_glyph_origin_func, "get_glyph_v_origin(font, font_data, glyph, user_data)", " 2-tuple, qahirah.Vector or None"),
-            ("glyph_h_kerning", def_wrap_get_glyph_kerning_func, "get_glyph_h_kerning(font, font_data, first_glyph, second_glyph, user_data)", " float"),
-            ("glyph_v_kerning", def_wrap_get_glyph_kerning_func, "get_glyph_v_kerning(font, font_data, first_glyph, second_glyph, user_data)", " float"),
-            ("glyph_extents", def_wrap_get_glyph_extents_func, "get_glyph_extents(font, font_data, glyph, user_data)", " GlyphExtents or None"),
-            ("glyph_contour_point", def_wrap_get_glyph_contour_point_func, "get_glyph_contour_point(font, font_data, glyph, point_index, user_data)", " 2-tuple, qahirah.Vector or None"),
-            ("glyph_name", def_wrap_get_glyph_name_func, "get_glyph_name_func(font, font_data, glyph, user_data)", " string or None"),
-            ("glyph_from_name", def_wrap_get_glyph_from_name_func, "get_glyph_from_name(font, font_data, name, user_data)", "n integer glyph code or None"),
+            ("font_h_extents", def_wrap_get_font_extents_func, "get_font_h_extents(font, font_data, user_data)", " FontExtents or None", None),
+            ("font_v_extents", def_wrap_get_font_extents_func, "get_font_v_extents(font, font_data, user_data)", " FontExtents or None", None),
+            ("nominal_glyph", def_wrap_get_nominal_glyph_func, "get_nominal_glyph(font, font_data, unicode, user_data)", "n integer glyph code or None", None),
+            ("variation_glyph", def_wrap_get_variation_glyph_func, "get_variation_glyph(font, font_data, unicode, variation_selector, user_data)", "n integer glyph code or None", None),
+            ("glyph_h_advance", def_wrap_get_glyph_advance_func, "get_glyph_h_advance(font, font_data, glyph, user_data)", " float", None),
+            ("glyph_v_advance", def_wrap_get_glyph_advance_func, "get_glyph_v_advance(font, font_data, glyph, user_data)", " float", None),
+            ("glyph_h_origin", def_wrap_get_glyph_origin_func, "get_glyph_h_origin(font, font_data, glyph, user_data)", " 2-tuple, qahirah.Vector or None", None),
+            ("glyph_v_origin", def_wrap_get_glyph_origin_func, "get_glyph_v_origin(font, font_data, glyph, user_data)", " 2-tuple, qahirah.Vector or None", None),
+            ("glyph_h_kerning", def_wrap_get_glyph_kerning_func, "get_glyph_h_kerning(font, font_data, first_glyph, second_glyph, user_data)", " float", "2.0.0"),
+            ("glyph_v_kerning", def_wrap_get_glyph_kerning_func, "get_glyph_v_kerning(font, font_data, first_glyph, second_glyph, user_data)", " float", "2.0.0"),
+            ("glyph_extents", def_wrap_get_glyph_extents_func, "get_glyph_extents(font, font_data, glyph, user_data)", " GlyphExtents or None", None),
+            ("glyph_contour_point", def_wrap_get_glyph_contour_point_func, "get_glyph_contour_point(font, font_data, glyph, point_index, user_data)", " 2-tuple, qahirah.Vector or None", None),
+            ("glyph_name", def_wrap_get_glyph_name_func, "get_glyph_name_func(font, font_data, glyph, user_data)", " string or None", None),
+            ("glyph_from_name", def_wrap_get_glyph_from_name_func, "get_glyph_from_name(font, font_data, name, user_data)", "n integer glyph code or None", None),
         ) \
     :
         def_callback_wrapper \
@@ -5059,10 +5638,20 @@ def def_fontfuncs_extra() :
                     "\n"
                     "    def %(proto)s\n"
                     "\n"
-                    " where font is the Font instance and font_data was what was"
+                    "where font is the Font instance and font_data was what was"
                     " passed to set_font_funcs for the Font, and return a%(result)s."
+                    "%(deprecated)s"
                 %
-                    {"name" : basename, "proto" : protostr, "result" : resultstr},
+                    {
+                        "name" : basename,
+                        "proto" : protostr,
+                        "result" : resultstr,
+                        "deprecated" :
+                            (
+                                lambda : "",
+                                lambda : "\nDeprecated since %s." % deprecated_ver,
+                            )[deprecated_ver != None](),
+                    },
             callback_field_name = "_wrap_%s_func" % basename,
             destroy_field_name = "_wrap_%s_destroy" % basename,
             def_wrap_callback_func = def_func,
@@ -5226,9 +5815,12 @@ class Set :
 
 #end Set
 
-# from hb-ot-tag.h:
+# from hb-ot-layout.h:
+
+# TODO: ot_tags_from_script_and_language, ot_tags_to_script_and_language
 
 def ot_tags_from_script(script) :
+    "deprecated since 2.0.0."
     script_tag_1 = HB.tag_t()
     script_tag_2 = HB.tag_t()
     hb.hb_ot_tags_from_script(script, ct.byref(script_tag_1), ct.byref(script_tag_2))
@@ -5242,6 +5834,7 @@ def ot_tag_to_script(tag) :
 #end ot_tag_to_script
 
 def ot_tag_from_language(language) :
+    "deprecated since 2.0.0."
     if not isinstance(language, Language) :
         raise TypeError("language must be a Language")
     #end if
@@ -5349,6 +5942,8 @@ class ShapePlan :
                 (face._hbobj, c_props, c_user_features, nr_user_features, c_shaper_list)
               )
     #end create
+
+    # TODO: hb_shape_plan_create2, hb_shape_plan_create_cached2?
 
     def execute(self, font, buffer, features) :
         if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
