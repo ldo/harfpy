@@ -3780,7 +3780,7 @@ class Face :
             point_array = (nr_attach_points * ct.c_uint)()
         #end while
         return \
-            tuple(point_array[i] for i in range(nr_attach_points))
+            point_array[:nr_attach_points]
     #end ot_layout_get_attach_points
 
     # GSUB/GPOS feature query and enumeration interface
@@ -3799,7 +3799,7 @@ class Face :
             script_tags = (nr_script_tags * ct.c_uint)()
         #end while
         return \
-            tuple(script_tags[i] for i in range(nr_script_tags))
+            script_tags[:nr_script_tags]
     #end ot_layout_table_get_script_tags
 
     def ot_layout_find_script(self, table_tag, script_tag) :
@@ -3851,7 +3851,7 @@ class Face :
             feature_tags = (nr_feature_tags * ct.c_uint)()
         #end while
         return \
-            tuple(feature_tags[i] for i in range(nr_feature_tags))
+            feature_tags[:nr_feature_tags]
     #end ot_layout_table_get_feature_tags
 
     def ot_layout_script_get_language_tags(self, table_tag, script_index) :
@@ -3868,7 +3868,7 @@ class Face :
             language_tags = (nr_language_tags * ct.c_uint)()
         #end while
         return \
-            tuple(language_tags[i] for i in range(nr_language_tags))
+            language_tags[:nr_language_tags]
     #end ot_layout_script_get_language_tags
 
     def ot_layout_script_find_language(self, table_tag, script_index, language_tag) :
@@ -3912,7 +3912,7 @@ class Face :
             feature_indexes = (nr_feature_indexes * ct.c_uint)()
         #end while
         return \
-            tuple(feature_indexes[i] for i in range(nr_feature_indexes))
+            feature_indexes[:nr_feature_indexes]
     #end ot_layout_language_get_feature_indexes
 
     def ot_layout_language_get_feature_tags(self, table_tag, script_index, language_index) :
@@ -3929,7 +3929,7 @@ class Face :
             feature_tags = (nr_feature_tags * ct.c_uint)()
         #end while
         return \
-            tuple(feature_tags[i] for i in range(nr_feature_tags))
+            feature_tags[:nr_feature_tags]
     #end ot_layout_language_get_feature_tags
 
     def ot_layout_language_find_feature(self, table_tag, script_index, language_index, feature_tag) :
@@ -3953,7 +3953,7 @@ class Face :
             lookup_indexes = (nr_lookups * ct.c_uint)()
         #end while
         return \
-            tuple(lookup_indexes[i] for i in range(nr_lookups))
+            lookup_indexes[:nr_lookups]
     #end ot_layout_feature_get_lookups
 
     def ot_layout_table_get_lookup_count(self, table_tag) :
@@ -5138,7 +5138,7 @@ class Font :
             caret_array = (nr_carets * HB.position_t)()
         #end while
         return \
-            tuple(caret_array[i] for i in range(nr_carets))
+            caret_array[:nr_carets]
     #end ot_layout_get_ligature_carets
 
     # from hb-ot-math.h (since 1.3.3):
