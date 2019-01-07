@@ -6123,46 +6123,50 @@ class Set :
 
 # from hb-ot-layout.h:
 
-def ot_tags_from_script_and_language(script, language) :
-    if language != None and not isinstance(language, Language) :
-        raise TypeError("language must be a Language")
-    #end if
-    if language != None :
-        c_language = Language._hbobj
-    else :
-        c_language = Language.INVALID
-    #end if
-    script_count = ct.c_uint()
-    language_count = ct.c_uint()
-    try_script_count = 4
-    try_language_count = 4
-    while True :
-        script_tags = (try_script_count * HB.tag_t)()
-        language_tags = (try_language_count * HB.tag_t)()
-        script_count.value = try_script_count
-        language_count.value = try_language_count
-        hb.hb_ot_tags_from_script_and_language(script, c_language, script_count, script_tags, language_count, language_tags)
-        if script_count.value < try_script_count and language_count.value < try_language_count :
-            # OK, I’m sure I’ve got them all
-            break
-        if script_count.value == try_script_count :
-            try_script_count *= 2
-        #end if
-        if language_count.value == try_language_count :
-            try_language_count *= 2
-        #end if
-    #end while
-    return \
-        (script_tags[:script_count.value], language_tags[:language_count.value])
-#end ot_tags_from_script_and_language
+if hasattr(hb, "hb_ot_tags_from_script_and_language") : # since: 2.0.0
 
-def ot_tags_to_script_and_language(script_tag, language_tag) :
-    c_script = HB.script_t()
-    c_language = ct.c_void_p()
-    hb.hb_ot_tags_to_script_and_language(script_tag, language_tag, c_script, c_language)
-    return \
-        (c_script.value, Language(c_language.value))
-#end ot_tags_to_script_and_language
+    def ot_tags_from_script_and_language(script, language) :
+        if language != None and not isinstance(language, Language) :
+            raise TypeError("language must be a Language")
+        #end if
+        if language != None :
+            c_language = Language._hbobj
+        else :
+            c_language = Language.INVALID
+        #end if
+        script_count = ct.c_uint()
+        language_count = ct.c_uint()
+        try_script_count = 4
+        try_language_count = 4
+        while True :
+            script_tags = (try_script_count * HB.tag_t)()
+            language_tags = (try_language_count * HB.tag_t)()
+            script_count.value = try_script_count
+            language_count.value = try_language_count
+            hb.hb_ot_tags_from_script_and_language(script, c_language, script_count, script_tags, language_count, language_tags)
+            if script_count.value < try_script_count and language_count.value < try_language_count :
+                # OK, I’m sure I’ve got them all
+                break
+            if script_count.value == try_script_count :
+                try_script_count *= 2
+            #end if
+            if language_count.value == try_language_count :
+                try_language_count *= 2
+            #end if
+        #end while
+        return \
+            (script_tags[:script_count.value], language_tags[:language_count.value])
+    #end ot_tags_from_script_and_language
+
+    def ot_tags_to_script_and_language(script_tag, language_tag) :
+        c_script = HB.script_t()
+        c_language = ct.c_void_p()
+        hb.hb_ot_tags_to_script_and_language(script_tag, language_tag, c_script, c_language)
+        return \
+            (c_script.value, Language(c_language.value))
+    #end ot_tags_to_script_and_language
+
+#end if
 
 def ot_tags_from_script(script) :
     "deprecated since 2.0.0."
