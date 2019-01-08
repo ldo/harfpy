@@ -6162,8 +6162,13 @@ if hasattr(hb, "hb_ot_tags_from_script_and_language") : # since: 2.0.0
         c_script = HB.script_t()
         c_language = ct.c_void_p()
         hb.hb_ot_tags_to_script_and_language(script_tag, language_tag, c_script, c_language)
+        if c_language.value != None :
+            language = Language(c_language.value)
+        else :
+            language = None
+        #end if
         return \
-            (c_script.value, Language(c_language.value))
+            (c_script.value, language)
     #end ot_tags_to_script_and_language
 
 #end if
