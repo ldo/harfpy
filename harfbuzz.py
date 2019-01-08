@@ -6130,7 +6130,7 @@ if hasattr(hb, "hb_ot_tags_from_script_and_language") : # since: 2.0.0
             raise TypeError("language must be a Language")
         #end if
         if language != None :
-            c_language = Language._hbobj
+            c_language = language._hbobj
         else :
             c_language = Language.INVALID
         #end if
