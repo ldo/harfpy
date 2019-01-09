@@ -2263,6 +2263,37 @@ def script_get_horizontal_direction(script) :
         hb.hb_script_get_horizontal_direction(script)
 #end script_get_horizontal_direction
 
+class VariationExtra :
+    # extra members for Variation class.
+
+    @staticmethod
+    def from_string(s) :
+        c_s = s.encode()
+        c_result = HB.variation_t()
+        if hb.hb_variation_from_string(c_s, len(c_s), c_result) != 0 :
+            result = Variation.from_hb(c_result)
+        else :
+            result = None
+        #end if
+        return \
+            result
+    #end from_string
+
+    def to_string(self) :
+        c_self = self.to_hb()
+        s_max = 64
+        while True :
+            s_buf = (ct.c_char * s_max)()
+            hb.hb_variation_to_string(c_self, s_buf, smax)
+            if len(s_buf.value) < smax :
+                break
+            s_max *= 2
+        #end while
+        return \
+            s_buf.value.decode() # automatically stops at NUL?
+    #end to_string
+
+#end VariationExtra
 Variation = def_struct_class \
   (
     name = "Variation",
@@ -2274,8 +2305,10 @@ Variation = def_struct_class \
                     "to" : HB.TAG,
                     "from" : lambda t : HB.UNTAG(t, True),
                 },
-        }
+        },
+    extra = VariationExtra
   )
+del VariationExtra
 
 # from hb-unicode.h:
 
@@ -5034,6 +5067,13 @@ class Font :
     if hasattr(hb, "hb_font_set_variations") :
 
         def set_variations(self, variations) :
+            if (
+                    not isinstance(variations, (tuple, list))
+                or
+                    not all(isinstance(v, Variation) for v in variations)
+            ) :
+                raise TypeError("variations must be sequence of Variation objects")
+            #end if
             c_variations = seq_to_ct(variations, HB.variation_t, Variation.to_hb)
             hb.hb_font_set_variations(self._hbobj, c_variations, len(variations))
         #end set_variations
