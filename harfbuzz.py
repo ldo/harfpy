@@ -3568,6 +3568,20 @@ OTVarAxis = def_struct_class \
         }
   )
 
+OTVarAxisInfo = def_struct_class \
+  (
+    name = "OTVarAxisInfo",
+    ctname = "ot_var_axis_info_t",
+    conv =
+        {
+            "tag" :
+                {
+                    "to" : HB.TAG,
+                    "from" : lambda t : HB.UNTAG(t, True),
+                },
+        }
+  )
+
 # from hb-face.h:
 
 class Face :
@@ -4306,7 +4320,7 @@ class Face :
                     axes_count = ct.c_uint(array_len)
                 #end while
                 return \
-                    axes_array[:axes_count.value]
+                    list(OTVarAxisInfo.from_hb(axes_array[i]) for i in range(axes_count.value))
             #end ot_var_get_axis_infos
 
             def ot_var_find_axis_info(self, axis_tag) :
