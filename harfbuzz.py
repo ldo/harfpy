@@ -2071,7 +2071,7 @@ if hasattr(hb, "hb_ot_color_has_palettes") :
 #end if
 
 if hasattr(hb, "hb_ot_name_list_names") :
-    hb.hb_ot_name_list_names.restype = ct.c_void_p
+    hb.hb_ot_name_list_names.restype = ct.POINTER(HB.ot_name_entry_t)
     hb.hb_ot_name_list_names.argtypes = (ct.c_void_p, ct.POINTER(ct.c_uint))
     hb.hb_ot_name_get_utf8.restype = ct.c_uint
     hb.hb_ot_name_get_utf8.argtypes = (ct.c_void_p, HB.ot_name_id_t, ct.c_void_p, ct.POINTER(ct.c_uint), ct.c_void_p)
@@ -4179,7 +4179,53 @@ class Face :
             result
     #end ot_layout_size_params
 
-    # TODO: from hb-ot-name.h: ot_name_list_names, ot_name_get_utf8, ot_name_get_str
+    if hasattr(hb, "hb_ot_name_list_names") :
+
+        # Since: 2.0.0
+
+        @property
+        def ot_names(self) :
+            "returns a list of OTNameEntry objects for all OpenType names in this Face."
+            names_list = ct.POINTER(HB.ot_name_entry_t)()
+            nr_names = ct.c_uint()
+            names_list = hb.hb_ot_name_list_names(self._hbobj, nr_names)
+              # names_list belongs to hb_face_t and will stay valid as long as latter is valid
+            return \
+                list(OTNameEntry.from_hb(names_list[i]) for i in range(nr_names.value))
+        #end names
+
+        def ot_name_get_utf8(self, name_id, language = None) :
+            if language != None and not isinstance(language, Language) :
+                raise TypeError("language must be a Language")
+            #end if
+            if language != None :
+                c_language = language._hbobj
+            else :
+                c_language = None
+            #end if
+            text_max = 1 # dummy, to begin with
+            while True :
+                text = (ct.c_char * text_max)()
+                text_size = ct.c_uint(text_max)
+                text_len = hb.hb_ot_name_get_utf8(self._hbobj, name_id, c_language, text_size, text)
+                if text_size.value == text_len :
+                    break
+                # allocate actual space, now I know how much I need
+                text_max = text_len + 1
+            #end while
+            return \
+                text[:text_len]
+        #end ot_name_get_utf8
+
+        def ot_name_get(self, name_id, language = None) :
+            if language != None and not isinstance(language, Language) :
+                raise TypeError("language must be a Language")
+            #end if
+            return \
+                self.ot_name_get_utf8(name_id, language).decode()
+        #end ot_name_get
+
+    #end if
 
     if hasattr(hb, "hb_ot_layout_feature_get_name_ids") :
 
@@ -4570,6 +4616,19 @@ def def_face_props(celf) :
 #end def_face_props
 def_face_props(Face)
 del def_face_props
+
+# from hb-ot-name.h (since 2.0.0):
+
+OTNameEntry = def_struct_class \
+  (
+    name = "OTNameEntry",
+    ctname = "ot_name_entry_t",
+    conv =
+        {
+            # TODO decode "var"?
+            "language" : {"from" : Language, "to" : lambda l : l._hbobj},
+        }
+  )
 
 # from hb-ot-math.h (since 1.3.3):
 
