@@ -4179,6 +4179,8 @@ class Face :
             result
     #end ot_layout_size_params
 
+    # TODO: from hb-ot-name.h: ot_name_list_names, ot_name_get_utf8, ot_name_get_str
+
     if hasattr(hb, "hb_ot_layout_feature_get_name_ids") :
 
         def ot_layout_feature_get_name_ids(self, table_tag, feature_index) :
