@@ -4375,7 +4375,7 @@ class Face :
                 axis_info = HB.ot_var_axis_info_t()
                 success = hb.hb_ot_var_find_axis_info(self._hbobj, axis_tag, axis_info) != 0
                 return \
-                    (None, axis_info)[success]
+                    (lambda : None, lambda : OTVarAxisInfo.from_hb(axis_info))[success]()
             #end ot_var_find_axis_info
 
         #end if
@@ -4953,8 +4953,9 @@ class Font :
                 c_advances,
                 1
               )
+            conv = (lambda x : x, HB.from_position_t)[self.autoscale]
             return \
-                list(c_advances)
+                list(conv(adv) for adv in c_advances)
         #end get_glyph_advances_for_direction
 
     #end if
@@ -5252,8 +5253,9 @@ class Font :
             caret_count = ct.c_uint(nr_carets)
             caret_array = (nr_carets * HB.position_t)()
         #end while
+        conv = (lambda x : x, HB.from_position_t)[self.autoscale]
         return \
-            caret_array[:nr_carets]
+            list(conv(c) for c in caret_array[:nr_carets])
     #end ot_layout_get_ligature_carets
 
     # from hb-ot-math.h (since 1.3.3):
