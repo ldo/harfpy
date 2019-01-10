@@ -3582,6 +3582,20 @@ OTVarAxisInfo = def_struct_class \
         }
   )
 
+# from hb-ot-color.h
+# Since: 2.1.0
+
+OTColourLayer = def_struct_class \
+  (
+    name = "OTColourLayer",
+    ctname = "ot_colour_layer_t"
+  )
+OTColorLayer = def_struct_class \
+  (
+    name = "OTColorLayer",
+    ctname = "ot_color_layer_t"
+  )
+
 # from hb-face.h:
 
 class Face :
@@ -4528,7 +4542,7 @@ class Face :
                 count = ct.c_uint(array_len)
             #end while
             return \
-                layers[:count.value]
+                list(OTColourLayer.from_hb(c) for c in layers[:count.value])
         #end ot_colour_glyph_get_layers
 
         def ot_color_glyph_get_layers(self, glyph) :
@@ -4543,7 +4557,7 @@ class Face :
                 count = ct.c_uint(array_len)
             #end while
             return \
-                layers[:count.value]
+                list(OTColorLayer.from_hb(c) for c in layers[:count.value])
         #end ot_color_glyph_get_layers
 
         @property
