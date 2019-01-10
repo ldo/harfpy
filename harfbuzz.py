@@ -6127,6 +6127,9 @@ def shape(font, buffer, features = None) :
     if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
         raise TypeError("font must be a Font, buffer must be a Buffer")
     #end if
+    if features != None and not all(isinstance(f, Feature) for f in features) :
+        raise TypeError("features must be sequence of Feature objects")
+    #end if
     if features != None :
         c_features = seq_to_ct(features, HB.feature_t, lambda f : f.to_hb())
         nr_features = len(features)
@@ -6141,6 +6144,9 @@ def shape(font, buffer, features = None) :
 def shape_full(font, buffer, features = None, shaper_list = None) :
     if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
         raise TypeError("font must be a Font, buffer must be a Buffer")
+    #end if
+    if features != None and not all(isinstance(f, Feature) for f in features) :
+        raise TypeError("features must be sequence of Feature objects")
     #end if
     if features != None :
         c_features = seq_to_ct(features, HB.feature_t, lambda f : f.to_hb())
@@ -6323,6 +6329,9 @@ def ot_shape_glyphs_closure(font, buffer, features, glyphs = None) :
     if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
         raise TypeError("font must be a Font and buffer must be a Buffer")
     #end if
+    if features != None and not all(isinstance(f, Feature) for f in features) :
+        raise TypeError("features must be sequence of Feature objects")
+    #end if
     c_glyphs = Set.to_hb(glyphs)
     if features != None :
         c_features = seq_to_ct(features, HB.feature_t, lambda f : f.to_hb())
@@ -6393,6 +6402,9 @@ class ShapePlan :
             raise TypeError("props must be a SegmentProperties")
         #end if
         c_props = props.to_hb()
+        if user_features != None and not all(isinstance(f, Feature) for f in user_features) :
+            raise TypeError("user_features must be sequence of Feature objects")
+        #end if
         if user_features != None :
             c_user_features = seq_to_ct(user_features, HB.feature_t, lambda f : f.to_hb())
             nr_user_features = len(user_features)
@@ -6423,6 +6435,9 @@ class ShapePlan :
                 raise TypeError("props must be a SegmentProperties")
             #end if
             c_props = props.to_hb()
+            if user_features != None and not all(isinstance(f, Feature) for f in user_features) :
+                raise TypeError("user_features must be sequence of Feature objects")
+            #end if
             if user_features != None :
                 c_user_features = seq_to_ct(user_features, HB.feature_t, lambda f : f.to_hb())
                 nr_user_features = len(user_features)
@@ -6454,6 +6469,9 @@ class ShapePlan :
     def execute(self, font, buffer, features) :
         if not isinstance(font, Font) or not isinstance(buffer, Buffer) :
             raise TypeError("font must be a Font and buffer must be a Buffer")
+        #end if
+        if features != None and not all(isinstance(f, Feature) for f in features) :
+            raise TypeError("features must be sequence of Feature objects")
         #end if
         if features != None :
             c_features = seq_to_ct(features, HB.feature_t, lambda f : f.to_hb())
