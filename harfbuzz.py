@@ -90,11 +90,12 @@ class HARFBUZZ :
 
     def TAG(*args) :
         "creates a tag_t from four byte values or a bytes or str value of length 4."
+        result = None # to begin with
         if len(args) == 4 :
             c1, c2, c3, c4 = args
         elif len(args) == 1 :
             arg = args[0]
-            if isinstance(arg, (bytes, bytearray)) :
+            if isinstance(arg, (bytes, bytearray, list, tuple)) :
                 c1, c2, c3, c4 = tuple(arg)
             elif isinstance(arg, str) :
                 args = tuple(ord(c) for c in arg)
@@ -102,14 +103,22 @@ class HARFBUZZ :
                     raise TypeError("TAG string must be 4 ASCII chars in [0 .. 255]")
                 #end if
                 c1, c2, c3, c4 = args
+            elif isinstance(arg, int) :
+                if arg < 0 or arg > 0xFFFFFFFF :
+                    raise ValueError("TAG int must be in [0 .. 2 ** 32 - 1]")
+                #end if
+                result = arg
             else :
                 raise TypeError("TAG arg must be bytes or string")
             #end if
         else :
             raise TypeError("wrong nr of TAG args")
         #end if
+        if result == None :
+            result = c1 << 24 | c2 << 16 | c3 << 8 | c4
+        #end if
         return \
-            c1 << 24 | c2 << 16 | c3 << 8 | c4
+            result
     #end TAG
 
     def UNTAG(tag, printable = False) :
