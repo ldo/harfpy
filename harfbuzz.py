@@ -4914,7 +4914,7 @@ class Font :
         #end if
         return \
             result
-    #end wrap_get_glyph_name_func
+    #end get_glyph_name
 
     def get_glyph_from_name(self, name) :
         c_name = (ct.c_char * len(name))()
