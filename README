@@ -88,7 +88,7 @@ Hello-HarfBuzz Example
 ======================
 
 The HarfBuzz docs include [this
-example](http://behdad.github.io/harfbuzz/hello-harfbuzz.html) on how to get started.
+example](https://harfbuzz.github.io/ch03s03.html) on how to get started.
 Let’s recreate that using HarfPy.
 
     import sys
