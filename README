@@ -87,9 +87,8 @@ becomes
 Hello-HarfBuzz Example
 ======================
 
-The HarfBuzz docs include [this
-example](http://behdad.github.io/harfbuzz/hello-harfbuzz.html) on how to get started.
-Let’s recreate that using HarfPy.
+The HarfBuzz manual includes [this example](https://harfbuzz.github.io/ch03s03.html)
+on how to get started. Let’s recreate that using HarfPy.
 
     import sys
     import qahirah as qah
@@ -148,7 +147,7 @@ Using OpenType Font Features
 ============================
 
 An important part of OpenType is the [font features
-registry](https://www.microsoft.com/typography/otspec/featurelist.htm). This defines
+registry](https://docs.microsoft.com/en-us/typography/opentype/spec/featurelist). This defines
 standard “features” that a specific font may implement: for example, auto-kerning,
 alternate glyphs for different number styles, small caps, old-style ligatures and so on.
 
@@ -288,8 +287,9 @@ For more complete example scripts, see my harfpy_examples
 More Info About HarfBuzz
 ========================
 
-The API documentation seems to be rather lacking. A good starting point for finding out
-more is the [HarfBuzz Wiki](https://github.com/behdad/harfbuzz/wiki).
+The abovementioned [manual](https://harfbuzz.github.io/) has a lot of useful
+reference info. Some other introductory info may be found at the
+[HarfBuzz Wiki](https://github.com/behdad/harfbuzz/wiki).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2018 May 4
+2020 August 22
