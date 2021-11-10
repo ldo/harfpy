@@ -2275,12 +2275,12 @@ def script_get_horizontal_direction(script) :
 class VariationExtra :
     # extra members for Variation class.
 
-    @staticmethod
-    def from_string(s) :
+    @classmethod
+    def from_string(celf, s) :
         c_s = s.encode()
         c_result = HB.variation_t()
         if hb.hb_variation_from_string(c_s, len(c_s), c_result) != 0 :
-            result = Variation.from_hb(c_result)
+            result = celf.from_hb(c_result)
         else :
             result = None
         #end if
@@ -2396,19 +2396,19 @@ class UnicodeFuncs :
         #end if
     #end __del__
 
-    @staticmethod
-    def get_default() :
+    @classmethod
+    def get_default(celf) :
         return \
-            UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_default()))
+            celf(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_default()))
     #end get_default
 
-    @staticmethod
-    def create(parent = None) :
+    @classmethod
+    def create(celf, parent = None) :
         if parent != None and not isinstance(parent, UnicodeFuncs) :
             raise TypeError("parent must be None or a UnicodeFuncs")
         #end if
         return \
-            UnicodeFuncs \
+            celf \
               (
                 hb.hb_unicode_funcs_create
                   (
@@ -2417,8 +2417,8 @@ class UnicodeFuncs :
               )
     #end create
 
-    @staticmethod
-    def get_empty() :
+    @classmethod
+    def get_empty(celf) :
         "returns the (unique) “empty” UnicodeFuncs object. Its functions behave as" \
         " follows:\n" \
         "\n" \
@@ -2431,7 +2431,7 @@ class UnicodeFuncs :
         "    unicode_decompose always returns None\n" \
         "    unicode_decompose_compatibility always returns an empty sequence."
         return \
-            UnicodeFuncs(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_empty()))
+            celf(hb.hb_unicode_funcs_reference(hb.hb_unicode_funcs_get_empty()))
     #end get_empty
 
     # immutable defined below
@@ -2880,12 +2880,12 @@ class Blob :
             Blob(hb.hb_blob_create_sub_blob(self._hbobj, offset, length))
     #end create_sub
 
-    @staticmethod
-    def get_empty() :
+    @classmethod
+    def get_empty(celf) :
         "returns the (unique) empty Blob. This has a null data pointer, zero length," \
         " and its memory mode is readonly."
         return \
-            Blob(hb.hb_blob_reference(hb.hb_blob_get_empty()))
+            celf(hb.hb_blob_reference(hb.hb_blob_get_empty()))
     #end get_empty
 
     def __len__(self) :
@@ -3086,18 +3086,18 @@ class Buffer :
         #end if
     #end __del__
 
-    @staticmethod
-    def create() :
+    @classmethod
+    def create(celf) :
         "creates a new Buffer."
         return \
-            Buffer(hb.hb_buffer_create())
+            celf(hb.hb_buffer_create())
     #end create
 
-    @staticmethod
-    def get_empty() :
+    @classmethod
+    def get_empty(celf) :
         "returns the (unique) empty Buffer instance."
         return \
-            Buffer(hb.hb_buffer_reference(hb.hb_buffer_get_empty()))
+            celf(hb.hb_buffer_reference(hb.hb_buffer_get_empty()))
     #end get_empty
 
     def reset(self) :
@@ -3660,20 +3660,20 @@ class Face :
         #end if
     #end __del__
 
-    @staticmethod
-    def create(blob, index, autoscale) :
+    @classmethod
+    def create(celf, blob, index, autoscale) :
         "creates a Face that gets its data from the specified Blob."
         if not isinstance(blob, Blob) :
             raise TypeError("blob must be a Blob")
         #end if
-        result = Face(hb.hb_face_create(blob._hbobj, index), autoscale)
+        result = celf(hb.hb_face_create(blob._hbobj, index), autoscale)
         result._arr = blob._arr # in case Blob goes away
         return \
             result
     #end create
 
-    @staticmethod
-    def create_for_tables(reference_table, user_data, destroy, autoscale) :
+    @classmethod
+    def create_for_tables(celf, reference_table, user_data, destroy, autoscale) :
         "creates a Face which calls the specified reference_table action to access" \
         " the font tables. This should be declared as\n" \
         "\n" \
@@ -3691,7 +3691,7 @@ class Face :
 
         @HB.reference_table_func_t
         def wrap_reference_table(c_face, c_tag, c_user_data) :
-            result = reference_table(Face(hb.hb_face_reference(c_face), autoscale), c_tag, user_data)
+            result = reference_table(celf(hb.hb_face_reference(c_face), autoscale), c_tag, user_data)
             if isinstance(result, Blob) :
                 c_result = hb.hb_blob_reference(result._hbobj)
             elif result == None :
@@ -3712,7 +3712,7 @@ class Face :
             wrap_destroy = None
         #end if
 
-        result = Face(hb.hb_face_create_for_tables(wrap_reference_table, None, wrap_destroy), autoscale)
+        result = celf(hb.hb_face_create_for_tables(wrap_reference_table, None, wrap_destroy), autoscale)
         # note I cannot save any references to Blob._arr -- user will have to
         # ensure these do not vanish prematurely
         result._wrap_reference_table = wrap_reference_table
@@ -3721,19 +3721,19 @@ class Face :
             result
     #end create_for_tables
 
-    @staticmethod
-    def get_empty() :
+    @classmethod
+    def get_empty(celf) :
         "returns the (unique) empty Face. This has no glyphs and is immutable."
         return \
-            Face(hb.hb_face_reference(hb.hb_face_get_empty()), False)
+            celf(hb.hb_face_reference(hb.hb_face_get_empty()), False)
     #end get_empty
 
     if hasattr(hb, "hb_face_builder_create") :
 
-        @staticmethod
-        def builder_create(autoscale) :
+        @classmethod
+        def builder_create(celf, autoscale) :
             return \
-                Face(hb.hb_face_builder_create(), autoscale)
+                celf(hb.hb_face_builder_create(), autoscale)
         #end builder_create
 
         def builder_add_table(self, tag, blob) :
@@ -3751,14 +3751,14 @@ class Face :
 
         # from hb-ft.h:
 
-        @staticmethod
-        def ft_create(ft_face) :
+        @classmethod
+        def ft_create(celf, ft_face) :
             "creates a Face from a freetype.Face."
             if not isinstance(ft_face, freetype.Face) :
                 raise TypeError("ft_face must be a freetype.Face")
             #end if
             return \
-                Face(hb.hb_ft_face_create_referenced(ft_face._ftobj), True)
+                celf(hb.hb_ft_face_create_referenced(ft_face._ftobj), True)
         #end ft_create
 
     #end if
@@ -4736,13 +4736,13 @@ class Font :
         #end if
     #end __del__
 
-    @staticmethod
-    def create(face) :
+    @classmethod
+    def create(celf, face) :
         "creates a Font from the specified Face."
         if not isinstance(face, Face) :
             raise TypeError("face must be a Face")
         #end if
-        result = Font(hb.hb_font_create(face._hbobj), face.autoscale)
+        result = celf(hb.hb_font_create(face._hbobj), face.autoscale)
         result._face = face
         return \
             result
@@ -4755,10 +4755,10 @@ class Font :
             result
     #end create_sub_font
 
-    @staticmethod
-    def get_empty(autoscale) :
+    @classmethod
+    def get_empty(celf, autoscale) :
         return \
-            Font(hb.hb_font_get_empty(), autoscale)
+            celf(hb.hb_font_get_empty(), autoscale)
     #end get_empty
 
     # immutable defined below
@@ -5216,13 +5216,13 @@ class Font :
 
         # from hb-ft.h:
 
-        @staticmethod
-        def ft_create(ft_face) :
+        @classmethod
+        def ft_create(celf, ft_face) :
             "creates a Font from a freetype.Face."
             if not isinstance(ft_face, freetype.Face) :
                 raise TypeError("ft_face must be a freetype.Face")
             #end if
-            result = Font(hb.hb_ft_font_create_referenced(ft_face._ftobj), True)
+            result = celf(hb.hb_ft_font_create_referenced(ft_face._ftobj), True)
             result._face = ft_face
             return \
                 result
@@ -5634,14 +5634,14 @@ class FontFuncs :
         #end if
     #end __del__
 
-    @staticmethod
-    def create(autoscale) :
+    @classmethod
+    def create(celf, autoscale) :
         return \
-            FontFuncs(hb.hb_font_funcs_create(), autoscale)
+            celf(hb.hb_font_funcs_create(), autoscale)
     #end create
 
-    @staticmethod
-    def get_empty() :
+    @classmethod
+    def get_empty(celf) :
         "returns the (unique) “empty” FontFuncs object. Its functions behave as" \
         " follows:\n" \
         "\n" \
@@ -5657,7 +5657,7 @@ class FontFuncs :
         "    glyph_name is always the empty string\n" \
         "    glyph_from_name is always zero."
         return \
-            FontFuncs(hb.hb_font_funcs_reference(hb.hb_font_funcs_get_empty()), False)
+            celf(hb.hb_font_funcs_reference(hb.hb_font_funcs_get_empty()), False)
     #end get_empty
 
     @property
@@ -6113,8 +6113,8 @@ del def_fontfuncs_extra
 class FeatureExtra :
     # extra members for Feature class.
 
-    @staticmethod
-    def from_string(s) :
+    @classmethod
+    def from_string(celf, s) :
         "returns a Feature corresponding to the specified name string."
         sb = s.encode()
         result = HB.feature_t()
@@ -6122,7 +6122,7 @@ class FeatureExtra :
             raise ValueError("failed to decode feature_from_string")
         #end if
         return \
-            Feature.from_hb(result)
+            celf.from_hb(result)
     #end from_string
 
     def to_string(self) :
@@ -6224,8 +6224,8 @@ class Set :
         #end if
     #end __del__
 
-    @staticmethod
-    def to_hb(pyset = None) :
+    @classmethod
+    def to_hb(celf, pyset = None) :
         hbobj = hb.hb_set_create()
         if pyset != None :
             for elt in pyset :
@@ -6240,13 +6240,13 @@ class Set :
             #end for
         #end if
         return \
-            Set(hbobj)
+            celf(hbobj)
     #end to_hb
 
-    @staticmethod
-    def NULL() :
+    @classmethod
+    def NULL(celf) :
         return \
-            Set(None)
+            celf(None)
     #end NULL
 
     def from_hb(self) :
@@ -6418,8 +6418,8 @@ class ShapePlan :
         #end if
     #end __del__
 
-    @staticmethod
-    def create(face, props, user_features, shaper_list, cached) :
+    @classmethod
+    def create(celf, face, props, user_features, shaper_list, cached) :
         if not isinstance(face, Face) :
             raise TypeError("face must be a Face")
         #end if
@@ -6439,7 +6439,7 @@ class ShapePlan :
         #end if
         nr_shapers, c_shaper_list, c_strs = shaper_list_to_hb(shaper_list)
         return \
-            ShapePlan \
+            celf \
               (
                 (
                     hb.hb_shape_plan_create,
@@ -6451,8 +6451,8 @@ class ShapePlan :
 
     if hasattr(hb, "hb_shape_plan_create2") :
 
-        @staticmethod
-        def create2(face, props, user_features, coords, shaper_list, cached) :
+        @classmethod
+        def create2(celf, face, props, user_features, coords, shaper_list, cached) :
             if not isinstance(face, Face) :
                 raise TypeError("face must be a Face")
             #end if
@@ -6479,7 +6479,7 @@ class ShapePlan :
             #end if
             nr_shapers, c_shaper_list, c_strs = shaper_list_to_hb(shaper_list)
             return \
-                ShapePlan \
+                celf \
                   (
                     (
                         hb.hb_shape_plan_create2,
@@ -6511,10 +6511,10 @@ class ShapePlan :
             result
     #end execute
 
-    @staticmethod
-    def get_empty() :
+    @classmethod
+    def get_empty(celf) :
         return \
-            ShapePlan(hb.hb_shape_plan_reference(hb.hb_shape_plan_get_empty()))
+            celf(hb.hb_shape_plan_reference(hb.hb_shape_plan_get_empty()))
     #end get_empty
 
     @property
