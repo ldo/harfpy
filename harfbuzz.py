@@ -4407,6 +4407,7 @@ class Face :
         #end if
 
         if hasattr(hb, "hb_ot_var_get_named_instance_count") :
+
             @property
             def ot_var_named_instance_count(self) :
                 return \
