@@ -2952,7 +2952,10 @@ class GlyphPositionExtra :
                 qahirah.Vector(self.x_offset, self.y_offset)
         #end offset
 
+    else :
+        pass
     #end if
+
 #end GlyphPositionExtra
 GlyphPosition = def_struct_class \
   (
