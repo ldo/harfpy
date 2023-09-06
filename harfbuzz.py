@@ -2,9 +2,9 @@
 # Python-3 binding for HarfBuzz.
 #
 # Additional recommended libraries:
-#     python_freetype <https://github.com/ldo/python_freetype> -- binding for FreeType
-#     Qahirah <https://github.com/ldo/qahirah> -- binding for Cairo
-#     PyBidi <https://github.com/ldo/pybidi> -- binding for FriBidi
+#     python_freetype <https://gitlab.com/ldo/python_freetype> -- binding for FreeType
+#     Qahirah <https://gitlab.com/ldo/qahirah> -- binding for Cairo
+#     PyBidi <https://gitlab.com/ldo/pybidi> -- binding for FriBidi
 #
 # Python adaptation copyright © 2016-2018 Lawrence D'Oliveiro,
 # based on C original by Behdad Esfahbod and others.

@@ -3,13 +3,13 @@ HarfPy is a Python 3 binding for
 conjunction with my Python wrappers for other major parts of the Linux typography stack:
 
 * Qahirah ([GitLab](https://gitlab.com/ldo/qahirah),
-  [GitHub](https://github.com/ldo/qahirah)) -- my binding for the
+  [BitBucket](https://bitbucket.org/ldo17/qahirah)) -- my binding for the
   [Cairo](https://www.cairographics.org/) graphics library
 * python_freetype ([GitLab](https://gitlab.com/ldo/python_freetype),
-  [GitHub](https://github.com/ldo/python_freetype)) -- my binding for
+  [BitBucket](https://bitbucket.org/ldo17/python_freetype)) -- my binding for
   [FreeType](https://www.freetype.org/)
 * PyBidi ([GitLab](https://gitlab.com/ldo/pybidi),
-  [GitHub](https://github.com/ldo/pybidi)) -- my binding for
+  [BitBucket](https://bitbucket.org/ldo17/pybidi)) -- my binding for
   [FriBidi](https://fribidi.org/)
 
 The basic steps in doing a piece of high-quality text rendering on Linux are:
@@ -281,7 +281,7 @@ And finally, save the `ImageSurface` contents to a PNG file for viewing:
 
 For more complete example scripts, see my harfpy_examples
 ([GitLab](https://gitlab.com/ldo/harfpy_examples),
-[GitHub](https://github.com/ldo/harfpy_examples)) repo.
+[BitBucket](https://bitbucket.org/ldo17/harfpy_examples)) repo.
 
 
 More Info About HarfBuzz
@@ -292,4 +292,4 @@ reference info. Some other introductory info may be found at the
 [HarfBuzz Wiki](https://github.com/behdad/harfbuzz/wiki).
 
 Lawrence D'Oliveiro <ldo@geek-central.gen.nz>
-2020 August 22
+2023 September 6

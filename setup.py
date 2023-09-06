@@ -41,7 +41,7 @@ setuptools.setup \
         "language bindings for the HarfBuzz shaper library, for Python 3.3 or later",
     author = "Lawrence D'Oliveiro",
     author_email = "ldo@geek-central.gen.nz",
-    url = "https://github.com/ldo/harfpy",
+    url = "https://gitlab.com/ldo/harfpy",
     license = "LGPL v2.1+",
     py_modules = ["harfbuzz"],
     cmdclass =
